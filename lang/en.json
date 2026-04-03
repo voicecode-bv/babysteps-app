@@ -52,5 +52,9 @@
     "Username": "Username",
     "Create account": "Create account",
     "By registering you agree to our Terms and Privacy Policy. Your data is safe with us.": "By registering you agree to our Terms and Privacy Policy. Your data is safe with us.",
-    "Already have an account?": "Already have an account?"
+    "Already have an account?": "Already have an account?",
+
+    "Invalid credentials": "Invalid credentials",
+    "Validation failed": "Validation failed",
+    "Registration failed": "Registration failed"
 }

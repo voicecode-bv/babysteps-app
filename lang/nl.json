@@ -52,5 +52,9 @@
     "Username": "Gebruikersnaam",
     "Create account": "Account aanmaken",
     "By registering you agree to our Terms and Privacy Policy. Your data is safe with us.": "Door je te registreren ga je akkoord met onze Voorwaarden en ons Privacybeleid. Jouw gegevens zijn veilig bij ons.",
-    "Already have an account?": "Al een account?"
+    "Already have an account?": "Al een account?",
+
+    "Invalid credentials": "Ongeldige inloggegevens",
+    "Validation failed": "Validatie mislukt",
+    "Registration failed": "Registratie mislukt"
 }
