@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
@@ -34,12 +35,16 @@ class ApiClient
      */
     public function login(string $email, string $password): array
     {
-        $response = $this->request()
-            ->post('/auth/login', [
-                'email' => $email,
-                'password' => $password,
-                'device_name' => 'babysteps-mobile',
-            ]);
+        try {
+            $response = $this->request()
+                ->post('/auth/login', [
+                    'email' => $email,
+                    'password' => $password,
+                    'device_name' => 'babysteps-mobile',
+                ]);
+        } catch (ConnectionException) {
+            return ['success' => false, 'message' => __('Could not connect to the server')];
+        }
 
         if ($response->successful()) {
             $data = $response->json();
@@ -59,15 +64,19 @@ class ApiClient
      */
     public function register(string $name, string $username, string $email, string $password): array
     {
-        $response = $this->request()
-            ->post('/auth/register', [
-                'name' => $name,
-                'username' => $username,
-                'email' => $email,
-                'password' => $password,
-                'password_confirmation' => $password,
-                'device_name' => 'babysteps-mobile',
-            ]);
+        try {
+            $response = $this->request()
+                ->post('/auth/register', [
+                    'name' => $name,
+                    'username' => $username,
+                    'email' => $email,
+                    'password' => $password,
+                    'password_confirmation' => $password,
+                    'device_name' => 'babysteps-mobile',
+                ]);
+        } catch (ConnectionException) {
+            return ['success' => false, 'message' => __('Could not connect to the server')];
+        }
 
         if ($response->successful()) {
             $data = $response->json();
@@ -99,7 +108,11 @@ class ApiClient
             return ['valid' => false];
         }
 
-        $response = $this->authenticated()->get('/auth/me');
+        try {
+            $response = $this->authenticated()->get('/auth/me');
+        } catch (ConnectionException) {
+            return ['valid' => false];
+        }
 
         if ($response->successful()) {
             return ['valid' => true, 'user' => $response->json('user')];
@@ -147,9 +160,15 @@ class ApiClient
 
     public function request(): PendingRequest
     {
-        return Http::baseUrl(config('api-client.base_url'))
+        $request = Http::baseUrl(config('api-client.base_url'))
             ->timeout(config('api-client.timeout'))
             ->acceptJson();
+
+        if (app()->isLocal()) {
+            $request->withoutVerifying();
+        }
+
+        return $request;
     }
 
     public function authenticated(): PendingRequest
