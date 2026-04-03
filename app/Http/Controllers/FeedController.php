@@ -2,22 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Post;
+use Babysteps\ApiClient\Services\ApiClient;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class FeedController extends Controller
 {
-    public function __invoke(): Response
+    public function __invoke(ApiClient $apiClient): Response
     {
-        $posts = Post::query()
-            ->with('user')
-            ->withCount(['likes', 'comments'])
-            ->latest()
-            ->paginate(10);
+        $response = $apiClient->get('/feed?page='.request()->integer('page', 1));
 
         return Inertia::render('Feed', [
-            'posts' => $posts,
+            'posts' => $response->json(),
         ]);
     }
 }

@@ -9,5 +9,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/login', [LoginController::class, 'show'])->name('login');
 Route::get('/register', [RegisterController::class, 'show'])->name('register');
 
-Route::get('/', FeedController::class)->name('feed');
-Route::get('/posts/{post}', [PostController::class, 'show'])->name('posts.show');
+Route::middleware('auth.token')->group(function () {
+    Route::get('/', FeedController::class)->name('feed');
+    Route::get('/posts/{post}', [PostController::class, 'show'])->name('posts.show')->whereNumber('post');
+});

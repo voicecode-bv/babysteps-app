@@ -15,7 +15,9 @@ const form = useForm({
 const showPassword = ref(false);
 
 function submit() {
-    // Backend volgt later
+    form.post('/register', {
+        onFinish: () => form.reset('password'),
+    });
 }
 </script>
 

@@ -13,7 +13,9 @@ const form = useForm({
 const showPassword = ref(false);
 
 function submit() {
-    // Backend volgt later
+    form.post('/login', {
+        onFinish: () => form.reset('password'),
+    });
 }
 </script>
 
