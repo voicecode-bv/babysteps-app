@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Link, router } from '@inertiajs/vue3';
+import { useTranslations } from '@/composables/useTranslations';
+import { router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
 interface User {
@@ -33,6 +34,8 @@ const props = defineProps<{
     post: Post;
 }>();
 
+const { t } = useTranslations();
+
 const isLiked = ref(false);
 const likesCount = ref(props.post.likes_count);
 const newComment = ref('');
@@ -44,7 +47,7 @@ function toggleLike() {
 
 function submitComment() {
     if (!newComment.value.trim()) return;
-    // Backend volgt later - voor nu alleen UI reset
+    // Backend volgt later
     newComment.value = '';
 }
 
@@ -57,41 +60,41 @@ function timeAgo(dateString: string): string {
     const now = new Date();
     const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-    if (seconds < 60) return 'nu';
-    if (seconds < 3600) return `${Math.floor(seconds / 60)} min`;
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)} u`;
-    if (seconds < 604800) return `${Math.floor(seconds / 86400)} d`;
-    return `${Math.floor(seconds / 604800)} w`;
+    if (seconds < 60) return t('just now');
+    if (seconds < 3600) return t(':count min ago', { count: Math.floor(seconds / 60) });
+    if (seconds < 86400) return t(':count hours ago', { count: Math.floor(seconds / 3600) });
+    if (seconds < 604800) return t(':count days ago', { count: Math.floor(seconds / 86400) });
+    return t(':count weeks ago', { count: Math.floor(seconds / 604800) });
 }
 </script>
 
 <template>
-    <div class="flex h-dvh flex-col bg-black text-white">
+    <div class="flex h-dvh flex-col bg-sand-50 text-sand-900 dark:bg-sand-900 dark:text-sand-100">
         <!-- Header -->
-        <header class="flex items-center justify-between border-b border-neutral-800 px-4 py-3">
-            <button class="flex items-center gap-2" @click="goBack">
+        <header class="flex items-center justify-between border-b border-sand-200 bg-white px-4 pb-3 dark:border-sand-800 dark:bg-sand-900" style="padding-top: max(0.75rem, var(--inset-top))">
+            <button class="flex items-center gap-2 text-sand-700 dark:text-sand-300" @click="goBack">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
                 </svg>
             </button>
-            <h1 class="text-lg font-semibold">Bericht</h1>
+            <h1 class="text-lg font-semibold text-sand-800 dark:text-sand-100">{{ t('Moment') }}</h1>
             <div class="w-5" />
         </header>
 
         <!-- Scrollable Content -->
         <div class="flex-1 overflow-y-auto">
             <!-- Post Header -->
-            <div class="flex items-center gap-3 px-4 py-3">
+            <div class="flex items-center gap-3 bg-white px-4 py-3 dark:bg-sand-900">
                 <img
-                    :src="post.user.avatar ?? `https://ui-avatars.com/api/?name=${post.user.name}&background=333&color=fff&size=64`"
-                    :alt="post.user.username"
-                    class="size-8 rounded-full object-cover"
+                    :src="post.user.avatar ?? `https://ui-avatars.com/api/?name=${post.user.name}&background=e5ece5&color=3a573a&size=64`"
+                    :alt="post.user.name"
+                    class="size-10 rounded-full object-cover ring-2 ring-sage-200 dark:ring-sage-700"
                 />
                 <div class="flex-1">
-                    <p class="text-sm font-semibold">{{ post.user.username }}</p>
-                    <p v-if="post.location" class="text-xs text-neutral-400">{{ post.location }}</p>
+                    <p class="text-sm font-semibold text-sand-800 dark:text-sand-100">{{ post.user.name }}</p>
+                    <p v-if="post.location" class="text-xs text-sand-500 dark:text-sand-400">{{ post.location }}</p>
                 </div>
-                <button class="text-white">
+                <button class="text-sand-400 dark:text-sand-500">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM18.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
                     </svg>
@@ -99,15 +102,15 @@ function timeAgo(dateString: string): string {
             </div>
 
             <!-- Post Media -->
-            <div class="relative aspect-square w-full bg-neutral-900">
+            <div class="relative aspect-square w-full bg-sand-100 dark:bg-sand-800">
                 <img
                     v-if="post.media_type === 'image'"
                     :src="post.media_url"
-                    :alt="post.caption ?? 'Post'"
+                    :alt="post.caption ?? t('Photo')"
                     class="size-full object-cover"
                 />
                 <div v-else class="flex size-full items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-16 text-neutral-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-16 text-sand-300 dark:text-sand-600">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.91 11.672a.375.375 0 0 1 0 .656l-5.603 3.113a.375.375 0 0 1-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112Z" />
                     </svg>
@@ -115,7 +118,7 @@ function timeAgo(dateString: string): string {
             </div>
 
             <!-- Action Buttons -->
-            <div class="flex items-center gap-4 px-4 py-3">
+            <div class="flex items-center gap-4 bg-white px-4 py-3 dark:bg-sand-900">
                 <button @click="toggleLike">
                     <svg
                         v-if="!isLiked"
@@ -124,7 +127,7 @@ function timeAgo(dateString: string): string {
                         viewBox="0 0 24 24"
                         stroke-width="1.5"
                         stroke="currentColor"
-                        class="size-6"
+                        class="size-6 text-sand-600 dark:text-sand-300"
                     >
                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
                     </svg>
@@ -133,70 +136,66 @@ function timeAgo(dateString: string): string {
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 24 24"
                         fill="currentColor"
-                        class="size-6 text-red-500"
+                        class="size-6 text-blush-400"
                     >
                         <path d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z" />
                     </svg>
                 </button>
-                <button>
+                <button class="text-sand-600 dark:text-sand-300">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337Z" />
-                    </svg>
-                </button>
-                <button>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
-                    </svg>
-                </button>
-                <div class="flex-1" />
-                <button>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
                     </svg>
                 </button>
             </div>
 
             <!-- Likes -->
-            <div class="px-4">
-                <p v-if="likesCount > 0" class="text-sm font-semibold">
-                    {{ likesCount }} {{ likesCount === 1 ? 'like' : 'likes' }}
+            <div class="bg-white px-4 pb-2 dark:bg-sand-900">
+                <p v-if="likesCount > 0" class="text-sm font-medium text-sand-700 dark:text-sand-200">
+                    {{ likesCount === 1 ? t(':count person likes this', { count: likesCount }) : t(':count people like this', { count: likesCount }) }}
                 </p>
             </div>
 
             <!-- Caption -->
-            <div v-if="post.caption" class="px-4 py-2">
-                <p class="text-sm">
-                    <span class="font-semibold">{{ post.user.username }}</span>
+            <div v-if="post.caption" class="bg-white px-4 pb-3 dark:bg-sand-900">
+                <p class="text-sm text-sand-800 dark:text-sand-200">
+                    <span class="font-semibold">{{ post.user.name }}</span>
                     {{ ' ' + post.caption }}
                 </p>
-                <p class="mt-1 text-[10px] uppercase text-neutral-500">{{ timeAgo(post.created_at) }}</p>
+                <p class="mt-1 text-xs text-sand-400 dark:text-sand-500">{{ timeAgo(post.created_at) }}</p>
             </div>
 
-            <!-- Comments -->
-            <div class="border-t border-neutral-800">
-                <div v-if="post.comments.length === 0" class="px-4 py-8 text-center">
-                    <p class="text-sm font-semibold">Nog geen reacties</p>
-                    <p class="mt-1 text-sm text-neutral-400">Begin het gesprek.</p>
+            <!-- Comments Section -->
+            <div class="mt-2 bg-white dark:bg-sand-900">
+                <div class="border-b border-sand-100 px-4 py-3 dark:border-sand-800">
+                    <h2 class="text-sm font-semibold text-sand-700 dark:text-sand-300">
+                        {{ t('Comments') }}
+                        <span v-if="post.comments_count > 0" class="font-normal text-sand-400 dark:text-sand-500">({{ post.comments_count }})</span>
+                    </h2>
                 </div>
 
-                <div v-for="comment in post.comments" :key="comment.id" class="flex gap-3 px-4 py-3">
+                <div v-if="post.comments.length === 0" class="px-4 py-8 text-center">
+                    <p class="text-sm font-medium text-sand-600 dark:text-sand-300">{{ t('No comments yet') }}</p>
+                    <p class="mt-1 text-sm text-sand-400 dark:text-sand-500">{{ t('Share what you think!') }}</p>
+                </div>
+
+                <div v-for="comment in post.comments" :key="comment.id" class="flex gap-3 border-b border-sand-50 px-4 py-3 dark:border-sand-800">
                     <img
-                        :src="comment.user.avatar ?? `https://ui-avatars.com/api/?name=${comment.user.name}&background=333&color=fff&size=64`"
-                        :alt="comment.user.username"
+                        :src="comment.user.avatar ?? `https://ui-avatars.com/api/?name=${comment.user.name}&background=e5ece5&color=3a573a&size=64`"
+                        :alt="comment.user.name"
                         class="mt-0.5 size-8 flex-shrink-0 rounded-full object-cover"
                     />
                     <div class="flex-1">
-                        <p class="text-sm">
-                            <span class="font-semibold">{{ comment.user.username }}</span>
+                        <p class="text-sm text-sand-800 dark:text-sand-200">
+                            <span class="font-semibold">{{ comment.user.name }}</span>
                             {{ ' ' + comment.body }}
                         </p>
                         <div class="mt-1 flex items-center gap-3">
-                            <span class="text-xs text-neutral-500">{{ timeAgo(comment.created_at) }}</span>
-                            <button class="text-xs font-semibold text-neutral-500">Beantwoorden</button>
+                            <span class="text-xs text-sand-400 dark:text-sand-500">{{ timeAgo(comment.created_at) }}</span>
+                            <button class="text-xs font-medium text-sand-500 dark:text-sand-400">{{ t('Reply') }}</button>
                         </div>
                     </div>
                     <button class="mt-1 flex-shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-3 text-neutral-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4 text-sand-400 dark:text-sand-500">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
                         </svg>
                     </button>
@@ -205,21 +204,21 @@ function timeAgo(dateString: string): string {
         </div>
 
         <!-- Comment Input -->
-        <div class="flex items-center gap-3 border-t border-neutral-800 px-4 pb-6 pt-3">
-            <div class="size-8 flex-shrink-0 rounded-full bg-neutral-700" />
+        <div class="flex items-center gap-3 border-t border-sand-200 bg-white px-4 py-3 dark:border-sand-800 dark:bg-sand-900">
+            <div class="size-8 flex-shrink-0 rounded-full bg-sage-100 dark:bg-sage-800" />
             <form class="flex flex-1 items-center gap-2" @submit.prevent="submitComment">
                 <input
                     v-model="newComment"
                     type="text"
-                    placeholder="Voeg een reactie toe..."
-                    class="flex-1 bg-transparent text-sm text-white placeholder-neutral-500 focus:outline-none"
+                    :placeholder="t('Write a comment...')"
+                    class="flex-1 bg-transparent text-sm text-sand-800 placeholder-sand-400 focus:outline-none dark:text-sand-100 dark:placeholder-sand-500"
                 />
                 <button
                     type="submit"
-                    class="text-sm font-semibold text-blue-500 disabled:opacity-30"
+                    class="text-sm font-semibold text-sage-600 disabled:opacity-30 dark:text-sage-400"
                     :disabled="!newComment.trim()"
                 >
-                    Plaatsen
+                    {{ t('Post') }}
                 </button>
             </form>
         </div>
