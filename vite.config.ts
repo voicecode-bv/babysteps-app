@@ -3,6 +3,7 @@ import { wayfinder } from '@laravel/vite-plugin-wayfinder';
 import tailwindcss from '@tailwindcss/vite';
 import vue from '@vitejs/plugin-vue';
 import laravel from 'laravel-vite-plugin';
+import { nativephpMobile, nativephpHotFile } from './vendor/nativephp/mobile/resources/js/vite-plugin.js';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
@@ -10,6 +11,7 @@ export default defineConfig({
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.ts'],
             refresh: true,
+            hotFile: nativephpHotFile(),
         }),
         inertia(),
         tailwindcss(),
@@ -24,5 +26,6 @@ export default defineConfig({
         wayfinder({
             formVariants: true,
         }),
+        nativephpMobile(),
     ],
 });
