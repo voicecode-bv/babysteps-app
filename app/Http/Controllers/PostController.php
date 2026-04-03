@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use Babysteps\ApiClient\Services\ApiClient;
+use App\Services\ApiClient;
 use Inertia\Inertia;
 use Inertia\Response;
 

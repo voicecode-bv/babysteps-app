@@ -56,5 +56,6 @@
 
     "Invalid credentials": "Ongeldige inloggegevens",
     "Validation failed": "Validatie mislukt",
-    "Registration failed": "Registratie mislukt"
+    "Registration failed": "Registratie mislukt",
+    "Failed to create post": "Bericht aanmaken mislukt"
 }

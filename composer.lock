@@ -4,44 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "357f24513f05d55ef8de5757a9fba0ec",
+    "content-hash": "77e1df11cf42d1836fcb47c8b594096c",
     "packages": [
-        {
-            "name": "babysteps/api-client",
-            "version": "dev-nativephp-instagram-ui",
-            "dist": {
-                "type": "path",
-                "url": "packages/babysteps/api-client",
-                "reference": "37957ebc26e2ba27fd315eb5ece74a5280cc2124"
-            },
-            "require": {
-                "illuminate/http": "^13.0",
-                "illuminate/support": "^13.0",
-                "nativephp/mobile": "^3.0",
-                "nativephp/mobile-secure-storage": "^1.0",
-                "php": "^8.3"
-            },
-            "type": "library",
-            "extra": {
-                "laravel": {
-                    "providers": [
-                        "Babysteps\\ApiClient\\ApiClientServiceProvider"
-                    ]
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Babysteps\\ApiClient\\": "src/"
-                }
-            },
-            "license": [
-                "MIT"
-            ],
-            "description": "API client package for Babysteps mobile app backend communication",
-            "transport-options": {
-                "relative": true
-            }
-        },
         {
             "name": "brick/math",
             "version": "0.14.8",
@@ -10265,9 +10229,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "babysteps/api-client": 20
-    },
+    "stability-flags": {},
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
