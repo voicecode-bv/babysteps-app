@@ -1,6 +1,6 @@
 <?php
 
-namespace Babysteps\ApiClient\Services;
+namespace App\Services;
 
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
@@ -30,8 +30,6 @@ class ApiClient
     }
 
     /**
-     * Authenticate with the backend and store the received token.
-     *
      * @return array{success: bool, user?: array<string, mixed>, message?: string}
      */
     public function login(string $email, string $password): array
@@ -47,10 +45,7 @@ class ApiClient
             $data = $response->json();
             $this->storeToken($data['token']);
 
-            return [
-                'success' => true,
-                'user' => $data['user'],
-            ];
+            return ['success' => true, 'user' => $data['user']];
         }
 
         return [
@@ -60,8 +55,6 @@ class ApiClient
     }
 
     /**
-     * Register a new account on the backend and store the received token.
-     *
      * @return array{success: bool, user?: array<string, mixed>, errors?: array<string, mixed>, message?: string}
      */
     public function register(string $name, string $username, string $email, string $password): array
@@ -80,10 +73,7 @@ class ApiClient
             $data = $response->json();
             $this->storeToken($data['token']);
 
-            return [
-                'success' => true,
-                'user' => $data['user'],
-            ];
+            return ['success' => true, 'user' => $data['user']];
         }
 
         if ($response->status() === 422) {
@@ -101,26 +91,18 @@ class ApiClient
     }
 
     /**
-     * Validate the stored token against the backend.
-     *
      * @return array{valid: bool, user?: array<string, mixed>}
      */
     public function validateToken(): array
     {
-        $token = $this->getToken();
-
-        if (! $token) {
+        if (! $this->hasToken()) {
             return ['valid' => false];
         }
 
-        $response = $this->authenticatedRequest()
-            ->get('/auth/me');
+        $response = $this->authenticated()->get('/auth/me');
 
         if ($response->successful()) {
-            return [
-                'valid' => true,
-                'user' => $response->json('user'),
-            ];
+            return ['valid' => true, 'user' => $response->json('user')];
         }
 
         $this->clearToken();
@@ -128,55 +110,39 @@ class ApiClient
         return ['valid' => false];
     }
 
-    /**
-     * Log out by revoking the token on the backend and clearing local storage.
-     */
     public function logout(): void
     {
-        $token = $this->getToken();
-
-        if ($token) {
-            $this->authenticatedRequest()
-                ->post('/auth/logout');
+        if ($this->hasToken()) {
+            $this->authenticated()->post('/auth/logout');
         }
 
         $this->clearToken();
     }
 
-    /**
-     * Make an authenticated GET request to the backend API.
-     */
     public function get(string $path): Response
     {
-        return $this->authenticatedRequest()->get($path);
+        return $this->authenticated()->get($path);
     }
 
     /**
-     * Make an authenticated POST request to the backend API.
-     *
      * @param  array<string, mixed>  $data
      */
     public function post(string $path, array $data = []): Response
     {
-        return $this->authenticatedRequest()->post($path, $data);
+        return $this->authenticated()->post($path, $data);
     }
 
     /**
-     * Make an authenticated PUT request to the backend API.
-     *
      * @param  array<string, mixed>  $data
      */
     public function put(string $path, array $data = []): Response
     {
-        return $this->authenticatedRequest()->put($path, $data);
+        return $this->authenticated()->put($path, $data);
     }
 
-    /**
-     * Make an authenticated DELETE request to the backend API.
-     */
     public function delete(string $path): Response
     {
-        return $this->authenticatedRequest()->delete($path);
+        return $this->authenticated()->delete($path);
     }
 
     public function request(): PendingRequest
@@ -186,9 +152,8 @@ class ApiClient
             ->acceptJson();
     }
 
-    public function authenticatedRequest(): PendingRequest
+    public function authenticated(): PendingRequest
     {
-        return $this->request()
-            ->withToken($this->getToken());
+        return $this->request()->withToken($this->getToken());
     }
 }

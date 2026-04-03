@@ -56,5 +56,6 @@
 
     "Invalid credentials": "Invalid credentials",
     "Validation failed": "Validation failed",
-    "Registration failed": "Registration failed"
+    "Registration failed": "Registration failed",
+    "Failed to create post": "Failed to create post"
 }

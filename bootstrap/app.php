@@ -1,9 +1,9 @@
 <?php
 
+use App\Http\Middleware\AuthenticateToken;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\HandleNativeEdge;
 use App\Http\Middleware\SetLocale;
-use Babysteps\ApiClient\Http\Middleware\AuthenticateToken;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;

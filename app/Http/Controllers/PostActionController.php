@@ -1,13 +1,12 @@
 <?php
 
-namespace Babysteps\ApiClient\Http\Controllers;
+namespace App\Http\Controllers;
 
-use Babysteps\ApiClient\Services\ApiClient;
+use App\Services\ApiClient;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
 
-class PostController extends Controller
+class PostActionController extends Controller
 {
     public function __construct(protected ApiClient $apiClient) {}
 
@@ -19,7 +18,7 @@ class PostController extends Controller
             'location' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $response = $this->apiClient->authenticatedRequest()
+        $response = $this->apiClient->authenticated()
             ->attach('media', file_get_contents($validated['media']->getRealPath()), $validated['media']->getClientOriginalName())
             ->post('/posts', [
                 'caption' => $validated['caption'] ?? '',
@@ -33,41 +32,41 @@ class PostController extends Controller
         return back()->withErrors(['media' => $response->json('message', __('Failed to create post'))]);
     }
 
-    public function destroy(int $postId): RedirectResponse
+    public function destroy(int $post): RedirectResponse
     {
-        $this->apiClient->delete("/posts/{$postId}");
+        $this->apiClient->delete("/posts/{$post}");
 
         return redirect()->route('feed');
     }
 
-    public function like(int $postId): RedirectResponse
+    public function like(int $post): RedirectResponse
     {
-        $this->apiClient->post("/posts/{$postId}/like");
+        $this->apiClient->post("/posts/{$post}/like");
 
         return back();
     }
 
-    public function unlike(int $postId): RedirectResponse
+    public function unlike(int $post): RedirectResponse
     {
-        $this->apiClient->delete("/posts/{$postId}/like");
+        $this->apiClient->delete("/posts/{$post}/like");
 
         return back();
     }
 
-    public function comment(Request $request, int $postId): RedirectResponse
+    public function comment(Request $request, int $post): RedirectResponse
     {
         $validated = $request->validate([
             'body' => ['required', 'string', 'max:1000'],
         ]);
 
-        $this->apiClient->post("/posts/{$postId}/comments", $validated);
+        $this->apiClient->post("/posts/{$post}/comments", $validated);
 
         return back();
     }
 
-    public function destroyComment(int $commentId): RedirectResponse
+    public function destroyComment(int $comment): RedirectResponse
     {
-        $this->apiClient->delete("/comments/{$commentId}");
+        $this->apiClient->delete("/comments/{$comment}");
 
         return back();
     }

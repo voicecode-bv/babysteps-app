@@ -8,7 +8,7 @@ The mobile app expects these environment variables:
 
 | Variable | Default | Description |
 |---|---|---|
-| `API_BASE_URL` | `https://api.babysteps.app` | Base URL for all API endpoints |
+| `API_BASE_URL` | `https://babysteps-api.test/api/v1` | Base URL for all API endpoints |
 | `API_TIMEOUT` | `15` | HTTP timeout in seconds |
 
 All endpoints below are relative to `API_BASE_URL`.

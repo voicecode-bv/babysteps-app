@@ -1,12 +1,12 @@
 <?php
 
-namespace Babysteps\ApiClient\Http\Controllers;
+namespace App\Http\Controllers\Auth;
 
+use App\Http\Controllers\Controller;
 use App\Models\User;
-use Babysteps\ApiClient\Services\ApiClient;
+use App\Services\ApiClient;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
@@ -70,9 +70,6 @@ class AuthController extends Controller
         return redirect()->route('login');
     }
 
-    /**
-     * Verify the stored token on app startup and sync local user data.
-     */
     public function verify(): RedirectResponse
     {
         $result = $this->apiClient->validateToken();
@@ -89,8 +86,6 @@ class AuthController extends Controller
     }
 
     /**
-     * Create or update the local user record and log them in.
-     *
      * @param  array<string, mixed>  $userData
      */
     protected function syncLocalUser(array $userData): void

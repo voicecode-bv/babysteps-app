@@ -1,8 +1,8 @@
 <?php
 
-namespace Babysteps\ApiClient\Http\Middleware;
+namespace App\Http\Middleware;
 
-use Babysteps\ApiClient\Services\ApiClient;
+use App\Services\ApiClient;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -12,8 +12,6 @@ class AuthenticateToken
     public function __construct(protected ApiClient $apiClient) {}
 
     /**
-     * Validate the stored API token. If invalid, clear it and redirect to login.
-     *
      * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
