@@ -16,6 +16,10 @@ class AuthenticateToken
      */
     public function handle(Request $request, Closure $next): Response
     {
+        if ($request->user()) {
+            return $next($request);
+        }
+
         if (! $this->apiClient->hasToken()) {
             return redirect()->route('login');
         }
