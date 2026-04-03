@@ -39,8 +39,10 @@ function submit() {
                         type="text"
                         :placeholder="t('Your name')"
                         autocomplete="name"
-                        class="w-full rounded-xl border border-sand-200 bg-white px-4 py-3.5 text-sm text-sand-800 placeholder-sand-400 shadow-sm focus:border-sage-400 focus:outline-none focus:ring-1 focus:ring-sage-400 dark:border-sand-700 dark:bg-sand-800 dark:text-sand-100 dark:placeholder-sand-500"
+                        class="w-full rounded-xl border bg-white px-4 py-3.5 text-sm text-sand-800 placeholder-sand-400 shadow-sm focus:outline-none dark:bg-sand-800 dark:text-sand-100 dark:placeholder-sand-500"
+                        :class="form.errors.name ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400' : 'border-sand-200 focus:border-sage-400 focus:ring-1 focus:ring-sage-400 dark:border-sand-700'"
                     />
+                    <p v-if="form.errors.name" class="mt-1 text-xs text-blush-500">{{ form.errors.name }}</p>
                 </div>
 
                 <div>
@@ -49,8 +51,10 @@ function submit() {
                         type="email"
                         :placeholder="t('Email address')"
                         autocomplete="email"
-                        class="w-full rounded-xl border border-sand-200 bg-white px-4 py-3.5 text-sm text-sand-800 placeholder-sand-400 shadow-sm focus:border-sage-400 focus:outline-none focus:ring-1 focus:ring-sage-400 dark:border-sand-700 dark:bg-sand-800 dark:text-sand-100 dark:placeholder-sand-500"
+                        class="w-full rounded-xl border bg-white px-4 py-3.5 text-sm text-sand-800 placeholder-sand-400 shadow-sm focus:outline-none dark:bg-sand-800 dark:text-sand-100 dark:placeholder-sand-500"
+                        :class="form.errors.email ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400' : 'border-sand-200 focus:border-sage-400 focus:ring-1 focus:ring-sage-400 dark:border-sand-700'"
                     />
+                    <p v-if="form.errors.email" class="mt-1 text-xs text-blush-500">{{ form.errors.email }}</p>
                 </div>
 
                 <div>
@@ -59,8 +63,10 @@ function submit() {
                         type="text"
                         :placeholder="t('Username')"
                         autocomplete="username"
-                        class="w-full rounded-xl border border-sand-200 bg-white px-4 py-3.5 text-sm text-sand-800 placeholder-sand-400 shadow-sm focus:border-sage-400 focus:outline-none focus:ring-1 focus:ring-sage-400 dark:border-sand-700 dark:bg-sand-800 dark:text-sand-100 dark:placeholder-sand-500"
+                        class="w-full rounded-xl border bg-white px-4 py-3.5 text-sm text-sand-800 placeholder-sand-400 shadow-sm focus:outline-none dark:bg-sand-800 dark:text-sand-100 dark:placeholder-sand-500"
+                        :class="form.errors.username ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400' : 'border-sand-200 focus:border-sage-400 focus:ring-1 focus:ring-sage-400 dark:border-sand-700'"
                     />
+                    <p v-if="form.errors.username" class="mt-1 text-xs text-blush-500">{{ form.errors.username }}</p>
                 </div>
 
                 <div class="relative">
@@ -69,7 +75,8 @@ function submit() {
                         :type="showPassword ? 'text' : 'password'"
                         :placeholder="t('Password')"
                         autocomplete="new-password"
-                        class="w-full rounded-xl border border-sand-200 bg-white px-4 py-3.5 pr-16 text-sm text-sand-800 placeholder-sand-400 shadow-sm focus:border-sage-400 focus:outline-none focus:ring-1 focus:ring-sage-400 dark:border-sand-700 dark:bg-sand-800 dark:text-sand-100 dark:placeholder-sand-500"
+                        class="w-full rounded-xl border bg-white px-4 py-3.5 pr-16 text-sm text-sand-800 placeholder-sand-400 shadow-sm focus:outline-none dark:bg-sand-800 dark:text-sand-100 dark:placeholder-sand-500"
+                        :class="form.errors.password ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400' : 'border-sand-200 focus:border-sage-400 focus:ring-1 focus:ring-sage-400 dark:border-sand-700'"
                     />
                     <button
                         type="button"
@@ -78,14 +85,15 @@ function submit() {
                     >
                         {{ showPassword ? t('Hide') : t('Show') }}
                     </button>
+                    <p v-if="form.errors.password" class="mt-1 text-xs text-blush-500">{{ form.errors.password }}</p>
                 </div>
 
                 <button
                     type="submit"
                     class="w-full rounded-xl bg-sage-500 py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-sage-600 disabled:opacity-50 dark:bg-sage-400 dark:text-sand-900 dark:hover:bg-sage-300"
-                    :disabled="!form.email || !form.name || !form.username || !form.password"
+                    :disabled="form.processing || !form.email || !form.name || !form.username || !form.password"
                 >
-                    {{ t('Create account') }}
+                    {{ form.processing ? '...' : t('Create account') }}
                 </button>
             </form>
 
