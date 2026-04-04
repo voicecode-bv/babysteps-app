@@ -45,6 +45,7 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            'platform' => config('app.platform'),
             'locale' => $locale,
             'translations' => File::exists($translationsPath)
                 ? File::json($translationsPath)

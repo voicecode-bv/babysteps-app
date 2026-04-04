@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import BottomNav from '@/components/BottomNav.vue';
 import { useTranslations } from '@/composables/useTranslations';
+import { usePage } from '@inertiajs/vue3';
 import { computed, useSlots } from 'vue';
 
 const props = defineProps<{
@@ -9,9 +11,11 @@ const props = defineProps<{
 
 const { t } = useTranslations();
 const slots = useSlots();
+const page = usePage();
 
 const hasHeaderLeft = computed(() => !!slots['header-left']);
 const showHeader = computed(() => props.showHeader !== false);
+const isWeb = computed(() => page.props.platform === 'web');
 </script>
 
 <template>
@@ -35,5 +39,7 @@ const showHeader = computed(() => props.showHeader !== false);
         <main class="flex-1 overflow-y-auto">
             <slot />
         </main>
+
+        <BottomNav v-if="isWeb" />
     </div>
 </template>
