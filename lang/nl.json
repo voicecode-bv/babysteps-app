@@ -81,5 +81,9 @@
     "User not found? Invite them by email.": "Gebruiker niet gevonden? Nodig ze uit via e-mail.",
     "Email address...": "E-mailadres...",
     "Invitation sent!": "Uitnodiging verstuurd!",
-    "Failed to send invitation": "Uitnodiging versturen mislukt"
+    "Failed to send invitation": "Uitnodiging versturen mislukt",
+
+    ":count moment": ":count moment",
+    ":count moments": ":count momenten",
+    "No moments yet": "Nog geen momenten"
 }
