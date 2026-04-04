@@ -42,9 +42,9 @@ function goBack() {
         <div class="bg-white px-4 py-5 dark:bg-sand-900">
             <div class="flex items-center gap-4">
                 <img
-                    :src="profile.avatar ?? `https://ui-avatars.com/api/?name=${profile.name}&background=e5ece5&color=3a573a&size=128`"
+                    :src="profile.avatar ?? `https://ui-avatars.com/api/?name=${profile.name}&background=f0dcc6&color=5c3f24&size=128`"
                     :alt="profile.name"
-                    class="size-20 rounded-full object-cover ring-2 ring-sage-200 dark:ring-sage-700"
+                    class="size-20 rounded-full object-cover ring-2 ring-sand-200 dark:ring-sand-700"
                 />
                 <div class="flex-1">
                     <h2 class="text-lg font-semibold text-sand-800 dark:text-sand-100">{{ profile.name }}</h2>
