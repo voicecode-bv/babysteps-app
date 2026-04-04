@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useTranslations } from '@/composables/useTranslations';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { router, useForm, usePage } from '@inertiajs/vue3';
+import { Link, router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
 interface User {
@@ -49,6 +49,11 @@ const page = usePage();
 const authUserId = computed(() => (page.props.auth as { user: { id: number } }).user.id);
 const isLiked = computed(() => props.post.likes?.some((like) => like.user_id === authUserId.value) ?? false);
 const commentForm = useForm({ body: '' });
+const commentInput = ref<HTMLInputElement>();
+
+function focusComment() {
+    commentInput.value?.focus();
+}
 
 function toggleLike() {
     if (isLiked.value) {
@@ -105,13 +110,15 @@ function timeAgo(dateString: string): string {
         <div>
             <!-- Post Header -->
             <div class="flex items-center gap-3 bg-white px-4 py-3 dark:bg-sand-900">
-                <img
-                    :src="post.user.avatar ?? `https://ui-avatars.com/api/?name=${post.user.name}&background=f0dcc6&color=5c3f24&size=64`"
-                    :alt="post.user.name"
-                    class="size-10 rounded-full object-cover ring-2 ring-sand-200 dark:ring-sand-700"
-                />
+                <Link :href="`/profiles/${post.user.username}`">
+                    <img
+                        :src="post.user.avatar ?? `https://ui-avatars.com/api/?name=${post.user.name}&background=f0dcc6&color=5c3f24&size=64`"
+                        :alt="post.user.name"
+                        class="size-10 rounded-full object-cover ring-2 ring-sand-200 dark:ring-sand-700"
+                    />
+                </Link>
                 <div class="flex-1">
-                    <p class="text-sm font-semibold text-sand-800 dark:text-sand-100">{{ post.user.name }}</p>
+                    <Link :href="`/profiles/${post.user.username}`" class="text-sm font-semibold text-sand-800 dark:text-sand-100">{{ post.user.name }}</Link>
                     <p v-if="post.location" class="text-xs text-sand-500 dark:text-sand-400">{{ post.location }}</p>
                 </div>
                 <button class="text-sand-400 dark:text-sand-500">
@@ -139,7 +146,7 @@ function timeAgo(dateString: string): string {
 
             <!-- Action Buttons -->
             <div class="flex items-center gap-4 bg-white px-4 py-3 dark:bg-sand-900">
-                <button @click="toggleLike">
+                <button @click="toggleLike" :disabled="post.user.id === authUserId">
                     <svg
                         v-if="!isLiked"
                         xmlns="http://www.w3.org/2000/svg"
@@ -161,7 +168,7 @@ function timeAgo(dateString: string): string {
                         <path d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z" />
                     </svg>
                 </button>
-                <button class="text-sand-600 dark:text-sand-300">
+                <button class="text-sand-600 dark:text-sand-300" @click="focusComment">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337Z" />
                     </svg>
@@ -199,14 +206,16 @@ function timeAgo(dateString: string): string {
                 </div>
 
                 <div v-for="comment in post.comments" :key="comment.id" class="flex gap-3 border-b border-sand-50 px-4 py-3 dark:border-sand-800">
-                    <img
-                        :src="comment.user.avatar ?? `https://ui-avatars.com/api/?name=${comment.user.name}&background=f0dcc6&color=5c3f24&size=64`"
-                        :alt="comment.user.name"
-                        class="mt-0.5 size-8 flex-shrink-0 rounded-full object-cover"
-                    />
+                    <Link :href="`/profiles/${comment.user.username}`" class="mt-0.5 flex-shrink-0">
+                        <img
+                            :src="comment.user.avatar ?? `https://ui-avatars.com/api/?name=${comment.user.name}&background=f0dcc6&color=5c3f24&size=64`"
+                            :alt="comment.user.name"
+                            class="size-8 rounded-full object-cover"
+                        />
+                    </Link>
                     <div class="flex-1">
                         <p class="text-sm text-sand-800 dark:text-sand-200">
-                            <span class="font-semibold">{{ comment.user.name }}</span>
+                            <Link :href="`/profiles/${comment.user.username}`" class="font-semibold">{{ comment.user.name }}</Link>
                             {{ ' ' + comment.body }}
                         </p>
                         <div class="mt-1 flex items-center gap-3">
@@ -215,7 +224,7 @@ function timeAgo(dateString: string): string {
                         </div>
                     </div>
                     <div class="mt-1 flex flex-shrink-0 flex-col items-center gap-0.5">
-                        <button @click="toggleCommentLike(comment)">
+                        <button @click="toggleCommentLike(comment)" :disabled="comment.user.id === authUserId">
                             <svg
                                 v-if="!comment.is_liked"
                                 xmlns="http://www.w3.org/2000/svg"
@@ -248,6 +257,7 @@ function timeAgo(dateString: string): string {
             <div class="size-8 flex-shrink-0 rounded-full bg-sand-200 dark:bg-sand-800" />
             <form class="flex flex-1 items-center gap-2" @submit.prevent="submitComment">
                 <input
+                    ref="commentInput"
                     v-model="commentForm.body"
                     type="text"
                     :placeholder="t('Write a comment...')"
