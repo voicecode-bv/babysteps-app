@@ -7,7 +7,9 @@ declare global {
     }
 }
 
-window.router = router;
+if (typeof window !== 'undefined') {
+    window.router = router;
+}
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 

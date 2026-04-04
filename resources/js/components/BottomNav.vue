@@ -3,6 +3,7 @@ import { useTranslations } from '@/composables/useTranslations';
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { feed } from '@/routes';
+import { index as circlesIndex } from '@/actions/App/Http/Controllers/CircleController';
 
 const { t } = useTranslations();
 const page = usePage();
@@ -11,7 +12,7 @@ const currentUrl = computed(() => page.url);
 
 const items = [
     { id: 'home', label: 'Home', href: feed.url(), icon: 'home' },
-    { id: 'circles', label: 'Circles', href: feed.url(), icon: 'circles' },
+    { id: 'circles', label: 'Circles', href: circlesIndex().url, icon: 'circles' },
     { id: 'add', label: 'New', href: feed.url(), icon: 'add' },
     { id: 'notifications', label: 'Notifications', href: feed.url(), icon: 'notifications' },
     { id: 'profile', label: 'Profile', href: feed.url(), icon: 'profile' },
