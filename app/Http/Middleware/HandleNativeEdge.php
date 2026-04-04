@@ -14,6 +14,10 @@ class HandleNativeEdge
      */
     public function handle(Request $request, Closure $next): Response
     {
+        if (config('app.platform') === 'web') {
+            return $next($request);
+        }
+
         if ($request->user()) {
             $this->setupBottomNav($request);
         } else {
