@@ -45,6 +45,7 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            'platform' => function_exists('nativephp_call') ? 'native' : 'web',
             'locale' => $locale,
             'translations' => File::exists($translationsPath)
                 ? File::json($translationsPath)
