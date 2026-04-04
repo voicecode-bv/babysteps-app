@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Services\ApiClient;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -16,6 +18,11 @@ class ProfileController extends Controller
         $profile = $apiClient->get("/profiles/{$username}")->json('data');
         $postsResponse = $apiClient->get("/profiles/{$username}/posts?page={$page}")->json();
 
+        $user = request()->user();
+        if ($user && $user->username === $username) {
+            $profile['bio'] = $user->bio;
+        }
+
         $paginator = new LengthAwarePaginator(
             items: $postsResponse['data'],
             total: $postsResponse['meta']['total'],
@@ -27,5 +34,16 @@ class ProfileController extends Controller
             'profile' => $profile,
             'posts' => Inertia::scroll($paginator),
         ]);
+    }
+
+    public function updateBio(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'bio' => ['nullable', 'string', 'max:150'],
+        ]);
+
+        $request->user()->update($validated);
+
+        return back();
     }
 }

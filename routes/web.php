@@ -34,6 +34,7 @@ Route::middleware(['auth.token', HandleNativeEdge::class])->group(function () {
     Route::delete('/comments/{comment}/like', [PostActionController::class, 'unlikeComment'])->name('comments.unlike')->whereNumber('comment');
 
     Route::get('/profiles/{username}', [ProfileController::class, 'show'])->name('profiles.show');
+    Route::put('/profile/bio', [ProfileController::class, 'updateBio'])->name('profile.update-bio');
 
     Route::get('/circles', [CircleController::class, 'index'])->name('circles.index');
     Route::get('/circles/{circle}', [CircleController::class, 'show'])->name('circles.show')->whereNumber('circle');

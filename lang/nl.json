@@ -75,5 +75,13 @@
     "Delete circle": "Kring verwijderen",
     "Failed to create circle": "Kring aanmaken mislukt",
     "Failed to update circle": "Kring bijwerken mislukt",
-    "Failed to add member": "Lid toevoegen mislukt"
+    "Failed to add member": "Lid toevoegen mislukt",
+
+    "moment": "moment",
+    "moments": "momenten",
+    "Write something about yourself...": "Schrijf iets over jezelf...",
+    "Cancel": "Annuleren",
+    "Edit bio": "Bio bewerken",
+    "Add a bio...": "Bio toevoegen...",
+    "No moments yet": "Nog geen momenten"
 }

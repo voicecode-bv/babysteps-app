@@ -75,5 +75,13 @@
     "Delete circle": "Delete circle",
     "Failed to create circle": "Failed to create circle",
     "Failed to update circle": "Failed to update circle",
-    "Failed to add member": "Failed to add member"
+    "Failed to add member": "Failed to add member",
+
+    "moment": "moment",
+    "moments": "moments",
+    "Write something about yourself...": "Write something about yourself...",
+    "Cancel": "Cancel",
+    "Edit bio": "Edit bio",
+    "Add a bio...": "Add a bio...",
+    "No moments yet": "No moments yet"
 }
