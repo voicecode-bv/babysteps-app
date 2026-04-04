@@ -18,11 +18,6 @@ class ProfileController extends Controller
         $profile = $apiClient->get("/profiles/{$username}")->json('data');
         $postsResponse = $apiClient->get("/profiles/{$username}/posts?page={$page}")->json();
 
-        $user = request()->user();
-        if ($user && $user->username === $username) {
-            $profile['bio'] = $user->bio;
-        }
-
         $paginator = new LengthAwarePaginator(
             items: $postsResponse['data'],
             total: $postsResponse['meta']['total'],
@@ -36,13 +31,13 @@ class ProfileController extends Controller
         ]);
     }
 
-    public function updateBio(Request $request): RedirectResponse
+    public function updateBio(Request $request, ApiClient $apiClient): RedirectResponse
     {
         $validated = $request->validate([
             'bio' => ['nullable', 'string', 'max:150'],
         ]);
 
-        $request->user()->update($validated);
+        $apiClient->put('/profile/bio', $validated);
 
         return back();
     }
