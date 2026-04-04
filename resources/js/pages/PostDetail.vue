@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { useTranslations } from '@/composables/useTranslations';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { ref } from 'vue';
+import { router, useForm, usePage } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
 
 interface User {
     id: number;
@@ -15,6 +16,13 @@ interface Comment {
     body: string;
     created_at: string;
     user: User;
+    likes_count: number;
+    is_liked: boolean;
+}
+
+interface Like {
+    id: number;
+    user_id: number;
 }
 
 interface Post {
@@ -26,6 +34,7 @@ interface Post {
     created_at: string;
     user: User;
     comments: Comment[];
+    likes: Like[];
     likes_count: number;
     comments_count: number;
 }
@@ -36,19 +45,34 @@ const props = defineProps<{
 
 const { t } = useTranslations();
 
-const isLiked = ref(false);
-const likesCount = ref(props.post.likes_count);
-const newComment = ref('');
+const page = usePage();
+const authUserId = computed(() => (page.props.auth as { user: { id: number } }).user.id);
+const isLiked = computed(() => props.post.likes?.some((like) => like.user_id === authUserId.value) ?? false);
+const commentForm = useForm({ body: '' });
 
 function toggleLike() {
-    isLiked.value = !isLiked.value;
-    likesCount.value += isLiked.value ? 1 : -1;
+    if (isLiked.value) {
+        router.delete(`/posts/${props.post.id}/like`, { preserveScroll: true });
+    } else {
+        router.post(`/posts/${props.post.id}/like`, {}, { preserveScroll: true });
+    }
+}
+
+function toggleCommentLike(comment: Comment) {
+    if (comment.is_liked) {
+        router.delete(`/comments/${comment.id}/like`, { preserveScroll: true });
+    } else {
+        router.post(`/comments/${comment.id}/like`, {}, { preserveScroll: true });
+    }
 }
 
 function submitComment() {
-    if (!newComment.value.trim()) return;
-    // Backend volgt later
-    newComment.value = '';
+    if (!commentForm.body.trim()) return;
+
+    commentForm.post(`/posts/${props.post.id}/comments`, {
+        preserveScroll: true,
+        onSuccess: () => commentForm.reset(),
+    });
 }
 
 function goBack() {
@@ -82,9 +106,9 @@ function timeAgo(dateString: string): string {
             <!-- Post Header -->
             <div class="flex items-center gap-3 bg-white px-4 py-3 dark:bg-sand-900">
                 <img
-                    :src="post.user.avatar ?? `https://ui-avatars.com/api/?name=${post.user.name}&background=e5ece5&color=3a573a&size=64`"
+                    :src="post.user.avatar ?? `https://ui-avatars.com/api/?name=${post.user.name}&background=f0dcc6&color=5c3f24&size=64`"
                     :alt="post.user.name"
-                    class="size-10 rounded-full object-cover ring-2 ring-sage-200 dark:ring-sage-700"
+                    class="size-10 rounded-full object-cover ring-2 ring-sand-200 dark:ring-sand-700"
                 />
                 <div class="flex-1">
                     <p class="text-sm font-semibold text-sand-800 dark:text-sand-100">{{ post.user.name }}</p>
@@ -146,8 +170,8 @@ function timeAgo(dateString: string): string {
 
             <!-- Likes -->
             <div class="bg-white px-4 pb-2 dark:bg-sand-900">
-                <p v-if="likesCount > 0" class="text-sm font-medium text-sand-700 dark:text-sand-200">
-                    {{ likesCount === 1 ? t(':count person likes this', { count: likesCount }) : t(':count people like this', { count: likesCount }) }}
+                <p v-if="post.likes_count > 0" class="text-sm font-medium text-sand-700 dark:text-sand-200">
+                    {{ post.likes_count === 1 ? t(':count person likes this', { count: post.likes_count }) : t(':count people like this', { count: post.likes_count }) }}
                 </p>
             </div>
 
@@ -176,7 +200,7 @@ function timeAgo(dateString: string): string {
 
                 <div v-for="comment in post.comments" :key="comment.id" class="flex gap-3 border-b border-sand-50 px-4 py-3 dark:border-sand-800">
                     <img
-                        :src="comment.user.avatar ?? `https://ui-avatars.com/api/?name=${comment.user.name}&background=e5ece5&color=3a573a&size=64`"
+                        :src="comment.user.avatar ?? `https://ui-avatars.com/api/?name=${comment.user.name}&background=f0dcc6&color=5c3f24&size=64`"
                         :alt="comment.user.name"
                         class="mt-0.5 size-8 flex-shrink-0 rounded-full object-cover"
                     />
@@ -190,29 +214,49 @@ function timeAgo(dateString: string): string {
                             <button class="text-xs font-medium text-sand-500 dark:text-sand-400">{{ t('Reply') }}</button>
                         </div>
                     </div>
-                    <button class="mt-1 flex-shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4 text-sand-400 dark:text-sand-500">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
-                        </svg>
-                    </button>
+                    <div class="mt-1 flex flex-shrink-0 flex-col items-center gap-0.5">
+                        <button @click="toggleCommentLike(comment)">
+                            <svg
+                                v-if="!comment.is_liked"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke-width="1.5"
+                                stroke="currentColor"
+                                class="size-4 text-sand-400 dark:text-sand-500"
+                            >
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+                            </svg>
+                            <svg
+                                v-else
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                                class="size-4 text-blush-400"
+                            >
+                                <path d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z" />
+                            </svg>
+                        </button>
+                        <span v-if="comment.likes_count > 0" class="text-[10px] text-sand-400 dark:text-sand-500">{{ comment.likes_count }}</span>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Comment Input -->
         <div class="flex items-center gap-3 border-t border-sand-200 bg-white px-4 py-3 dark:border-sand-800 dark:bg-sand-900">
-            <div class="size-8 flex-shrink-0 rounded-full bg-sage-100 dark:bg-sage-800" />
+            <div class="size-8 flex-shrink-0 rounded-full bg-sand-200 dark:bg-sand-800" />
             <form class="flex flex-1 items-center gap-2" @submit.prevent="submitComment">
                 <input
-                    v-model="newComment"
+                    v-model="commentForm.body"
                     type="text"
                     :placeholder="t('Write a comment...')"
                     class="flex-1 bg-transparent text-sm text-sand-800 placeholder-sand-400 focus:outline-none dark:text-sand-100 dark:placeholder-sand-500"
                 />
                 <button
                     type="submit"
-                    class="text-sm font-semibold text-sage-600 disabled:opacity-30 dark:text-sage-400"
-                    :disabled="!newComment.trim()"
+                    class="text-sm font-semibold text-sand-600 disabled:opacity-30 dark:text-sand-400"
+                    :disabled="!commentForm.body.trim() || commentForm.processing"
                 >
                     {{ t('Post') }}
                 </button>

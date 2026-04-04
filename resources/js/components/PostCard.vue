@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import { useTranslations } from '@/composables/useTranslations';
 
@@ -16,6 +16,7 @@ export interface PostData {
         username: string;
         avatar: string | null;
     };
+    is_liked: boolean;
     likes_count: number;
     comments_count: number;
 }
@@ -26,13 +27,20 @@ const props = defineProps<{
 
 const { t } = useTranslations();
 
-const isLiked = ref(false);
+const isLiked = ref(props.post.is_liked);
 const likesCount = ref(props.post.likes_count);
 const showFullCaption = ref(false);
 
 function toggleLike() {
-    isLiked.value = !isLiked.value;
-    likesCount.value += isLiked.value ? 1 : -1;
+    if (isLiked.value) {
+        isLiked.value = false;
+        likesCount.value--;
+        router.delete(`/posts/${props.post.id}/like`, { preserveScroll: true });
+    } else {
+        isLiked.value = true;
+        likesCount.value++;
+        router.post(`/posts/${props.post.id}/like`, {}, { preserveScroll: true });
+    }
 }
 
 function timeAgo(dateString: string): string {
@@ -53,9 +61,9 @@ function timeAgo(dateString: string): string {
         <!-- Post Header -->
         <div class="flex items-center gap-3 px-4 py-3">
             <img
-                :src="post.user.avatar ?? `https://ui-avatars.com/api/?name=${post.user.name}&background=e5ece5&color=3a573a&size=64`"
+                :src="post.user.avatar ?? `https://ui-avatars.com/api/?name=${post.user.name}&background=f0dcc6&color=5c3f24&size=64`"
                 :alt="post.user.name"
-                class="size-10 rounded-full object-cover ring-2 ring-sage-200 dark:ring-sage-700"
+                class="size-10 rounded-full object-cover ring-2 ring-sand-200 dark:ring-sand-700"
             />
             <div class="flex-1">
                 <p class="text-sm font-semibold text-sand-800 dark:text-sand-100">{{ post.user.name }}</p>

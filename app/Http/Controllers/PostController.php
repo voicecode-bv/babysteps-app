@@ -13,7 +13,7 @@ class PostController extends Controller
         $response = $apiClient->get("/posts/{$post}");
 
         return Inertia::render('PostDetail', [
-            'post' => $response->json(),
+            'post' => $response->json('data'),
         ]);
     }
 }

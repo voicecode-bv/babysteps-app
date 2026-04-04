@@ -41,7 +41,7 @@ function submit() {
                         :placeholder="t('Your name')"
                         autocomplete="name"
                         class="w-full rounded-xl border bg-white px-4 py-3.5 text-sm text-sand-800 placeholder-sand-400 shadow-sm focus:outline-none dark:bg-sand-800 dark:text-sand-100 dark:placeholder-sand-500"
-                        :class="form.errors.name ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400' : 'border-sand-200 focus:border-sage-400 focus:ring-1 focus:ring-sage-400 dark:border-sand-700'"
+                        :class="form.errors.name ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400' : 'border-sand-200 focus:border-sand-400 focus:ring-1 focus:ring-sand-400 dark:border-sand-700'"
                     />
                     <p v-if="form.errors.name" class="mt-1 text-xs text-blush-500">{{ form.errors.name }}</p>
                 </div>
@@ -54,7 +54,7 @@ function submit() {
                         :placeholder="t('Email address')"
                         autocomplete="email"
                         class="w-full rounded-xl border bg-white px-4 py-3.5 text-sm text-sand-800 placeholder-sand-400 shadow-sm focus:outline-none dark:bg-sand-800 dark:text-sand-100 dark:placeholder-sand-500"
-                        :class="form.errors.email ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400' : 'border-sand-200 focus:border-sage-400 focus:ring-1 focus:ring-sage-400 dark:border-sand-700'"
+                        :class="form.errors.email ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400' : 'border-sand-200 focus:border-sand-400 focus:ring-1 focus:ring-sand-400 dark:border-sand-700'"
                     />
                     <p v-if="form.errors.email" class="mt-1 text-xs text-blush-500">{{ form.errors.email }}</p>
                 </div>
@@ -67,7 +67,7 @@ function submit() {
                         :placeholder="t('Username')"
                         autocomplete="username"
                         class="w-full rounded-xl border bg-white px-4 py-3.5 text-sm text-sand-800 placeholder-sand-400 shadow-sm focus:outline-none dark:bg-sand-800 dark:text-sand-100 dark:placeholder-sand-500"
-                        :class="form.errors.username ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400' : 'border-sand-200 focus:border-sage-400 focus:ring-1 focus:ring-sage-400 dark:border-sand-700'"
+                        :class="form.errors.username ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400' : 'border-sand-200 focus:border-sand-400 focus:ring-1 focus:ring-sand-400 dark:border-sand-700'"
                     />
                     <p v-if="form.errors.username" class="mt-1 text-xs text-blush-500">{{ form.errors.username }}</p>
                 </div>
@@ -80,7 +80,7 @@ function submit() {
                         :placeholder="t('Password')"
                         autocomplete="new-password"
                         class="w-full rounded-xl border bg-white px-4 py-3.5 pr-16 text-sm text-sand-800 placeholder-sand-400 shadow-sm focus:outline-none dark:bg-sand-800 dark:text-sand-100 dark:placeholder-sand-500"
-                        :class="form.errors.password ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400' : 'border-sand-200 focus:border-sage-400 focus:ring-1 focus:ring-sage-400 dark:border-sand-700'"
+                        :class="form.errors.password ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400' : 'border-sand-200 focus:border-sand-400 focus:ring-1 focus:ring-sand-400 dark:border-sand-700'"
                     />
                     <button
                         type="button"
@@ -94,7 +94,7 @@ function submit() {
 
                 <button
                     type="submit"
-                    class="w-full rounded-xl bg-sage-500 py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-sage-600 disabled:opacity-50 dark:bg-sage-400 dark:text-sand-900 dark:hover:bg-sage-300"
+                    class="w-full rounded-xl bg-sand-500 py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-sand-600 disabled:opacity-50 dark:bg-sand-400 dark:text-sand-900 dark:hover:bg-sand-300"
                     :disabled="form.processing || !form.email || !form.name || !form.username || !form.password"
                 >
                     {{ form.processing ? '...' : t('Create account') }}
@@ -109,7 +109,7 @@ function submit() {
         <div class="border-t border-sand-200 pb-8 pt-4 dark:border-sand-800">
             <p class="text-center text-sm text-sand-500 dark:text-sand-400">
                 {{ t('Already have an account?') }}
-                <Link href="/login" class="font-semibold text-sage-600 dark:text-sage-400">{{ t('Log in') }}</Link>
+                <Link href="/login" class="font-semibold text-sand-600 dark:text-sand-400">{{ t('Log in') }}</Link>
             </p>
         </div>
     </div>

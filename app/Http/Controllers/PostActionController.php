@@ -78,4 +78,18 @@ class PostActionController extends Controller
 
         return back();
     }
+
+    public function likeComment(int $comment): RedirectResponse
+    {
+        $this->apiClient->post("/comments/{$comment}/like");
+
+        return back();
+    }
+
+    public function unlikeComment(int $comment): RedirectResponse
+    {
+        $this->apiClient->delete("/comments/{$comment}/like");
+
+        return back();
+    }
 }

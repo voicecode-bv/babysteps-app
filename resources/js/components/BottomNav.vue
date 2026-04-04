@@ -32,7 +32,7 @@ function isActive(id: string): boolean {
             :key="item.id"
             :href="item.href"
             class="flex flex-col items-center gap-0.5 px-3 py-1"
-            :class="isActive(item.id) ? 'text-sage-600 dark:text-sage-400' : 'text-sand-400 dark:text-sand-500'"
+            :class="isActive(item.id) ? 'text-sand-700 dark:text-sand-300' : 'text-sand-400 dark:text-sand-500'"
         >
             <!-- Home -->
             <svg v-if="item.icon === 'home'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
