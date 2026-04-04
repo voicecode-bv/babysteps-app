@@ -5,23 +5,45 @@ namespace Babysteps\ApiClient\Services;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Session;
 use Native\Mobile\Facades\SecureStorage;
 
 class ApiClient
 {
+    public function isAppPlatform(): bool
+    {
+        return config('api-client.platform') === 'app';
+    }
+
     public function getToken(): ?string
     {
-        return SecureStorage::get(config('api-client.token_key'));
+        if ($this->isAppPlatform()) {
+            return SecureStorage::get(config('api-client.token_key'));
+        }
+
+        return Session::get(config('api-client.token_key'));
     }
 
     public function storeToken(string $token): bool
     {
-        return SecureStorage::set(config('api-client.token_key'), $token);
+        if ($this->isAppPlatform()) {
+            return SecureStorage::set(config('api-client.token_key'), $token);
+        }
+
+        Session::put(config('api-client.token_key'), $token);
+
+        return true;
     }
 
     public function clearToken(): bool
     {
-        return SecureStorage::delete(config('api-client.token_key'));
+        if ($this->isAppPlatform()) {
+            return SecureStorage::delete(config('api-client.token_key'));
+        }
+
+        Session::forget(config('api-client.token_key'));
+
+        return true;
     }
 
     public function hasToken(): bool
