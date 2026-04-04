@@ -2,7 +2,7 @@
 import PostCard, { type PostData } from '@/components/PostCard.vue';
 import { useTranslations } from '@/composables/useTranslations';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Link } from '@inertiajs/vue3';
+import { InfiniteScroll, Link } from '@inertiajs/vue3';
 
 interface Circle {
     id: number;
@@ -13,7 +13,6 @@ interface Circle {
 defineProps<{
     posts: {
         data: PostData[];
-        next_page_url: string | null;
     };
     circles?: Circle[];
 }>();
@@ -66,9 +65,9 @@ const { t } = useTranslations();
             </Link>
         </div>
 
-        <div>
+        <InfiniteScroll data="posts" only-next>
             <PostCard v-for="post in posts.data" :key="post.id" :post="post" />
-        </div>
+        </InfiniteScroll>
 
         <div v-if="posts.data.length === 0" class="flex flex-col items-center justify-center px-8 py-20">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor" class="mb-4 size-16 text-sand-300 dark:text-sand-600">
