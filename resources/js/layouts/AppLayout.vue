@@ -2,22 +2,23 @@
 import { useTranslations } from '@/composables/useTranslations';
 import { computed, useSlots } from 'vue';
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
     showHeader?: boolean;
     title?: string;
-}>();
+}>(), {
+    showHeader: true,
+});
 
 const { t } = useTranslations();
 const slots = useSlots();
 
 const hasHeaderLeft = computed(() => !!slots['header-left']);
-const showHeader = computed(() => props.showHeader !== false);
 </script>
 
 <template>
     <div class="flex h-dvh flex-col bg-sand-50 text-sand-900 dark:bg-sand-900 dark:text-sand-100">
         <header
-            v-if="showHeader"
+            v-if="props.showHeader"
             class="flex items-center justify-between border-b border-sand-200 bg-white px-4 pb-3 dark:border-sand-800 dark:bg-sand-900"
             style="padding-top: max(0.75rem, var(--inset-top))"
         >

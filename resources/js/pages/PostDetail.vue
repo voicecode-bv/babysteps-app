@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useTranslations } from '@/composables/useTranslations';
-import { router } from '@inertiajs/vue3';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { ref } from 'vue';
 
 interface User {
@@ -52,7 +52,7 @@ function submitComment() {
 }
 
 function goBack() {
-    router.visit('/');
+    window.history.back();
 }
 
 function timeAgo(dateString: string): string {
@@ -69,20 +69,16 @@ function timeAgo(dateString: string): string {
 </script>
 
 <template>
-    <div class="flex h-dvh flex-col bg-sand-50 text-sand-900 dark:bg-sand-900 dark:text-sand-100">
-        <!-- Header -->
-        <header class="flex items-center justify-between border-b border-sand-200 bg-white px-4 pb-3 dark:border-sand-800 dark:bg-sand-900" style="padding-top: max(0.75rem, var(--inset-top))">
-            <button class="flex items-center gap-2 text-sand-700 dark:text-sand-300" @click="goBack">
+    <AppLayout :title="t('Moment')">
+        <template #header-left>
+            <button class="flex items-center text-sand-700 dark:text-sand-300" @click="goBack">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
                 </svg>
             </button>
-            <h1 class="text-lg font-semibold text-sand-800 dark:text-sand-100">{{ t('Moment') }}</h1>
-            <div class="w-5" />
-        </header>
+        </template>
 
-        <!-- Scrollable Content -->
-        <div class="flex-1 overflow-y-auto">
+        <div>
             <!-- Post Header -->
             <div class="flex items-center gap-3 bg-white px-4 py-3 dark:bg-sand-900">
                 <img
@@ -222,5 +218,5 @@ function timeAgo(dateString: string): string {
                 </button>
             </form>
         </div>
-    </div>
+    </AppLayout>
 </template>
