@@ -23,7 +23,7 @@ const { t } = useTranslations();
 <template>
     <AppLayout :show-header="false">
         <!-- Family Circles -->
-        <div class="flex gap-3 overflow-x-auto border-b border-sand-200 bg-white px-4 py-3 dark:border-sand-800 dark:bg-sand-900">
+        <div class="flex gap-3 overflow-x-auto scrollbar-none border-b border-sand-200 bg-white px-4 py-3 dark:border-sand-800 dark:bg-sand-900">
             <Link href="/circles" class="flex flex-col items-center gap-1.5">
                 <div class="flex size-16 items-center justify-center rounded-full border-2 border-dashed border-sand-300 dark:border-sand-600">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-sand-400 dark:text-sand-500">
