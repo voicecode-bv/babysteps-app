@@ -58,5 +58,22 @@
     "Validation failed": "Validatie mislukt",
     "Registration failed": "Registratie mislukt",
     "Failed to create post": "Bericht aanmaken mislukt",
-    "Could not connect to the server": "Kan geen verbinding maken met de server"
+    "Could not connect to the server": "Kan geen verbinding maken met de server",
+
+    "Circle name...": "Naam van kring...",
+    "Create": "Aanmaken",
+    ":count member": ":count lid",
+    ":count members": ":count leden",
+    "No circles yet": "Nog geen kringen",
+    "Create a circle to share moments with specific people.": "Maak een kring aan om momenten met specifieke mensen te delen.",
+    "Members": "Leden",
+    "Username...": "Gebruikersnaam...",
+    "Add": "Toevoegen",
+    "No members yet": "Nog geen leden",
+    "Add people by their username.": "Voeg mensen toe met hun gebruikersnaam.",
+    "Save": "Opslaan",
+    "Delete circle": "Kring verwijderen",
+    "Failed to create circle": "Kring aanmaken mislukt",
+    "Failed to update circle": "Kring bijwerken mislukt",
+    "Failed to add member": "Lid toevoegen mislukt"
 }

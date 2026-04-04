@@ -14,6 +14,7 @@ class FeedController extends Controller
 
         return Inertia::render('Feed', [
             'posts' => $response->successful() ? $response->json() : ['data' => [], 'next_page_url' => null],
+            'circles' => Inertia::defer(fn () => $apiClient->get('/circles')->json('data')),
         ]);
     }
 }

@@ -58,5 +58,22 @@
     "Validation failed": "Validation failed",
     "Registration failed": "Registration failed",
     "Failed to create post": "Failed to create post",
-    "Could not connect to the server": "Could not connect to the server"
+    "Could not connect to the server": "Could not connect to the server",
+
+    "Circle name...": "Circle name...",
+    "Create": "Create",
+    ":count member": ":count member",
+    ":count members": ":count members",
+    "No circles yet": "No circles yet",
+    "Create a circle to share moments with specific people.": "Create a circle to share moments with specific people.",
+    "Members": "Members",
+    "Username...": "Username...",
+    "Add": "Add",
+    "No members yet": "No members yet",
+    "Add people by their username.": "Add people by their username.",
+    "Save": "Save",
+    "Delete circle": "Delete circle",
+    "Failed to create circle": "Failed to create circle",
+    "Failed to update circle": "Failed to update circle",
+    "Failed to add member": "Failed to add member"
 }
