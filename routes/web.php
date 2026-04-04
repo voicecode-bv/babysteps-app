@@ -8,6 +8,7 @@ use App\Http\Controllers\CircleController;
 use App\Http\Controllers\FeedController;
 use App\Http\Controllers\PostActionController;
 use App\Http\Controllers\PostController;
+use App\Http\Middleware\HandleNativeEdge;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/login', [LoginController::class, 'show'])->name('login');
@@ -16,7 +17,7 @@ Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
 Route::post('/register', [AuthController::class, 'register'])->name('register.submit');
 Route::get('/auth/verify', [AuthController::class, 'verify'])->name('auth.verify');
 
-Route::middleware('auth.token')->group(function () {
+Route::middleware(['auth.token', HandleNativeEdge::class])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     Route::get('/', FeedController::class)->name('feed');

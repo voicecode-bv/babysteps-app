@@ -18,11 +18,7 @@ class HandleNativeEdge
             return $next($request);
         }
 
-        if ($request->user()) {
-            $this->setupBottomNav($request);
-        } else {
-            Edge::clear();
-        }
+        $this->setupBottomNav($request);
 
         return $next($request);
     }
