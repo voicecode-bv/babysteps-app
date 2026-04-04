@@ -3,6 +3,7 @@ import { useTranslations } from '@/composables/useTranslations';
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { feed } from '@/routes';
+import { create as postsCreate } from '@/routes/posts';
 import { index as circlesIndex } from '@/actions/App/Http/Controllers/CircleController';
 
 const { t } = useTranslations();
@@ -14,7 +15,7 @@ const authUsername = computed(() => (page.props.auth as { user: { username: stri
 const items = computed(() => [
     { id: 'home', label: 'Home', href: feed.url(), icon: 'home' },
     { id: 'circles', label: 'Circles', href: circlesIndex().url, icon: 'circles' },
-    { id: 'add', label: 'New', href: feed.url(), icon: 'add' },
+    { id: 'add', label: 'New', href: postsCreate.url(), icon: 'add' },
     { id: 'notifications', label: 'Notifications', href: feed.url(), icon: 'notifications' },
     { id: 'profile', label: 'Profile', href: `/profiles/${authUsername.value}`, icon: 'profile' },
 ]);
