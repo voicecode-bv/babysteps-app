@@ -40,7 +40,7 @@ function createCircle() {
             </Link>
         </template>
         <template #header-right>
-            <button class="text-sage-600 dark:text-sage-400" @click="showCreateForm = !showCreateForm">
+            <button class="text-sand-600 dark:text-sand-400" @click="showCreateForm = !showCreateForm">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                 </svg>
@@ -54,11 +54,11 @@ function createCircle() {
                     v-model="form.name"
                     type="text"
                     :placeholder="t('Circle name...')"
-                    class="flex-1 rounded-lg border border-sand-200 bg-sand-50 px-3 py-2 text-sm text-sand-800 placeholder-sand-400 focus:border-sage-400 focus:outline-none dark:border-sand-700 dark:bg-sand-800 dark:text-sand-100 dark:placeholder-sand-500"
+                    class="flex-1 rounded-lg border border-sand-200 bg-sand-50 px-3 py-2 text-sm text-sand-800 placeholder-sand-400 focus:border-sand-400 focus:outline-none dark:border-sand-700 dark:bg-sand-800 dark:text-sand-100 dark:placeholder-sand-500"
                 />
                 <button
                     type="submit"
-                    class="rounded-lg bg-sage-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-sage-700"
+                    class="rounded-lg bg-sand-500 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-sand-600"
                     :disabled="form.processing || !form.name.trim()"
                 >
                     {{ t('Create') }}
@@ -75,8 +75,8 @@ function createCircle() {
                 :href="`/circles/${circle.id}`"
                 class="flex items-center gap-3 bg-white px-4 py-3 active:bg-sand-50 dark:bg-sand-900 dark:active:bg-sand-800"
             >
-                <div class="flex size-12 items-center justify-center rounded-full bg-sage-100 dark:bg-sage-800">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.3" stroke="currentColor" class="size-6 text-sage-600 dark:text-sage-300">
+                <div class="flex size-12 items-center justify-center rounded-full bg-sand-200 dark:bg-sand-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.3" stroke="currentColor" class="size-6 text-sand-600 dark:text-sand-300">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
                     </svg>
                 </div>
