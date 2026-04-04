@@ -83,11 +83,7 @@
     "Invitation sent!": "Uitnodiging verstuurd!",
     "Failed to send invitation": "Uitnodiging versturen mislukt",
 
-    "moment": "moment",
-    "moments": "momenten",
-    "Write something about yourself...": "Schrijf iets over jezelf...",
-    "Cancel": "Annuleren",
-    "Edit bio": "Bio bewerken",
-    "Add a bio...": "Bio toevoegen...",
+    ":count moment": ":count moment",
+    ":count moments": ":count momenten",
     "No moments yet": "Nog geen momenten"
 }
