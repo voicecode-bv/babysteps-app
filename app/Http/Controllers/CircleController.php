@@ -20,9 +20,11 @@ class CircleController extends Controller
     public function show(int $circle, ApiClient $apiClient): Response
     {
         $response = $apiClient->get("/circles/{$circle}");
+        $invitationsResponse = $apiClient->get("/circles/{$circle}/invitations");
 
         return Inertia::render('Circles/Show', [
             'circle' => $response->json('data'),
+            'invitations' => $invitationsResponse->json('data', []),
         ]);
     }
 }

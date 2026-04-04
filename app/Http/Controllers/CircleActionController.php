@@ -64,6 +64,28 @@ class CircleActionController extends Controller
         return back()->withErrors(['username' => $response->json('message', __('Failed to add member'))]);
     }
 
+    public function inviteMember(Request $request, int $circle): RedirectResponse
+    {
+        $validated = $request->validate([
+            'email' => ['required', 'string', 'email'],
+        ]);
+
+        $response = $this->apiClient->post("/circles/{$circle}/invitations", $validated);
+
+        if ($response->successful()) {
+            return back();
+        }
+
+        return back()->withErrors(['email' => $response->json('message', __('Failed to send invitation'))]);
+    }
+
+    public function cancelInvitation(int $circle, int $invitation): RedirectResponse
+    {
+        $this->apiClient->delete("/circles/{$circle}/invitations/{$invitation}");
+
+        return back();
+    }
+
     public function removeMember(int $circle, int $user): RedirectResponse
     {
         $this->apiClient->delete("/circles/{$circle}/members/{$user}");

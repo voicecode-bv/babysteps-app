@@ -70,10 +70,16 @@
     "Username...": "Gebruikersnaam...",
     "Add": "Toevoegen",
     "No members yet": "Nog geen leden",
-    "Add people by their username.": "Voeg mensen toe met hun gebruikersnaam.",
+    "Add people by their username or invite them by email.": "Voeg mensen toe met hun gebruikersnaam of nodig ze uit via e-mail.",
     "Save": "Opslaan",
     "Delete circle": "Kring verwijderen",
     "Failed to create circle": "Kring aanmaken mislukt",
     "Failed to update circle": "Kring bijwerken mislukt",
-    "Failed to add member": "Lid toevoegen mislukt"
+    "Failed to add member": "Lid toevoegen mislukt",
+    "Pending invitations": "Openstaande uitnodigingen",
+    "Pending": "In afwachting",
+    "User not found? Invite them by email.": "Gebruiker niet gevonden? Nodig ze uit via e-mail.",
+    "Email address...": "E-mailadres...",
+    "Invitation sent!": "Uitnodiging verstuurd!",
+    "Failed to send invitation": "Uitnodiging versturen mislukt"
 }
