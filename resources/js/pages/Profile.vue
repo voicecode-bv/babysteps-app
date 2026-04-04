@@ -2,7 +2,8 @@
 import PostCard, { type PostData } from '@/components/PostCard.vue';
 import { useTranslations } from '@/composables/useTranslations';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { InfiniteScroll } from '@inertiajs/vue3';
+import { InfiniteScroll, useForm, usePage } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
 
 interface Profile {
     id: number;
@@ -14,7 +15,7 @@ interface Profile {
     posts_count: number;
 }
 
-defineProps<{
+const props = defineProps<{
     profile: Profile;
     posts: {
         data: PostData[];
@@ -22,6 +23,26 @@ defineProps<{
 }>();
 
 const { t } = useTranslations();
+const page = usePage();
+const authUserId = computed(() => (page.props.auth as { user: { id: number } }).user.id);
+const isOwnProfile = computed(() => props.profile.id === authUserId.value);
+
+const isEditingBio = ref(false);
+const bioForm = useForm({ bio: props.profile.bio ?? '' });
+
+function saveBio() {
+    bioForm.put('/profile/bio', {
+        preserveScroll: true,
+        onSuccess: () => {
+            isEditingBio.value = false;
+        },
+    });
+}
+
+function cancelEditBio() {
+    bioForm.bio = props.profile.bio ?? '';
+    isEditingBio.value = false;
+}
 
 function goBack() {
     window.history.back();
@@ -56,7 +77,44 @@ function goBack() {
                         </div>
                     </div>
                 </div>
-                <p v-if="profile.bio" class="mt-3 text-sm text-sand-700 dark:text-sand-300">{{ profile.bio }}</p>
+
+                <!-- Bio display / edit -->
+                <div class="mt-3">
+                    <template v-if="isEditingBio">
+                        <form @submit.prevent="saveBio" class="space-y-2">
+                            <textarea
+                                v-model="bioForm.bio"
+                                :placeholder="t('Write something about yourself...')"
+                                maxlength="150"
+                                rows="2"
+                                class="w-full resize-none rounded-lg border border-sand-200 bg-sand-50 px-3 py-2 text-sm text-sand-800 placeholder-sand-400 focus:border-sand-400 focus:outline-none dark:border-sand-700 dark:bg-sand-800 dark:text-sand-100 dark:placeholder-sand-500"
+                            />
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-sand-400 dark:text-sand-500">{{ bioForm.bio.length }}/150</span>
+                                <div class="flex gap-2">
+                                    <button type="button" class="text-sm text-sand-500 dark:text-sand-400" @click="cancelEditBio">{{ t('Cancel') }}</button>
+                                    <button
+                                        type="submit"
+                                        class="rounded-lg bg-sand-500 px-3 py-1 text-sm font-medium text-white disabled:opacity-50 dark:bg-sand-600"
+                                        :disabled="bioForm.processing"
+                                    >
+                                        {{ t('Save') }}
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </template>
+                    <template v-else>
+                        <p v-if="profile.bio" class="text-sm text-sand-700 dark:text-sand-300">{{ profile.bio }}</p>
+                        <button
+                            v-if="isOwnProfile"
+                            class="mt-1 text-xs font-medium text-sand-500 dark:text-sand-400"
+                            @click="isEditingBio = true"
+                        >
+                            {{ profile.bio ? t('Edit bio') : t('Add a bio...') }}
+                        </button>
+                    </template>
+                </div>
             </div>
 
             <div class="h-2 bg-sand-100 dark:bg-sand-800" />
