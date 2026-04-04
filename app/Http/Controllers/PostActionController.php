@@ -16,14 +16,22 @@ class PostActionController extends Controller
             'media' => ['required', 'file', 'mimes:jpg,jpeg,png,gif,mp4,mov', 'max:51200'],
             'caption' => ['nullable', 'string', 'max:2200'],
             'location' => ['nullable', 'string', 'max:255'],
+            'circle_ids' => ['nullable', 'array'],
+            'circle_ids.*' => ['integer'],
         ]);
+
+        $data = [
+            'caption' => $validated['caption'] ?? '',
+            'location' => $validated['location'] ?? '',
+        ];
+
+        if (! empty($validated['circle_ids'])) {
+            $data['circle_ids'] = $validated['circle_ids'];
+        }
 
         $response = $this->apiClient->authenticated()
             ->attach('media', file_get_contents($validated['media']->getRealPath()), $validated['media']->getClientOriginalName())
-            ->post('/posts', [
-                'caption' => $validated['caption'] ?? '',
-                'location' => $validated['location'] ?? '',
-            ]);
+            ->post('/posts', $data);
 
         if ($response->successful()) {
             return redirect()->route('feed');

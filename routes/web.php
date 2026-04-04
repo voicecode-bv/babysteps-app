@@ -3,6 +3,8 @@
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\CircleActionController;
+use App\Http\Controllers\CircleController;
 use App\Http\Controllers\FeedController;
 use App\Http\Controllers\PostActionController;
 use App\Http\Controllers\PostController;
@@ -26,4 +28,12 @@ Route::middleware('auth.token')->group(function () {
     Route::delete('/posts/{post}/like', [PostActionController::class, 'unlike'])->name('posts.unlike')->whereNumber('post');
     Route::post('/posts/{post}/comments', [PostActionController::class, 'comment'])->name('posts.comments.store')->whereNumber('post');
     Route::delete('/comments/{comment}', [PostActionController::class, 'destroyComment'])->name('comments.destroy')->whereNumber('comment');
+
+    Route::get('/circles', [CircleController::class, 'index'])->name('circles.index');
+    Route::get('/circles/{circle}', [CircleController::class, 'show'])->name('circles.show')->whereNumber('circle');
+    Route::post('/circles', [CircleActionController::class, 'store'])->name('circles.store');
+    Route::put('/circles/{circle}', [CircleActionController::class, 'update'])->name('circles.update')->whereNumber('circle');
+    Route::delete('/circles/{circle}', [CircleActionController::class, 'destroy'])->name('circles.destroy')->whereNumber('circle');
+    Route::post('/circles/{circle}/members', [CircleActionController::class, 'addMember'])->name('circles.members.store')->whereNumber('circle');
+    Route::delete('/circles/{circle}/members/{user}', [CircleActionController::class, 'removeMember'])->name('circles.members.destroy');
 });
