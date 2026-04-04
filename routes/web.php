@@ -45,6 +45,4 @@ Route::middleware(['auth.token', HandleNativeEdge::class])->group(function () {
     Route::post('/circles/{circle}/invitations', [CircleActionController::class, 'inviteMember'])->name('circles.invitations.store')->whereNumber('circle');
     Route::delete('/circles/{circle}/invitations/{invitation}', [CircleActionController::class, 'cancelInvitation'])->name('circles.invitations.destroy')->whereNumber(['circle', 'invitation']);
     Route::delete('/circles/{circle}/members/{user}', [CircleActionController::class, 'removeMember'])->name('circles.members.destroy');
-
-    Route::get('/profile/{username}', [ProfileController::class, 'show'])->name('profile.show');
 });

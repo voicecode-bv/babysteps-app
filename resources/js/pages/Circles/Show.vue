@@ -226,7 +226,7 @@ function goBack() {
 
             <!-- Members List -->
             <div v-for="member in circle.members" :key="member.id" class="flex items-center gap-3 border-b border-sand-50 px-4 py-3 dark:border-sand-800">
-                <Link :href="`/profile/${member.username}`" class="flex flex-1 items-center gap-3">
+                <Link :href="`/profiles/${member.username}`" class="flex flex-1 items-center gap-3">
                     <img
                         :src="member.avatar ?? `https://ui-avatars.com/api/?name=${member.name}&background=e5ece5&color=3a573a&size=64`"
                         :alt="member.name"
