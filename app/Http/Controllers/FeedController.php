@@ -13,7 +13,7 @@ class FeedController extends Controller
         $response = $apiClient->get('/feed?page='.request()->integer('page', 1));
 
         return Inertia::render('Feed', [
-            'posts' => $response->json(),
+            'posts' => $response->successful() ? $response->json() : ['data' => [], 'next_page_url' => null],
         ]);
     }
 }

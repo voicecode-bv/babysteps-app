@@ -1,4 +1,13 @@
-import { createInertiaApp } from '@inertiajs/vue3';
+import { createInertiaApp, router } from '@inertiajs/vue3';
+import { FetchHttpClient } from '@/http/FetchHttpClient';
+
+declare global {
+    interface Window {
+        router: typeof router;
+    }
+}
+
+window.router = router;
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -7,4 +16,5 @@ createInertiaApp({
     progress: {
         color: '#4B5563',
     },
+    http: new FetchHttpClient(),
 });

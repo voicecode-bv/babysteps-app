@@ -32,6 +32,7 @@ function submit() {
                     <input
                         v-model="form.email"
                         type="email"
+                        name="email"
                         :placeholder="t('Email address')"
                         autocomplete="email"
                         class="w-full rounded-xl border bg-white px-4 py-3.5 text-sm text-sand-800 placeholder-sand-400 shadow-sm focus:outline-none dark:bg-sand-800 dark:text-sand-100 dark:placeholder-sand-500"
@@ -44,6 +45,7 @@ function submit() {
                     <input
                         v-model="form.password"
                         :type="showPassword ? 'text' : 'password'"
+                        name="password"
                         :placeholder="t('Password')"
                         autocomplete="current-password"
                         class="w-full rounded-xl border bg-white px-4 py-3.5 pr-16 text-sm text-sand-800 placeholder-sand-400 shadow-sm focus:outline-none dark:bg-sand-800 dark:text-sand-100 dark:placeholder-sand-500"
