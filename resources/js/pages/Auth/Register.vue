@@ -2,6 +2,7 @@
 import { Link, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import { useTranslations } from '@/composables/useTranslations';
+import AppLayout from '@/layouts/AppLayout.vue';
 
 const { t } = useTranslations();
 
@@ -14,6 +15,10 @@ const form = useForm({
 
 const showPassword = ref(false);
 
+function goBack() {
+    window.history.back();
+}
+
 function submit() {
     form.post('/register', {
         onFinish: () => form.reset('password'),
@@ -22,7 +27,16 @@ function submit() {
 </script>
 
 <template>
-    <div class="flex min-h-dvh flex-col bg-sand-50 px-8 text-sand-900 dark:bg-sand-900 dark:text-sand-100">
+    <AppLayout :title="t('Register')">
+        <template #header-left>
+            <button class="flex items-center text-sand-700 dark:text-sand-300" @click="goBack">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+                </svg>
+            </button>
+        </template>
+
+        <div class="flex min-h-full flex-col px-8">
         <div class="flex flex-1 flex-col items-center justify-center">
             <div class="mb-4 text-center">
                 <h1 class="text-4xl font-bold tracking-tight text-sand-800 dark:text-sand-100">{{ t('Babysteps') }}</h1>
@@ -112,5 +126,6 @@ function submit() {
                 <Link href="/login" class="font-semibold text-sage-600 dark:text-sage-400">{{ t('Log in') }}</Link>
             </p>
         </div>
-    </div>
+        </div>
+    </AppLayout>
 </template>
