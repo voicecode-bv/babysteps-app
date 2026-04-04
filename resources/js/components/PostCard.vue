@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Link, router } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { Link, router, usePage } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
 import { useTranslations } from '@/composables/useTranslations';
 
 export interface PostData {
@@ -27,6 +27,8 @@ const props = defineProps<{
 
 const { t } = useTranslations();
 
+const page = usePage();
+const authUserId = computed(() => (page.props.auth as { user: { id: number } }).user.id);
 const isLiked = ref(props.post.is_liked);
 const likesCount = ref(props.post.likes_count);
 const showFullCaption = ref(false);
@@ -60,13 +62,15 @@ function timeAgo(dateString: string): string {
     <article class="bg-white dark:bg-sand-900">
         <!-- Post Header -->
         <div class="flex items-center gap-3 px-4 py-3">
-            <img
-                :src="post.user.avatar ?? `https://ui-avatars.com/api/?name=${post.user.name}&background=f0dcc6&color=5c3f24&size=64`"
-                :alt="post.user.name"
-                class="size-10 rounded-full object-cover ring-2 ring-sand-200 dark:ring-sand-700"
-            />
+            <Link :href="`/profiles/${post.user.username}`">
+                <img
+                    :src="post.user.avatar ?? `https://ui-avatars.com/api/?name=${post.user.name}&background=f0dcc6&color=5c3f24&size=64`"
+                    :alt="post.user.name"
+                    class="size-10 rounded-full object-cover ring-2 ring-sand-200 dark:ring-sand-700"
+                />
+            </Link>
             <div class="flex-1">
-                <p class="text-sm font-semibold text-sand-800 dark:text-sand-100">{{ post.user.name }}</p>
+                <Link :href="`/profiles/${post.user.username}`" class="text-sm font-semibold text-sand-800 dark:text-sand-100">{{ post.user.name }}</Link>
                 <p v-if="post.location" class="text-xs text-sand-500 dark:text-sand-400">{{ post.location }}</p>
             </div>
             <button class="text-sand-400 dark:text-sand-500">
@@ -97,7 +101,7 @@ function timeAgo(dateString: string): string {
 
         <!-- Action Buttons -->
         <div class="flex items-center gap-4 px-4 py-3">
-            <button @click="toggleLike">
+            <button @click="toggleLike" :disabled="post.user.id === authUserId">
                 <svg
                     v-if="!isLiked"
                     xmlns="http://www.w3.org/2000/svg"

@@ -8,6 +8,7 @@ use App\Http\Controllers\CircleController;
 use App\Http\Controllers\FeedController;
 use App\Http\Controllers\PostActionController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Middleware\HandleNativeEdge;
 use Illuminate\Support\Facades\Route;
 
@@ -31,6 +32,8 @@ Route::middleware(['auth.token', HandleNativeEdge::class])->group(function () {
     Route::delete('/comments/{comment}', [PostActionController::class, 'destroyComment'])->name('comments.destroy')->whereNumber('comment');
     Route::post('/comments/{comment}/like', [PostActionController::class, 'likeComment'])->name('comments.like')->whereNumber('comment');
     Route::delete('/comments/{comment}/like', [PostActionController::class, 'unlikeComment'])->name('comments.unlike')->whereNumber('comment');
+
+    Route::get('/profiles/{username}', [ProfileController::class, 'show'])->name('profiles.show');
 
     Route::get('/circles', [CircleController::class, 'index'])->name('circles.index');
     Route::get('/circles/{circle}', [CircleController::class, 'show'])->name('circles.show')->whereNumber('circle');
