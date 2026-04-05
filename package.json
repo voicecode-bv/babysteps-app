@@ -7,6 +7,8 @@
         "build:ssr": "vite build && vite build --ssr",
         "build:ios": "vite build --mode=ios",
         "build:android": "vite build --mode=android",
+        "dev:ios": "vite --mode=ios",
+        "dev:android": "vite --mode=android",
         "dev": "vite",
         "format": "prettier --write resources/",
         "format:check": "prettier --check resources/",
