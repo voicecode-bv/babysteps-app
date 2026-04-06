@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Services\ApiClient;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
 
 class CircleActionController extends Controller
 {
@@ -52,31 +53,69 @@ class CircleActionController extends Controller
     public function addMember(Request $request, int $circle): RedirectResponse
     {
         $validated = $request->validate([
-            'username' => ['required', 'string'],
+            'identifier' => ['required', 'string'],
         ]);
 
-        $response = $this->apiClient->post("/circles/{$circle}/members", $validated);
+        $data = str_contains($validated['identifier'], '@')
+            ? ['email' => $validated['identifier']]
+            : ['username' => $validated['identifier']];
+
+        $response = $this->apiClient->post("/circles/{$circle}/members", $data);
 
         if ($response->successful()) {
             return back();
         }
 
-        return back()->withErrors(['username' => $response->json('message', __('Failed to add member'))]);
+        return back()->withErrors(['identifier' => $response->json('message', __('Failed to invite member'))]);
     }
 
-    public function inviteMember(Request $request, int $circle): RedirectResponse
+    public function updatePhoto(Request $request, int $circle): RedirectResponse
     {
         $validated = $request->validate([
-            'email' => ['required', 'string', 'email'],
+            'photo_path' => ['required', 'string'],
         ]);
 
-        $response = $this->apiClient->post("/circles/{$circle}/invitations", $validated);
+        $path = $validated['photo_path'];
 
-        if ($response->successful()) {
-            return back();
-        }
+        abort_unless(file_exists($path), 422, __('Image file not found.'));
 
-        return back()->withErrors(['email' => $response->json('message', __('Failed to send invitation'))]);
+        $mimeType = File::mimeType($path);
+        $extension = match ($mimeType) {
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/heic' => 'heic',
+            'image/heif' => 'heif',
+            default => pathinfo($path, PATHINFO_EXTENSION) ?: 'jpg',
+        };
+
+        $filename = 'circle-photo.'.$extension;
+
+        $this->apiClient->authenticated()
+            ->attach('photo', file_get_contents($path), $filename, ['Content-Type' => $mimeType])
+            ->post("/circles/{$circle}/photo");
+
+        return back();
+    }
+
+    public function deletePhoto(int $circle): RedirectResponse
+    {
+        $this->apiClient->delete("/circles/{$circle}/photo");
+
+        return back();
+    }
+
+    public function acceptInvitation(int $invitation): RedirectResponse
+    {
+        $this->apiClient->post("/circle-invitations/{$invitation}/accept");
+
+        return back();
+    }
+
+    public function declineInvitation(int $invitation): RedirectResponse
+    {
+        $this->apiClient->post("/circle-invitations/{$invitation}/decline");
+
+        return back();
     }
 
     public function cancelInvitation(int $circle, int $invitation): RedirectResponse

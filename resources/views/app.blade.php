@@ -8,10 +8,10 @@
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
         @vite(['resources/css/app.css', 'resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"])
         <x-inertia::head>
-            <title>{{ config('app.name', 'Babysteps') }}</title>
+            <title>{{ config('app.name', 'Innerr') }}</title>
         </x-inertia::head>
     </head>
-    <body class="nativephp-safe-area font-sans antialiased">
+    <body class="font-sans antialiased">
         <x-inertia::app />
     </body>
 </html>

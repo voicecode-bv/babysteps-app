@@ -14,7 +14,15 @@ class HandleNativeEdge
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (config('app.platform') === 'web') {
+        if (! auth()->check()) {
+            return $next($request);
+        }
+
+        $routeName = $request->route()?->getName();
+
+        if ($routeName === 'posts.create') {
+            Edge::clear();
+
             return $next($request);
         }
 
@@ -44,8 +52,8 @@ class HandleNativeEdge
             'id' => 'circles',
             'icon' => 'person.2',
             'label' => __('Circles'),
-            'url' => route('feed'),
-            'active' => $routeName === 'circles',
+            'url' => route('circles.index'),
+            'active' => str_starts_with($routeName ?? '', 'circles'),
             'badge' => null,
             'badge_color' => null,
             'news' => false,
@@ -55,7 +63,7 @@ class HandleNativeEdge
             'id' => 'add',
             'icon' => 'plus.circle',
             'label' => __('New'),
-            'url' => route('feed'),
+            'url' => route('posts.create'),
             'active' => false,
             'badge' => null,
             'badge_color' => null,
@@ -66,7 +74,7 @@ class HandleNativeEdge
             'id' => 'notifications',
             'icon' => 'bell',
             'label' => __('Notifications'),
-            'url' => route('feed'),
+            'url' => route('notifications'),
             'active' => $routeName === 'notifications',
             'badge' => null,
             'badge_color' => null,
@@ -77,8 +85,8 @@ class HandleNativeEdge
             'id' => 'profile',
             'icon' => 'person',
             'label' => __('Profile'),
-            'url' => route('feed'),
-            'active' => $routeName === 'profile',
+            'url' => route('profiles.show', ['username' => auth()->user()->username]),
+            'active' => str_starts_with($routeName ?? '', 'profiles'),
             'badge' => null,
             'badge_color' => null,
             'news' => false,

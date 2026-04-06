@@ -2,8 +2,9 @@
 import { useTranslations } from '@/composables/useTranslations';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { store } from '@/actions/App/Http/Controllers/PostActionController';
-import { Link, useForm, usePage } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { Link, useForm } from '@inertiajs/vue3';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { Camera, On, Off, Events } from '@nativephp/mobile';
 
 interface Circle {
     id: number;
@@ -16,66 +17,87 @@ const props = defineProps<{
 }>();
 
 const { t } = useTranslations();
-const page = usePage();
-const isNative = computed(() => page.props.platform !== 'web');
 
 const form = useForm({
-    media: null as File | null,
+    media_path: null as string | null,
     caption: '',
     circle_ids: [] as number[],
 });
 
 const mediaPreview = ref<string | null>(null);
-const fileInput = ref<HTMLInputElement | null>(null);
+const mediaIsVideo = ref(false);
 const showSourcePicker = ref(false);
 
-const isValidForm = computed(() => form.media !== null && form.circle_ids.length > 0);
+const isValidForm = computed(() => form.media_path !== null && form.circle_ids.length > 0);
 
 function openSourcePicker() {
-    if (isNative.value) {
-        showSourcePicker.value = true;
-    } else {
-        selectFromGallery();
-    }
+    showSourcePicker.value = true;
 }
 
-function selectFromGallery() {
+async function selectFromGallery() {
     showSourcePicker.value = false;
-    if (fileInput.value) {
-        fileInput.value.removeAttribute('capture');
-        fileInput.value.click();
-    }
+    await Camera.pickImages().all();
 }
 
-function openCamera() {
+async function openCamera() {
     showSourcePicker.value = false;
-    if (fileInput.value) {
-        fileInput.value.setAttribute('capture', 'environment');
-        fileInput.value.click();
+    await Camera.getPhoto();
+}
+
+async function recordVideo() {
+    showSourcePicker.value = false;
+    await Camera.recordVideo();
+}
+
+async function loadPreview(path: string): Promise<string | null> {
+    try {
+        const response = await fetch(`/native-media?path=${encodeURIComponent(path)}`);
+        if (!response.ok) return null;
+        const { data_url } = await response.json();
+        return data_url;
+    } catch {
+        return null;
     }
 }
 
-function handleFileChange(event: Event) {
-    const target = event.target as HTMLInputElement;
-    const file = target.files?.[0];
-    if (!file) return;
+async function handlePhotoTaken(payload: { path: string; mimeType: string }) {
+    form.media_path = payload.path;
+    mediaPreview.value = await loadPreview(payload.path);
+    mediaIsVideo.value = false;
+}
 
-    form.media = file;
+async function handleVideoRecorded(payload: { path: string; mimeType: string }) {
+    form.media_path = payload.path;
+    mediaPreview.value = await loadPreview(payload.path);
+    mediaIsVideo.value = true;
+}
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        mediaPreview.value = e.target?.result as string;
-    };
-    reader.readAsDataURL(file);
+async function handleMediaSelected(payload: { success: boolean; files: { path: string; mimeType: string }[]; cancelled: boolean }) {
+    if (!payload.success || payload.cancelled || !payload.files.length) return;
+
+    const file = payload.files[0];
+    form.media_path = file.path;
+    mediaPreview.value = await loadPreview(file.path);
+    mediaIsVideo.value = file.mimeType?.startsWith('video/') ?? false;
 }
 
 function removeMedia() {
-    form.media = null;
+    form.media_path = null;
     mediaPreview.value = null;
-    if (fileInput.value) {
-        fileInput.value.value = '';
-    }
+    mediaIsVideo.value = false;
 }
+
+onMounted(() => {
+    On(Events.Camera.PhotoTaken, handlePhotoTaken);
+    On(Events.Camera.VideoRecorded, handleVideoRecorded);
+    On(Events.Gallery.MediaSelected, handleMediaSelected);
+});
+
+onUnmounted(() => {
+    Off(Events.Camera.PhotoTaken, handlePhotoTaken);
+    Off(Events.Camera.VideoRecorded, handleVideoRecorded);
+    Off(Events.Gallery.MediaSelected, handleMediaSelected);
+});
 
 const allCirclesSelected = computed(() => props.circles.length > 0 && form.circle_ids.length === props.circles.length);
 
@@ -97,9 +119,7 @@ function toggleCircle(circleId: number) {
 }
 
 function submit() {
-    form.post(store.url(), {
-        forceFormData: true,
-    });
+    form.post(store.url());
 }
 </script>
 
@@ -113,29 +133,16 @@ function submit() {
             </Link>
         </template>
         <template #header-right>
-            <button
-                :disabled="!isValidForm || form.processing"
-                class="text-sm font-semibold text-sand-600 disabled:opacity-40 dark:text-sand-400"
-                @click="submit"
-            >
-                {{ t('Share') }}
-            </button>
+            <span />
         </template>
 
         <div class="flex flex-col">
             <!-- Media Section -->
             <div class="border-b border-sand-200 bg-white dark:border-sand-800 dark:bg-sand-900">
-                <input
-                    ref="fileInput"
-                    type="file"
-                    accept="image/jpeg,image/jpg,image/png,image/gif"
-                    class="hidden"
-                    @change="handleFileChange"
-                />
-
                 <!-- Preview -->
                 <div v-if="mediaPreview" class="relative">
-                    <img :src="mediaPreview" class="w-full object-cover" :alt="t('Selected photo')" />
+                    <video v-if="mediaIsVideo" :src="mediaPreview" class="w-full object-cover" controls />
+                    <img v-else :src="mediaPreview" class="w-full object-cover" :alt="t('Selected photo')" />
                     <button
                         class="absolute right-3 top-3 rounded-full bg-black/50 p-1.5 text-white"
                         @click="removeMedia"
@@ -162,7 +169,7 @@ function submit() {
                     </button>
                 </div>
 
-                <p v-if="form.errors.media" class="px-4 pb-3 text-xs text-blush-500">{{ form.errors.media }}</p>
+                <p v-if="form.errors.media_path" class="px-4 pb-3 text-xs text-blush-500">{{ form.errors.media_path }}</p>
             </div>
 
             <!-- Caption -->
@@ -216,6 +223,17 @@ function submit() {
                     {{ form.progress.percentage }}%
                 </p>
             </div>
+
+            <!-- Share Button -->
+            <div class="px-4 py-4">
+                <button
+                    :disabled="!isValidForm || form.processing"
+                    class="w-full rounded-xl bg-sand-600 py-3 text-sm font-semibold text-white transition-colors active:bg-sand-700 disabled:opacity-40 dark:bg-sand-500 dark:active:bg-sand-400"
+                    @click="submit"
+                >
+                    {{ t('Share') }}
+                </button>
+            </div>
         </div>
 
         <!-- Source Picker Overlay -->
@@ -248,6 +266,16 @@ function submit() {
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
                                     </svg>
                                     {{ t('Take a photo') }}
+                                </button>
+                                <div class="mx-4 border-t border-sand-100 dark:border-sand-700" />
+                                <button
+                                    class="flex w-full items-center gap-3 px-4 py-3.5 text-left text-sm font-medium text-sand-700 active:bg-sand-50 dark:text-sand-200 dark:active:bg-sand-700"
+                                    @click="recordVideo"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 text-sand-500 dark:text-sand-400">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z" />
+                                    </svg>
+                                    {{ t('Record a video') }}
                                 </button>
                                 <div class="mx-4 border-t border-sand-100 dark:border-sand-700" />
                                 <button

@@ -28,7 +28,7 @@ const props = defineProps<{
 const { t } = useTranslations();
 
 const page = usePage();
-const authUserId = computed(() => (page.props.auth as { user: { id: number } }).user.id);
+const authUserId = computed(() => (page.props.auth as { user?: { id: number } })?.user?.id ?? null);
 const isLiked = ref(props.post.is_liked);
 const likesCount = ref(props.post.likes_count);
 const showFullCaption = ref(false);
@@ -37,11 +37,11 @@ function toggleLike() {
     if (isLiked.value) {
         isLiked.value = false;
         likesCount.value--;
-        router.delete(`/posts/${props.post.id}/like`, { preserveScroll: true });
+        router.delete(`/posts/${props.post.id}/like`, { preserveScroll: true, preserveState: true });
     } else {
         isLiked.value = true;
         likesCount.value++;
-        router.post(`/posts/${props.post.id}/like`, {}, { preserveScroll: true });
+        router.post(`/posts/${props.post.id}/like`, {}, { preserveScroll: true, preserveState: true });
     }
 }
 
@@ -96,7 +96,7 @@ function timeAgo(dateString: string): string {
 
         <!-- Action Buttons -->
         <div class="flex items-center gap-4 px-4 py-3">
-            <button @click="toggleLike" :disabled="post.user.id === authUserId">
+            <button v-if="post.user.id !== authUserId" @click="toggleLike">
                 <svg
                     v-if="!isLiked"
                     xmlns="http://www.w3.org/2000/svg"

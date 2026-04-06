@@ -18,7 +18,6 @@ declare module '@inertiajs/core' {
         sharedPageProps: {
             name: string;
             auth: Auth;
-            platform: string;
             locale: string;
             translations: Record<string, string>;
             sidebarOpen: boolean;

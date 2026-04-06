@@ -3,21 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Services\ApiClient;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class FeedController extends Controller
+class NotificationController extends Controller
 {
-    public function __invoke(ApiClient $apiClient): Response
+    public function index(ApiClient $apiClient): Response
     {
-
-        return Inertia::render('Feed', [
-            'posts' => Inertia::scroll(function () use ($apiClient) {
-
-                ray('scroll');
+        return Inertia::render('Notifications', [
+            'circleInvitations' => fn () => $apiClient->get('/circle-invitations')->json('data', []),
+            'notifications' => Inertia::scroll(function () use ($apiClient) {
                 $page = request()->integer('page', 1);
-                $response = $apiClient->get('/feed?page='.$page);
+                $response = $apiClient->get('/notifications?page='.$page);
 
                 if ($response->failed()) {
                     return new LengthAwarePaginator([], 0, 15);
@@ -32,7 +31,13 @@ class FeedController extends Controller
                     currentPage: $data['meta']['current_page'],
                 );
             }),
-            'circles' => Inertia::defer(fn () => $apiClient->proxyMediaUrls($apiClient->get('/circles')->json('data'))),
         ]);
+    }
+
+    public function markAsRead(ApiClient $apiClient): RedirectResponse
+    {
+        $apiClient->post('/notifications/read', request()->only('ids'));
+
+        return back();
     }
 }

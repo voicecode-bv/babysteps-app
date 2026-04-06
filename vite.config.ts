@@ -5,8 +5,14 @@ import vue from '@vitejs/plugin-vue';
 import laravel from 'laravel-vite-plugin';
 import { nativephpMobile, nativephpHotFile } from './vendor/nativephp/mobile/resources/js/vite-plugin.js';
 import { defineConfig } from 'vite';
+import path from 'path';
 
 export default defineConfig({
+    resolve: {
+        alias: {
+            '@nativephp/mobile': path.resolve(__dirname, 'vendor/nativephp/mobile/resources/dist/native.js'),
+        },
+    },
     plugins: [
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.ts'],

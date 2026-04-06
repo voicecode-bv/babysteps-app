@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import PostCard, { type PostData } from '@/components/PostCard.vue';
+import { usePullToRefresh } from '@/composables/usePullToRefresh';
 import { useTranslations } from '@/composables/useTranslations';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { InfiniteScroll, Link } from '@inertiajs/vue3';
+import { InfiniteScroll, Link, router } from '@inertiajs/vue3';
+import { computed, onMounted, ref, useTemplateRef } from 'vue';
 
 interface Circle {
     id: number;
@@ -18,12 +20,61 @@ defineProps<{
 }>();
 
 const { t } = useTranslations();
+
+const layoutRef = useTemplateRef<InstanceType<typeof AppLayout>>('layout');
+const containerRef = computed(() => layoutRef.value?.mainRef ?? null);
+const isLoadingPosts = ref(true);
+
+const { pullDistance, isRefreshing } = usePullToRefresh({
+    onRefresh: () =>
+        new Promise<void>((resolve) => {
+            router.reload({
+                only: ['posts', 'circles'],
+                reset: ['posts'],
+                onFinish: () => resolve(),
+            });
+        }),
+    containerRef,
+});
+
+onMounted(() => {
+    router.reload({
+        only: ['posts', 'circles'],
+        reset: ['posts'],
+        onFinish: () => {
+            isLoadingPosts.value = false;
+        },
+    });
+});
 </script>
 
 <template>
-    <AppLayout :show-header="false">
+    <AppLayout ref="layout" :show-header="false">
+        <!-- Pull to refresh indicator -->
+        <div
+            class="flex items-center justify-center overflow-hidden transition-[height] duration-200"
+            :class="{ 'duration-0': pullDistance > 0 && !isRefreshing }"
+            :style="{ height: `${pullDistance}px` }"
+        >
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="2"
+                stroke="currentColor"
+                class="size-6 text-sand-400 dark:text-sand-500"
+                :class="{ 'animate-spin': isRefreshing }"
+            >
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.992 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182M2.985 14.652"
+                />
+            </svg>
+        </div>
+
         <!-- Family Circles -->
-        <div class="flex gap-3 overflow-x-auto scrollbar-none border-b border-sand-200 bg-white px-4 py-3 dark:border-sand-800 dark:bg-sand-900">
+        <div class="sticky top-0 z-10 flex gap-3 overflow-x-auto scrollbar-none border-b border-sand-200 bg-white px-4 py-3 dark:border-sand-800 dark:bg-sand-900">
             <Link href="/circles" class="flex flex-shrink-0 flex-col items-center gap-1.5">
                 <div class="rounded-full p-0.5">
                     <div class="flex size-14 items-center justify-center rounded-full border-2 border-dashed border-sand-300 dark:border-sand-600">
@@ -51,7 +102,13 @@ const { t } = useTranslations();
                 class="flex flex-shrink-0 flex-col items-center gap-1.5"
             >
                 <div class="rounded-full bg-sand-200 p-0.5 dark:bg-sand-800">
-                    <div class="flex size-14 items-center justify-center rounded-full bg-sand-100 dark:bg-sand-900">
+                    <img
+                        v-if="circle.photo"
+                        :src="circle.photo"
+                        :alt="circle.name"
+                        class="size-14 rounded-full object-cover"
+                    />
+                    <div v-else class="flex size-14 items-center justify-center rounded-full bg-sand-100 dark:bg-sand-900">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.3" stroke="currentColor" class="size-7 text-sand-600 dark:text-sand-300">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
                         </svg>
@@ -61,16 +118,35 @@ const { t } = useTranslations();
             </Link>
         </div>
 
-        <InfiniteScroll v-if="posts" data="posts" only-next>
+        <!-- Post skeletons while loading -->
+        <template v-if="isLoadingPosts">
+            <div v-for="n in 3" :key="n" class="bg-white dark:bg-sand-900">
+                <div class="flex items-center gap-3 px-4 py-3">
+                    <div class="size-10 animate-pulse rounded-full bg-sand-200 dark:bg-sand-700" />
+                    <div class="flex-1 space-y-2">
+                        <div class="h-3.5 w-24 animate-pulse rounded bg-sand-200 dark:bg-sand-700" />
+                        <div class="h-3 w-16 animate-pulse rounded bg-sand-200 dark:bg-sand-700" />
+                    </div>
+                </div>
+                <div class="aspect-square w-full animate-pulse bg-sand-200 dark:bg-sand-700" />
+                <div class="space-y-2 px-4 py-3">
+                    <div class="h-3.5 w-32 animate-pulse rounded bg-sand-200 dark:bg-sand-700" />
+                    <div class="h-3 w-48 animate-pulse rounded bg-sand-200 dark:bg-sand-700" />
+                </div>
+                <div class="mx-4 border-b border-sand-100 dark:border-sand-800" />
+            </div>
+        </template>
+
+        <InfiniteScroll v-else-if="posts" data="posts" only-next>
             <PostCard v-for="post in posts.data" :key="post.id" :post="post" />
         </InfiniteScroll>
 
-        <div v-if="posts && posts.data.length === 0" class="flex flex-col items-center justify-center px-8 py-20">
+        <div v-if="!isLoadingPosts && posts && posts.data.length === 0" class="flex flex-col items-center justify-center px-8 py-20">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor" class="mb-4 size-16 text-sand-300 dark:text-sand-600">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
                 <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
             </svg>
-            <h3 class="text-lg font-semibold text-sand-800 dark:text-sand-200">{{ t('Share your first moment') }}</h3>
+            <h3 class="font-display text-lg font-semibold text-sand-800 dark:text-sand-200">{{ t('Share your first moment') }}</h3>
             <p class="mt-1 text-center text-sm text-sand-500 dark:text-sand-400">
                 {{ t('Add a photo and share it with your family and friends.') }}
             </p>

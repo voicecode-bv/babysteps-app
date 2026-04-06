@@ -46,8 +46,8 @@ const props = defineProps<{
 const { t } = useTranslations();
 
 const page = usePage();
-const authUserId = computed(() => (page.props.auth as { user: { id: number } }).user.id);
-const isLiked = computed(() => props.post.likes?.some((like) => like.user_id === authUserId.value) ?? false);
+const authUserId = computed(() => (page.props.auth as { user?: { id: number } })?.user?.id ?? null);
+const isLiked = computed(() => props.post.is_liked ?? false);
 const commentForm = useForm({ body: '' });
 const commentInput = ref<HTMLInputElement>();
 
@@ -141,7 +141,7 @@ function timeAgo(dateString: string): string {
 
             <!-- Action Buttons -->
             <div class="flex items-center gap-4 bg-white px-4 py-3 dark:bg-sand-900">
-                <button @click="toggleLike" :disabled="post.user.id === authUserId">
+                <button v-if="post.user.id !== authUserId" @click="toggleLike">
                     <svg
                         v-if="!isLiked"
                         xmlns="http://www.w3.org/2000/svg"
@@ -219,7 +219,7 @@ function timeAgo(dateString: string): string {
                         </div>
                     </div>
                     <div class="mt-1 flex flex-shrink-0 flex-col items-center gap-0.5">
-                        <button @click="toggleCommentLike(comment)" :disabled="comment.user.id === authUserId">
+                        <button v-if="comment.user.id !== authUserId" @click="toggleCommentLike(comment)">
                             <svg
                                 v-if="!comment.is_liked"
                                 xmlns="http://www.w3.org/2000/svg"

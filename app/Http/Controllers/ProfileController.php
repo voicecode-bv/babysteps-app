@@ -6,6 +6,7 @@ use App\Services\ApiClient;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\File;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -21,16 +22,11 @@ class ProfileController extends Controller
             abort(404);
         }
 
-        $profile = $profileResponse->json('data');
+        $profile = $apiClient->proxyMediaUrls($profileResponse->json('data'));
         $postsResponse = $apiClient->get("/profiles/{$username}/posts?page={$page}")->json();
 
-        $user = request()->user();
-        if ($user && $user->username === $username) {
-            $profile['bio'] = $user->bio;
-        }
-
         $paginator = new LengthAwarePaginator(
-            items: $postsResponse['data'],
+            items: $apiClient->proxyMediaUrls($postsResponse['data']),
             total: $postsResponse['meta']['total'],
             perPage: $postsResponse['meta']['per_page'],
             currentPage: $postsResponse['meta']['current_page'],
@@ -42,13 +38,68 @@ class ProfileController extends Controller
         ]);
     }
 
-    public function updateBio(Request $request): RedirectResponse
+    public function updateBio(Request $request, ApiClient $apiClient): RedirectResponse
     {
         $validated = $request->validate([
             'bio' => ['nullable', 'string', 'max:150'],
         ]);
 
+        $apiClient->put('/profile', $validated);
+
+        return back();
+    }
+
+    public function updateAvatar(Request $request, ApiClient $apiClient): RedirectResponse
+    {
+        $validated = $request->validate([
+            'avatar_path' => ['required', 'string'],
+        ]);
+
+        $path = $validated['avatar_path'];
+
+        abort_unless(file_exists($path), 422, __('Image file not found.'));
+
+        $mimeType = File::mimeType($path);
+        $extension = match ($mimeType) {
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/heic' => 'heic',
+            'image/heif' => 'heif',
+            default => pathinfo($path, PATHINFO_EXTENSION) ?: 'jpg',
+        };
+
+        $filename = 'avatar.'.$extension;
+
+        $response = $apiClient->authenticated()
+            ->attach('avatar', file_get_contents($path), $filename, ['Content-Type' => $mimeType])
+            ->post('/profile/avatar');
+
+        if ($response->successful()) {
+            $avatarUrl = $response->json('user.avatar');
+            $request->user()->update(['avatar' => $avatarUrl]);
+        }
+
+        return back();
+    }
+
+    public function deleteAvatar(Request $request, ApiClient $apiClient): RedirectResponse
+    {
+        $apiClient->delete('/profile/avatar');
+        $request->user()->update(['avatar' => null]);
+
+        return back();
+    }
+
+    public function updateLocale(Request $request, ApiClient $apiClient): RedirectResponse
+    {
+        $validated = $request->validate([
+            'locale' => ['required', 'string', 'in:en,nl'],
+        ]);
+
+        $apiClient->put('/profile', $validated);
+
         $request->user()->update($validated);
+        app()->setLocale($validated['locale']);
 
         return back();
     }

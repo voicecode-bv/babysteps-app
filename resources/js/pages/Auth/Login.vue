@@ -23,7 +23,7 @@ function submit() {
     <div class="flex min-h-dvh flex-col bg-sand-50 px-8 text-sand-900 dark:bg-sand-900 dark:text-sand-100">
         <div class="flex flex-1 flex-col items-center justify-center">
             <div class="mb-8 text-center">
-                <h1 class="text-4xl font-bold tracking-tight text-sand-800 dark:text-sand-100">{{ t('Babysteps') }}</h1>
+                <h1 class="font-display text-4xl font-bold tracking-tight text-sand-800 dark:text-sand-100">{{ t('Innerr') }}</h1>
                 <p class="mt-2 text-sm text-sand-500 dark:text-sand-400">{{ t('Safely share with those who matter') }}</p>
             </div>
 
@@ -75,7 +75,7 @@ function submit() {
 
         <div class="border-t border-sand-200 pb-8 pt-4 dark:border-sand-800">
             <p class="text-center text-sm text-sand-500 dark:text-sand-400">
-                {{ t('New to Babysteps?') }}
+                {{ t('New to Innerr?') }}
                 <Link href="/register" class="font-semibold text-sand-600 dark:text-sand-400">{{ t('Create an account') }}</Link>
             </p>
         </div>

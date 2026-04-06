@@ -118,8 +118,6 @@ return [
     |
     */
 
-    'platform' => env('APP_PLATFORM', 'web'),
-
     'maintenance' => [
         'driver' => env('APP_MAINTENANCE_DRIVER', 'file'),
         'store' => env('APP_MAINTENANCE_STORE', 'database'),

@@ -6,45 +6,23 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Session;
 use Native\Mobile\Facades\SecureStorage;
 
 class ApiClient
 {
-    public function isAppPlatform(): bool
-    {
-        return config('api-client.platform') === 'app';
-    }
-
     public function getToken(): ?string
     {
-        if ($this->isAppPlatform()) {
-            return SecureStorage::get(config('api-client.token_key'));
-        }
-
-        return Session::get(config('api-client.token_key'));
+        return SecureStorage::get(config('api-client.token_key'));
     }
 
     public function storeToken(string $token): bool
     {
-        if ($this->isAppPlatform()) {
-            return SecureStorage::set(config('api-client.token_key'), $token);
-        }
-
-        Session::put(config('api-client.token_key'), $token);
-
-        return true;
+        return SecureStorage::set(config('api-client.token_key'), $token);
     }
 
     public function clearToken(): bool
     {
-        if ($this->isAppPlatform()) {
-            return SecureStorage::delete(config('api-client.token_key'));
-        }
-
-        Session::forget(config('api-client.token_key'));
-
-        return true;
+        return SecureStorage::delete(config('api-client.token_key'));
     }
 
     public function hasToken(): bool
@@ -62,7 +40,7 @@ class ApiClient
                 ->post('/auth/login', [
                     'email' => $email,
                     'password' => $password,
-                    'device_name' => 'babysteps-mobile',
+                    'device_name' => 'innerr-mobile',
                 ]);
         } catch (ConnectionException) {
             return ['success' => false, 'message' => __('Could not connect to the server')];
@@ -94,7 +72,7 @@ class ApiClient
                     'email' => $email,
                     'password' => $password,
                     'password_confirmation' => $password,
-                    'device_name' => 'babysteps-mobile',
+                    'device_name' => 'innerr-mobile',
                 ]);
         } catch (ConnectionException) {
             return ['success' => false, 'message' => __('Could not connect to the server')];
@@ -196,5 +174,30 @@ class ApiClient
     public function authenticated(): PendingRequest
     {
         return $this->request()->withToken($this->getToken());
+    }
+
+    /**
+     * Rewrite signed API media URLs to go through the local caching proxy.
+     *
+     * @param  array<string, mixed>|null  $data
+     * @return array<string, mixed>|null
+     */
+    public function proxyMediaUrls(?array $data): ?array
+    {
+        if ($data === null) {
+            return null;
+        }
+
+        $json = json_encode($data);
+
+        $apiHost = parse_url(config('api-client.base_url'), PHP_URL_HOST);
+
+        $json = preg_replace_callback(
+            '#https?://'.preg_quote($apiHost, '#').'/api/media/[^"\\\\]+#',
+            fn ($matches) => url('/media-proxy?url='.urlencode($matches[0])),
+            $json,
+        );
+
+        return json_decode($json, true);
     }
 }

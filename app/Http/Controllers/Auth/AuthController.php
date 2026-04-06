@@ -8,6 +8,7 @@ use App\Services\ApiClient;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Native\Mobile\Edge\Edge;
 
 class AuthController extends Controller
 {
@@ -67,6 +68,9 @@ class AuthController extends Controller
         request()->session()->invalidate();
         request()->session()->regenerateToken();
 
+        // Clear bottom bar to make it disappear.
+        Edge::clear();
+
         return redirect()->route('login');
     }
 
@@ -93,6 +97,7 @@ class AuthController extends Controller
         $user = User::updateOrCreate(
             ['email' => $userData['email']],
             [
+                'api_user_id' => $userData['id'],
                 'name' => $userData['name'],
                 'username' => $userData['username'],
                 'avatar' => $userData['avatar'] ?? null,

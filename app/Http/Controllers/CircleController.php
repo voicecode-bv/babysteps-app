@@ -10,21 +10,19 @@ class CircleController extends Controller
 {
     public function index(ApiClient $apiClient): Response
     {
-        $response = $apiClient->get('/circles');
-
         return Inertia::render('Circles/Index', [
-            'circles' => $response->json('data'),
+            'circles' => Inertia::defer(fn () => $apiClient->proxyMediaUrls($apiClient->get('/circles')->json('data'))),
         ]);
     }
 
     public function show(int $circle, ApiClient $apiClient): Response
     {
         $response = $apiClient->get("/circles/{$circle}");
-        $invitationsResponse = $apiClient->get("/circles/{$circle}/invitations");
+        $data = $apiClient->proxyMediaUrls($response->json('data'));
 
         return Inertia::render('Circles/Show', [
-            'circle' => $response->json('data'),
-            'invitations' => $invitationsResponse->json('data', []),
+            'circle' => $data,
+            'invitations' => $data['pending_invitations'] ?? [],
         ]);
     }
 }

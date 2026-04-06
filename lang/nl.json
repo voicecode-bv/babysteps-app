@@ -1,5 +1,5 @@
 {
-    "Babysteps": "Babysteps",
+    "Innerr": "Innerr",
     "Safely share with those who matter": "Veilig delen met wie ertoe doet",
 
     "Home": "Home",
@@ -44,7 +44,7 @@
     "Show": "Toon",
     "Log in": "Inloggen",
     "Forgot password?": "Wachtwoord vergeten?",
-    "New to Babysteps?": "Nieuw bij Babysteps?",
+    "New to Innerr?": "Nieuw bij Innerr?",
     "Create an account": "Maak een account",
 
     "Share the most beautiful moments with your family and friends.": "Maak een account aan en deel de mooiste momenten met je familie en vrienden.",
@@ -85,5 +85,33 @@
 
     ":count moment": ":count moment",
     ":count moments": ":count momenten",
-    "No moments yet": "Nog geen momenten"
+    "No moments yet": "Nog geen momenten",
+
+    "Language": "Taal",
+    "Edit bio": "Bio bewerken",
+    "Add a bio...": "Voeg een bio toe...",
+    "Write something about yourself...": "Schrijf iets over jezelf...",
+    "Are you sure you want to log out?": "Weet je zeker dat je wilt uitloggen?",
+    "Log out": "Uitloggen",
+    "Cancel": "Annuleren",
+
+    "No notifications yet": "Nog geen meldingen",
+    "When someone interacts with your posts, you'll see it here.": "Wanneer iemand reageert op je berichten, zie je het hier.",
+    "Mark all as read": "Alles als gelezen markeren",
+
+    "Circle invitations": "Uitnodigingen voor kringen",
+    ":name has invited you": ":name heeft jou uitgenodigd",
+    "Accept": "Accepteren",
+    "Decline": "Weigeren",
+    "Cancel invitation": "Uitnodiging annuleren",
+    "Are you sure you want to cancel this invitation?": "Weet je zeker dat je deze uitnodiging wilt annuleren?",
+    "Username or email...": "Gebruikersnaam of e-mailadres...",
+    "Failed to invite member": "Uitnodigen mislukt",
+    "Remove member": "Lid verwijderen",
+    "Are you sure you want to remove this member?": "Weet je zeker dat je dit lid wilt verwijderen?",
+
+    ":name liked your post": ":name vindt je bericht leuk",
+    ":name commented: :comment": ":name reageerde: :comment",
+    ":name liked your comment": ":name vindt je reactie leuk",
+    ":name accepted your invitation to :circle": ":name heeft je uitnodiging voor :circle geaccepteerd"
 }

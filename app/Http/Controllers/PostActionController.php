@@ -3,22 +3,42 @@
 namespace App\Http\Controllers;
 
 use App\Services\ApiClient;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
 
 class PostActionController extends Controller
 {
     public function __construct(protected ApiClient $apiClient) {}
 
+    public function serveMedia(Request $request): JsonResponse
+    {
+        $path = $request->query('path');
+
+        abort_unless($path && file_exists($path), 404);
+
+        $mime = File::mimeType($path) ?: 'application/octet-stream';
+        $base64 = base64_encode(File::get($path));
+
+        return response()->json([
+            'data_url' => "data:{$mime};base64,{$base64}",
+        ]);
+    }
+
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'media' => ['required', 'file', 'mimes:jpg,jpeg,png,gif,mp4,mov', 'max:51200'],
+            'media_path' => ['required', 'string'],
             'caption' => ['nullable', 'string', 'max:2200'],
             'location' => ['nullable', 'string', 'max:255'],
             'circle_ids' => ['required', 'array'],
             'circle_ids.*' => ['integer'],
         ]);
+
+        $path = $validated['media_path'];
+
+        abort_unless(file_exists($path), 422, __('Media file not found.'));
 
         $data = [
             'caption' => $validated['caption'] ?? '',
@@ -26,15 +46,29 @@ class PostActionController extends Controller
             'circle_ids' => $validated['circle_ids'],
         ];
 
+        $mimeType = File::mimeType($path);
+        $extension = match ($mimeType) {
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/gif' => 'gif',
+            'image/heic' => 'heic',
+            'image/heif' => 'heif',
+            'video/mp4' => 'mp4',
+            'video/quicktime' => 'mov',
+            default => pathinfo($path, PATHINFO_EXTENSION) ?: 'jpg',
+        };
+
+        $filename = pathinfo($path, PATHINFO_FILENAME).'.'.$extension;
+
         $response = $this->apiClient->authenticated()
-            ->attach('media', file_get_contents($validated['media']->getRealPath()), $validated['media']->getClientOriginalName())
+            ->attach('media', file_get_contents($path), $filename, ['Content-Type' => $mimeType])
             ->post('/posts', $data);
 
         if ($response->successful()) {
             return redirect()->route('feed');
         }
 
-        return back()->withErrors(['media' => $response->json('message', __('Failed to create post'))]);
+        return back()->withErrors(['media_path' => $response->json('message', __('Failed to create post'))]);
     }
 
     public function destroy(int $post): RedirectResponse
