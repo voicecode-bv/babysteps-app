@@ -31,7 +31,8 @@ class CircleActionController extends Controller
     public function update(Request $request, int $circle): RedirectResponse
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['sometimes', 'required', 'string', 'max:255'],
+            'members_can_invite' => ['sometimes', 'boolean'],
         ]);
 
         $response = $this->apiClient->put("/circles/{$circle}", $validated);
@@ -130,5 +131,16 @@ class CircleActionController extends Controller
         $this->apiClient->delete("/circles/{$circle}/members/{$user}");
 
         return back();
+    }
+
+    public function leave(int $circle): RedirectResponse
+    {
+        $response = $this->apiClient->post("/circles/{$circle}/leave");
+
+        if ($response->failed()) {
+            return back()->withErrors(['leave' => $response->json('message', __('Failed to leave circle'))]);
+        }
+
+        return redirect()->route('circles.index');
     }
 }

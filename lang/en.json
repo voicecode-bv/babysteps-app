@@ -76,6 +76,11 @@
     "Failed to create circle": "Failed to create circle",
     "Failed to update circle": "Failed to update circle",
     "Failed to add member": "Failed to add member",
+    "Leave circle": "Leave circle",
+    "Are you sure you want to leave this circle?": "Are you sure you want to leave this circle?",
+    "Failed to leave circle": "Failed to leave circle",
+    "Owner": "Owner",
+    "Members can invite others": "Members can invite others",
 
     "moment": "moment",
     "moments": "moments",

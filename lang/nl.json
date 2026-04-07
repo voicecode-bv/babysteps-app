@@ -109,6 +109,11 @@
     "Failed to invite member": "Uitnodigen mislukt",
     "Remove member": "Lid verwijderen",
     "Are you sure you want to remove this member?": "Weet je zeker dat je dit lid wilt verwijderen?",
+    "Leave circle": "Kring verlaten",
+    "Are you sure you want to leave this circle?": "Weet je zeker dat je deze kring wilt verlaten?",
+    "Failed to leave circle": "Kring verlaten mislukt",
+    "Owner": "Eigenaar",
+    "Members can invite others": "Leden mogen anderen uitnodigen",
 
     ":name liked your post": ":name vindt je bericht leuk",
     ":name commented: :comment": ":name reageerde: :comment",

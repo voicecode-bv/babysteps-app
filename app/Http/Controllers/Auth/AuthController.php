@@ -29,6 +29,10 @@ class AuthController extends Controller
 
         $this->syncLocalUser($result['user']);
 
+        if (Auth::user()?->notifications_prompted_at === null) {
+            return redirect()->route('onboarding.notifications');
+        }
+
         return redirect()->route('feed');
     }
 

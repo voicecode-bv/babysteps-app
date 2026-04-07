@@ -49,6 +49,7 @@ class User extends Authenticatable
         return [
             'api_user_id' => 'integer',
             'email_verified_at' => 'datetime',
+            'notifications_prompted_at' => 'datetime',
             'password' => 'hashed',
         ];
     }

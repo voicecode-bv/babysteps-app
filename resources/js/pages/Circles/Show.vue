@@ -11,6 +11,7 @@ interface Member {
     name: string;
     username: string;
     avatar: string | null;
+    is_owner: boolean;
 }
 
 interface Invitation {
@@ -25,7 +26,9 @@ interface Circle {
     name: string;
     photo: string | null;
     members_count: number;
-    members: Member[];
+    members: Member[] | null;
+    members_can_invite: boolean;
+    is_owner: boolean;
     created_at: string;
 }
 
@@ -52,7 +55,18 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
 const isEditing = ref(false);
 const inviteSent = ref(false);
 
+const canInvite = computed(() => props.circle.is_owner || props.circle.members_can_invite);
+const members = computed(() => props.circle.members ?? []);
+
 const editForm = useForm({ name: props.circle.name });
+
+function toggleMembersCanInvite() {
+    router.put(
+        `/circles/${props.circle.id}`,
+        { name: props.circle.name, members_can_invite: !props.circle.members_can_invite },
+        { preserveScroll: true },
+    );
+}
 const memberForm = useForm({ identifier: '' });
 
 function updateCircle() {
@@ -65,6 +79,12 @@ function updateCircle() {
 
 function deleteCircle() {
     router.delete(`/circles/${props.circle.id}`);
+}
+
+async function leaveCircle() {
+    await Dialog.alert()
+        .confirm(t('Leave circle'), t('Are you sure you want to leave this circle?'))
+        .id('leave-circle-confirm');
 }
 
 function addMember() {
@@ -115,6 +135,9 @@ function handleButtonPressed(payload: { index: number; label: string; id?: strin
         router.delete(`/circles/${props.circle.id}/members/${pendingMemberId}`);
         pendingMemberId = null;
     }
+    if (payload.id === 'leave-circle-confirm' && payload.index === 1) {
+        router.post(`/circles/${props.circle.id}/leave`);
+    }
 }
 
 onMounted(() => {
@@ -142,7 +165,7 @@ function goBack() {
             </button>
         </template>
         <template #header-right>
-            <button class="text-sand-500 dark:text-sand-400" @click="isEditing = !isEditing">
+            <button v-if="circle.is_owner" class="text-sand-500 dark:text-sand-400" @click="isEditing = !isEditing">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
                 </svg>
@@ -173,7 +196,7 @@ function goBack() {
         </div>
 
         <!-- Edit Circle -->
-        <div v-if="isEditing" class="border-b border-sand-200 bg-white px-4 py-3 dark:border-sand-800 dark:bg-sand-900">
+        <div v-if="isEditing" class="space-y-4 border-b border-sand-200 bg-white px-4 py-4 dark:border-sand-800 dark:bg-sand-900">
             <form class="flex items-center gap-2" @submit.prevent="updateCircle">
                 <input
                     v-model="editForm.name"
@@ -188,16 +211,30 @@ function goBack() {
                     {{ t('Save') }}
                 </button>
             </form>
-            <p v-if="editForm.errors.name" class="mt-1 text-xs text-blush-500">{{ editForm.errors.name }}</p>
-            <button class="mt-2 text-xs font-medium text-blush-500" @click="deleteCircle">
-                {{ t('Delete circle') }}
-            </button>
+            <p v-if="editForm.errors.name" class="-mt-2 text-xs text-blush-500">{{ editForm.errors.name }}</p>
+
+            <label class="flex items-center justify-between gap-3">
+                <span class="text-sm text-sand-700 dark:text-sand-200">{{ t('Members can invite others') }}</span>
+                <button
+                    type="button"
+                    role="switch"
+                    :aria-checked="circle.members_can_invite"
+                    class="relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors"
+                    :class="circle.members_can_invite ? 'bg-sage-600 dark:bg-sage-500' : 'bg-sand-300 dark:bg-sand-700'"
+                    @click="toggleMembersCanInvite"
+                >
+                    <span
+                        class="inline-block size-5 transform rounded-full bg-white shadow transition-transform"
+                        :class="circle.members_can_invite ? 'translate-x-5' : 'translate-x-0.5'"
+                    />
+                </button>
+            </label>
         </div>
 
         <!-- Circle Info -->
         <div class="bg-white px-4 py-4 dark:bg-sand-900">
             <div class="flex items-center gap-3">
-                <button class="relative" @click="pickPhoto">
+                <button class="relative" :disabled="!circle.is_owner" @click="circle.is_owner && pickPhoto()">
                     <img
                         v-if="circle.photo"
                         :src="circle.photo"
@@ -209,7 +246,7 @@ function goBack() {
                             <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
                         </svg>
                     </div>
-                    <div class="absolute bottom-0 right-0 flex size-5 items-center justify-center rounded-full bg-sage-600 ring-2 ring-white dark:ring-sand-900">
+                    <div v-if="circle.is_owner" class="absolute bottom-0 right-0 flex size-5 items-center justify-center rounded-full bg-sage-600 ring-2 ring-white dark:ring-sand-900">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="size-3 text-white">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
                             <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
@@ -227,7 +264,7 @@ function goBack() {
 
         <!-- Members Section -->
         <div class="mt-2 bg-white dark:bg-sand-900">
-            <div class="border-b border-sand-100 px-4 py-3 dark:border-sand-800">
+            <div v-if="canInvite" class="border-b border-sand-100 px-4 py-3 dark:border-sand-800">
                 <!-- Invitation sent success -->
                 <div v-if="inviteSent" class="flex items-center gap-2 text-sm text-sage-600 dark:text-sage-400">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
@@ -257,10 +294,10 @@ function goBack() {
             </div>
 
             <!-- Members List -->
-            <div v-if="circle.members.length > 0" class="border-b border-sand-100 px-4 py-2 dark:border-sand-800">
+            <div v-if="members.length > 0" class="border-b border-sand-100 px-4 py-2 dark:border-sand-800">
                 <h3 class="text-sm font-semibold text-sand-700 dark:text-sand-300">{{ t('Members') }}</h3>
             </div>
-            <div v-for="member in circle.members" :key="member.id" class="flex items-center gap-3 border-b border-sand-50 px-4 py-3 dark:border-sand-800">
+            <div v-for="member in members" :key="member.id" class="flex items-center gap-3 border-b border-sand-50 px-4 py-3 dark:border-sand-800">
                 <Link :href="`/profiles/${member.username}`" class="flex flex-1 items-center gap-3">
                     <img
                         :src="member.avatar ?? `https://ui-avatars.com/api/?name=${member.name}&background=e5ece5&color=3a573a&size=64`"
@@ -272,7 +309,12 @@ function goBack() {
                         <p class="text-xs text-sand-500 dark:text-sand-400">@{{ member.username }}</p>
                     </div>
                 </Link>
-                <button class="text-sand-400 dark:text-sand-500" @click="removeMember(member.id)">
+                <span v-if="member.is_owner" :title="t('Owner')" class="text-sage-600 dark:text-sage-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-5">
+                        <path fill-rule="evenodd" d="M2.25 6.75a.75.75 0 0 1 1.183-.611l4.794 3.424 3.045-6.45a.75.75 0 0 1 1.356 0l3.045 6.45 4.794-3.424a.75.75 0 0 1 1.176.795l-2.26 9.04A2.25 2.25 0 0 1 17.25 18H6.75a2.25 2.25 0 0 1-2.183-1.726l-2.26-9.04a.75.75 0 0 1-.057-.484Zm4.5 13.5a.75.75 0 0 1 .75-.75h9a.75.75 0 0 1 0 1.5h-9a.75.75 0 0 1-.75-.75Z" clip-rule="evenodd" />
+                    </svg>
+                </span>
+                <button v-else-if="circle.is_owner" class="text-sand-400 dark:text-sand-500" @click="removeMember(member.id)">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M22 10.5h-6m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM4 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 10.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
                     </svg>
@@ -302,8 +344,22 @@ function goBack() {
                 </div>
             </template>
 
+            <!-- Leave Circle -->
+            <div v-if="!circle.is_owner" class="border-t border-sand-100 px-4 py-4 dark:border-sand-800">
+                <button class="text-sm font-medium text-blush-500" @click="leaveCircle">
+                    {{ t('Leave circle') }}
+                </button>
+            </div>
+
+            <!-- Delete Circle -->
+            <div v-if="circle.is_owner" class="border-t border-sand-100 px-4 py-4 dark:border-sand-800">
+                <button class="text-sm font-medium text-blush-500" @click="deleteCircle">
+                    {{ t('Delete circle') }}
+                </button>
+            </div>
+
             <!-- Empty Members State -->
-            <div v-if="circle.members.length === 0 && invitations.length === 0" class="px-4 py-8 text-center">
+            <div v-if="members.length === 0 && invitations.length === 0" class="px-4 py-8 text-center">
                 <p class="text-sm font-medium text-sand-600 dark:text-sand-300">{{ t('No members yet') }}</p>
                 <p class="mt-1 text-sm text-sand-400 dark:text-sand-500">{{ t('Add people by their username or invite them by email.') }}</p>
             </div>
