@@ -83,5 +83,15 @@
     "Cancel": "Cancel",
     "Edit bio": "Edit bio",
     "Add a bio...": "Add a bio...",
-    "No moments yet": "No moments yet"
+    "No moments yet": "No moments yet",
+
+    "Stay in the loop": "Stay in the loop",
+    "Enable notifications so you never miss a moment. We'll let you know when:": "Enable notifications so you never miss a moment. We'll let you know when:",
+    "New photos": "New photos",
+    "Someone in your circle shared a new moment": "Someone in your circle shared a new moment",
+    "Likes": "Likes",
+    "Someone liked your photo": "Someone liked your photo",
+    "Someone commented on your photo": "Someone commented on your photo",
+    "Enable notifications": "Enable notifications",
+    "Maybe later": "Maybe later"
 }

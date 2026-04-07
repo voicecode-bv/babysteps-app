@@ -20,7 +20,7 @@ class HandleNativeEdge
 
         $routeName = $request->route()?->getName();
 
-        if ($routeName === 'posts.create') {
+        if ($this->shouldClearEdge($routeName)) {
             Edge::clear();
 
             return $next($request);
@@ -29,6 +29,14 @@ class HandleNativeEdge
         $this->setupBottomNav($request);
 
         return $next($request);
+    }
+
+    protected function shouldClearEdge(?string $routeName): bool
+    {
+        return in_array($routeName, [
+            'posts.create',
+            'onboarding.notifications',
+        ]);
     }
 
     protected function setupBottomNav(Request $request): void

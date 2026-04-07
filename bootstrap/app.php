@@ -21,6 +21,10 @@ return Application::configure(basePath: dirname(__DIR__))
             AddLinkHeadersForPreloadedAssets::class,
         ]);
 
+        // Disable CSRF verification entirely for NativePHP mobile compatibility
+        // Android WebView has issues with XSRF-TOKEN cookie accessibility
+        $middleware->preventRequestForgery();
+
         $middleware->alias([
             'auth.token' => AuthenticateToken::class,
         ]);

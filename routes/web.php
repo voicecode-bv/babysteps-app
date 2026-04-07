@@ -6,9 +6,11 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\CircleActionController;
 use App\Http\Controllers\CircleController;
 use App\Http\Controllers\CreatePostController;
+use App\Http\Controllers\DeviceTokenController;
 use App\Http\Controllers\FeedController;
 use App\Http\Controllers\MediaProxyController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\Onboarding\NotificationController as OnboardingNotificationController;
 use App\Http\Controllers\PostActionController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
@@ -25,6 +27,8 @@ Route::get('/media-proxy', MediaProxyController::class)->name('media-proxy');
 
 Route::middleware(['auth.token', HandleNativeEdge::class])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    Route::post('/device-token', [DeviceTokenController::class, 'store'])->name('device-token.store');
+    Route::get('/onboarding/notifications', OnboardingNotificationController::class)->name('onboarding.notifications');
 
     Route::get('/', FeedController::class)->name('feed');
     Route::get('/posts/create', CreatePostController::class)->name('posts.create');

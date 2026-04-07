@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Native\Mobile\Providers\CameraServiceProvider;
 use Native\Mobile\Providers\DialogServiceProvider;
+use Native\Mobile\Providers\PushNotificationsServiceProvider;
 use Native\Mobile\Providers\SecureStorageServiceProvider;
 
 class NativeServiceProvider extends ServiceProvider
@@ -40,6 +41,7 @@ class NativeServiceProvider extends ServiceProvider
             SecureStorageServiceProvider::class,
             CameraServiceProvider::class,
             DialogServiceProvider::class,
+            PushNotificationsServiceProvider::class,
         ];
     }
 }

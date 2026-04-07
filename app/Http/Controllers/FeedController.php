@@ -11,11 +11,8 @@ class FeedController extends Controller
 {
     public function __invoke(ApiClient $apiClient): Response
     {
-
         return Inertia::render('Feed', [
             'posts' => Inertia::scroll(function () use ($apiClient) {
-
-                ray('scroll');
                 $page = request()->integer('page', 1);
                 $response = $apiClient->get('/feed?page='.$page);
 

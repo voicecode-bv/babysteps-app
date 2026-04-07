@@ -113,5 +113,15 @@
     ":name liked your post": ":name vindt je bericht leuk",
     ":name commented: :comment": ":name reageerde: :comment",
     ":name liked your comment": ":name vindt je reactie leuk",
-    ":name accepted your invitation to :circle": ":name heeft je uitnodiging voor :circle geaccepteerd"
+    ":name accepted your invitation to :circle": ":name heeft je uitnodiging voor :circle geaccepteerd",
+
+    "Stay in the loop": "Blijf op de hoogte",
+    "Enable notifications so you never miss a moment. We'll let you know when:": "Schakel meldingen in zodat je niets mist. We laten je weten wanneer:",
+    "New photos": "Nieuwe foto's",
+    "Someone in your circle shared a new moment": "Iemand in je kring heeft een nieuw moment gedeeld",
+    "Likes": "Likes",
+    "Someone liked your photo": "Iemand vindt je foto leuk",
+    "Someone commented on your photo": "Iemand heeft gereageerd op je foto",
+    "Enable notifications": "Meldingen inschakelen",
+    "Maybe later": "Misschien later"
 }

@@ -28,3 +28,4 @@ yarn-error.log
 
 # Credential files (keystores, private keys, etc.)
 /credentials/
+/service-account.json

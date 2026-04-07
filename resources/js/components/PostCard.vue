@@ -85,6 +85,16 @@ function timeAgo(dateString: string): string {
                     class="size-full object-cover"
                     loading="lazy"
                 />
+                <video
+                    v-else-if="post.media_type === 'video'"
+                    :src="post.media_url"
+                    class="size-full object-cover"
+                    playsinline
+                    muted
+                    loop
+                    controls
+                    preload="metadata"
+                />
                 <div v-else class="flex size-full items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-12 text-sand-300 dark:text-sand-600">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />

@@ -11,7 +11,7 @@
             <title>{{ config('app.name', 'Innerr') }}</title>
         </x-inertia::head>
     </head>
-    <body class="bg-sand-50 dark:bg-sand-900 font-sans antialiased">
+    <body class="bg-white dark:bg-sand-900 font-sans antialiased">
         <x-inertia::app />
     </body>
 </html>

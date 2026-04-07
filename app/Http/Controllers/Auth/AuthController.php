@@ -56,7 +56,7 @@ class AuthController extends Controller
 
         $this->syncLocalUser($result['user']);
 
-        return redirect()->route('feed');
+        return redirect()->route('onboarding.notifications');
     }
 
     public function logout(): RedirectResponse
