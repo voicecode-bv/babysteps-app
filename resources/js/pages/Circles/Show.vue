@@ -77,8 +77,10 @@ function updateCircle() {
     });
 }
 
-function deleteCircle() {
-    router.delete(`/circles/${props.circle.id}`);
+async function deleteCircle() {
+    await Dialog.alert()
+        .confirm(t('Delete circle'), t('Are you sure you want to delete this circle?'))
+        .id('delete-circle-confirm');
 }
 
 async function leaveCircle() {
@@ -137,6 +139,9 @@ function handleButtonPressed(payload: { index: number; label: string; id?: strin
     }
     if (payload.id === 'leave-circle-confirm' && payload.index === 1) {
         router.post(`/circles/${props.circle.id}/leave`);
+    }
+    if (payload.id === 'delete-circle-confirm' && payload.index === 1) {
+        router.delete(`/circles/${props.circle.id}`);
     }
 }
 
