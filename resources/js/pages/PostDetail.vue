@@ -2,7 +2,8 @@
 import { useTranslations } from '@/composables/useTranslations';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { Dialog, On, Off, Events } from '@nativephp/mobile';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 
 interface User {
     id: number;
@@ -25,6 +26,12 @@ interface Like {
     user_id: number;
 }
 
+interface Circle {
+    id: number;
+    name: string;
+    photo: string | null;
+}
+
 interface Post {
     id: number;
     media_url: string;
@@ -37,6 +44,7 @@ interface Post {
     likes: Like[];
     likes_count: number;
     comments_count: number;
+    circles?: Circle[];
 }
 
 const props = defineProps<{
@@ -48,6 +56,7 @@ const { t } = useTranslations();
 const page = usePage();
 const authUserId = computed(() => (page.props.auth as { user?: { id: number } })?.user?.id ?? null);
 const isLiked = computed(() => props.post.is_liked ?? false);
+const isOwner = computed(() => props.post.user.id === authUserId.value);
 const commentForm = useForm({ body: '' });
 const commentInput = ref<HTMLInputElement>();
 
@@ -84,6 +93,21 @@ function goBack() {
     window.history.back();
 }
 
+async function deletePost() {
+    await Dialog.alert()
+        .confirm(t('Delete post'), t('Are you sure you want to delete this post?'))
+        .id('delete-post-confirm');
+}
+
+function handleButtonPressed(payload: { index: number; id?: string | null }) {
+    if (payload.id === 'delete-post-confirm' && payload.index === 1) {
+        router.delete(`/posts/${props.post.id}`);
+    }
+}
+
+onMounted(() => On(Events.Alert.ButtonPressed, handleButtonPressed));
+onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
+
 function timeAgo(dateString: string): string {
     const date = new Date(dateString);
     const now = new Date();
@@ -103,6 +127,13 @@ function timeAgo(dateString: string): string {
             <button class="flex items-center text-sand-700 dark:text-sand-300" @click="goBack">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+                </svg>
+            </button>
+        </template>
+        <template v-if="isOwner" #header-right>
+            <button class="text-blush-500" @click="deletePost">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
                 </svg>
             </button>
         </template>
@@ -192,6 +223,32 @@ function timeAgo(dateString: string): string {
                     {{ ' ' + post.caption }}
                 </p>
                 <p class="mt-1 text-xs text-sand-400 dark:text-sand-500">{{ timeAgo(post.created_at) }}</p>
+            </div>
+
+            <!-- Shared in circles (owner only) -->
+            <div v-if="isOwner && post.circles && post.circles.length > 0" class="bg-white px-4 pb-3 dark:bg-sand-900">
+                <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-sand-400 dark:text-sand-500">{{ t('Shared in') }}</p>
+                <div class="flex flex-wrap gap-2">
+                    <Link
+                        v-for="circle in post.circles"
+                        :key="circle.id"
+                        :href="`/circles/${circle.id}`"
+                        class="flex items-center gap-2 rounded-full bg-sand-100 py-1 pl-1 pr-3 dark:bg-sand-800"
+                    >
+                        <img
+                            v-if="circle.photo"
+                            :src="circle.photo"
+                            :alt="circle.name"
+                            class="size-6 rounded-full object-cover"
+                        />
+                        <div v-else class="flex size-6 items-center justify-center rounded-full bg-sand-200 dark:bg-sand-700">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-3.5 text-sand-500 dark:text-sand-400">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
+                            </svg>
+                        </div>
+                        <span class="text-xs font-medium text-sand-700 dark:text-sand-200">{{ circle.name }}</span>
+                    </Link>
+                </div>
             </div>
 
             <!-- Comments Section -->
