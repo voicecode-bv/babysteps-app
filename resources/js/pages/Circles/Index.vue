@@ -2,6 +2,7 @@
 import { usePullToRefresh } from '@/composables/usePullToRefresh';
 import { useTranslations } from '@/composables/useTranslations';
 import AppLayout from '@/layouts/AppLayout.vue';
+import Button from '@/components/Button.vue';
 import { Deferred, Link, router, useForm } from '@inertiajs/vue3';
 import { computed, ref, useTemplateRef } from 'vue';
 
@@ -92,15 +93,15 @@ function createCircle() {
                     v-model="form.name"
                     type="text"
                     :placeholder="t('Circle name...')"
-                    class="flex-1 rounded-lg border border-sand-200 bg-sand-50 px-3 py-2 text-sm text-sand-800 placeholder-sand-400 focus:border-sand-400 focus:outline-none dark:border-sand-700 dark:bg-sand-800 dark:text-sand-100 dark:placeholder-sand-500"
+                    class="field flex-1"
                 />
-                <button
+                <Button
                     type="submit"
-                    class="rounded-lg bg-sand-500 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-sand-600"
+                    size="sm"
                     :disabled="form.processing || !form.name.trim()"
                 >
                     {{ t('Create') }}
-                </button>
+                </Button>
             </form>
             <p v-if="form.errors.name" class="mt-1 text-xs text-blush-500">{{ form.errors.name }}</p>
         </div>

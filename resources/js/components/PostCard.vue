@@ -145,8 +145,6 @@ function timeAgo(dateString: string): string {
         <!-- Caption -->
         <div v-if="post.caption" class="px-4 pb-1 pt-1">
             <p class="text-sm text-sand-800 dark:text-sand-200">
-                <span class="font-semibold">{{ post.user.name }}</span>
-                {{ ' ' }}
                 <template v-if="!showFullCaption && post.caption.length > 100">
                     {{ post.caption.substring(0, 100) }}...
                     <button class="text-sand-400 dark:text-sand-500" @click="showFullCaption = true">{{ t('more') }}</button>

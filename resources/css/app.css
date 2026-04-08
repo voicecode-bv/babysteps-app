@@ -40,4 +40,22 @@
     --color-blush-700: #a02e2e;
     --color-blush-800: #7a2323;
     --color-blush-900: #551919;
+
+    /* Brand palette aligned with innerr-website */
+    --color-cream: #fbf4ea;
+    --color-warmwhite: #fefaf3;
+    --color-teal: #1d5f5c;
+    --color-teal-light: #2a7a76;
+    --color-teal-muted: #4a9b97;
+    --color-night: #162020;
+    --color-accent: #c25a2e;
+    --color-accent-soft: #f4a47e;
+}
+
+@utility field {
+    @apply w-full rounded-full border-[1.5px] border-sand-200 bg-white px-5 py-4 text-sm font-light text-night placeholder-sand-400 outline-none transition-colors focus:border-teal dark:border-sand-700 dark:bg-sand-800 dark:text-sand-100 dark:placeholder-sand-500;
+}
+
+@utility field-area {
+    @apply w-full resize-none rounded-2xl border-[1.5px] border-sand-200 bg-white px-5 py-4 text-sm font-light text-night placeholder-sand-400 outline-none transition-colors focus:border-teal dark:border-sand-700 dark:bg-sand-800 dark:text-sand-100 dark:placeholder-sand-500;
 }

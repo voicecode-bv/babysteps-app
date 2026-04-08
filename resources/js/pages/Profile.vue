@@ -2,6 +2,7 @@
 import PostCard, { type PostData } from '@/components/PostCard.vue';
 import { useTranslations } from '@/composables/useTranslations';
 import AppLayout from '@/layouts/AppLayout.vue';
+import Button from '@/components/Button.vue';
 import { InfiniteScroll, router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { Camera, Dialog, On, Off, Events } from '@nativephp/mobile';
@@ -143,19 +144,19 @@ onUnmounted(() => {
                                 :placeholder="t('Write something about yourself...')"
                                 maxlength="150"
                                 rows="2"
-                                class="w-full resize-none rounded-lg border border-sand-200 bg-sand-50 px-3 py-2 text-sm text-sand-800 placeholder-sand-400 focus:border-sand-400 focus:outline-none dark:border-sand-700 dark:bg-sand-800 dark:text-sand-100 dark:placeholder-sand-500"
+                                class="field-area"
                             />
                             <div class="flex items-center justify-between">
                                 <span class="text-xs text-sand-400 dark:text-sand-500">{{ bioForm.bio.length }}/150</span>
                                 <div class="flex gap-2">
                                     <button type="button" class="text-sm text-sand-500 dark:text-sand-400" @click="cancelEditBio">{{ t('Cancel') }}</button>
-                                    <button
+                                    <Button
                                         type="submit"
-                                        class="rounded-lg bg-sand-500 px-3 py-1 text-sm font-medium text-white disabled:opacity-50 dark:bg-sand-600"
+                                        size="sm"
                                         :disabled="bioForm.processing"
                                     >
                                         {{ t('Save') }}
-                                    </button>
+                                    </Button>
                                 </div>
                             </div>
                         </form>
@@ -176,35 +177,33 @@ onUnmounted(() => {
                 <div v-if="isOwnProfile" class="mt-4">
                     <p class="mb-2 text-xs font-medium text-sand-500 dark:text-sand-400">{{ t('Language') }}</p>
                     <div class="flex gap-2">
-                        <button
-                            class="flex-1 rounded-lg border py-2.5 text-sm font-medium transition-colors"
-                            :class="currentLocale === 'nl'
-                                ? 'border-sand-500 bg-sand-500 text-white dark:border-sand-600 dark:bg-sand-600'
-                                : 'border-sand-200 text-sand-700 dark:border-sand-700 dark:text-sand-300'"
+                        <Button
+                            block
+                            :variant="currentLocale === 'nl' ? 'primary' : 'secondary'"
                             @click="setLocale('nl')"
                         >
                             Nederlands
-                        </button>
-                        <button
-                            class="flex-1 rounded-lg border py-2.5 text-sm font-medium transition-colors"
-                            :class="currentLocale === 'en'
-                                ? 'border-sand-500 bg-sand-500 text-white dark:border-sand-600 dark:bg-sand-600'
-                                : 'border-sand-200 text-sand-700 dark:border-sand-700 dark:text-sand-300'"
+                        </Button>
+                        <Button
+                            block
+                            :variant="currentLocale === 'en' ? 'primary' : 'secondary'"
                             @click="setLocale('en')"
                         >
                             English
-                        </button>
+                        </Button>
                     </div>
                 </div>
 
                 <!-- Logout -->
-                <button
+                <Button
                     v-if="isOwnProfile"
-                    class="mt-4 w-full rounded-lg border border-red-200 py-3 text-sm font-medium text-red-600 dark:border-red-800 dark:text-red-400"
+                    variant="danger"
+                    block
+                    class="mt-4"
                     @click="logout"
                 >
                     {{ t('Log out') }}
-                </button>
+                </Button>
             </div>
 
             <div class="h-2 bg-sand-100 dark:bg-sand-800" />

@@ -2,6 +2,7 @@
 import { usePullToRefresh } from '@/composables/usePullToRefresh';
 import { useTranslations } from '@/composables/useTranslations';
 import AppLayout from '@/layouts/AppLayout.vue';
+import Button from '@/components/Button.vue';
 import { Link, router, useForm } from '@inertiajs/vue3';
 import { Camera, Dialog, On, Off, Events } from '@nativephp/mobile';
 import { computed, onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
@@ -206,15 +207,15 @@ function goBack() {
                 <input
                     v-model="editForm.name"
                     type="text"
-                    class="flex-1 rounded-lg border border-sand-200 bg-sand-50 px-3 py-2 text-sm text-sand-800 placeholder-sand-400 focus:border-sage-400 focus:outline-none dark:border-sand-700 dark:bg-sand-800 dark:text-sand-100 dark:placeholder-sand-500"
+                    class="field flex-1"
                 />
-                <button
+                <Button
                     type="submit"
-                    class="rounded-lg bg-sage-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-sage-700"
+                    size="sm"
                     :disabled="editForm.processing || !editForm.name.trim()"
                 >
                     {{ t('Save') }}
-                </button>
+                </Button>
             </form>
             <p v-if="editForm.errors.name" class="-mt-2 text-xs text-blush-500">{{ editForm.errors.name }}</p>
 
@@ -284,15 +285,15 @@ function goBack() {
                             v-model="memberForm.identifier"
                             type="text"
                             :placeholder="t('Username or email...')"
-                            class="flex-1 rounded-lg border border-sand-200 bg-sand-50 px-3 py-2 text-sm text-sand-800 placeholder-sand-400 focus:border-sage-400 focus:outline-none dark:border-sand-700 dark:bg-sand-800 dark:text-sand-100 dark:placeholder-sand-500"
+                            class="field flex-1"
                         />
-                        <button
+                        <Button
                             type="submit"
-                            class="rounded-lg bg-sage-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-sage-700"
+                            size="sm"
                             :disabled="memberForm.processing || !memberForm.identifier.trim()"
                         >
                             {{ t('Invite') }}
-                        </button>
+                        </Button>
                     </form>
                     <p v-if="memberForm.errors.identifier" class="mt-1 text-xs text-blush-500">{{ memberForm.errors.identifier }}</p>
                 </template>

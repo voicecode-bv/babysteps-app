@@ -2,6 +2,7 @@
 import { Link, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import { useTranslations } from '@/composables/useTranslations';
+import Button from '@/components/Button.vue';
 
 const { t } = useTranslations();
 
@@ -40,7 +41,7 @@ function submit() {
                         name="name"
                         :placeholder="t('Your name')"
                         autocomplete="name"
-                        class="w-full rounded-xl border bg-white px-4 py-3.5 text-sm text-sand-800 placeholder-sand-400 shadow-sm focus:outline-none dark:bg-sand-800 dark:text-sand-100 dark:placeholder-sand-500"
+                        class="field"
                         :class="form.errors.name ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400' : 'border-sand-200 focus:border-sand-400 focus:ring-1 focus:ring-sand-400 dark:border-sand-700'"
                     />
                     <p v-if="form.errors.name" class="mt-1 text-xs text-blush-500">{{ form.errors.name }}</p>
@@ -53,7 +54,7 @@ function submit() {
                         name="email"
                         :placeholder="t('Email address')"
                         autocomplete="email"
-                        class="w-full rounded-xl border bg-white px-4 py-3.5 text-sm text-sand-800 placeholder-sand-400 shadow-sm focus:outline-none dark:bg-sand-800 dark:text-sand-100 dark:placeholder-sand-500"
+                        class="field"
                         :class="form.errors.email ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400' : 'border-sand-200 focus:border-sand-400 focus:ring-1 focus:ring-sand-400 dark:border-sand-700'"
                     />
                     <p v-if="form.errors.email" class="mt-1 text-xs text-blush-500">{{ form.errors.email }}</p>
@@ -66,7 +67,7 @@ function submit() {
                         name="username"
                         :placeholder="t('Username')"
                         autocomplete="username"
-                        class="w-full rounded-xl border bg-white px-4 py-3.5 text-sm text-sand-800 placeholder-sand-400 shadow-sm focus:outline-none dark:bg-sand-800 dark:text-sand-100 dark:placeholder-sand-500"
+                        class="field"
                         :class="form.errors.username ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400' : 'border-sand-200 focus:border-sand-400 focus:ring-1 focus:ring-sand-400 dark:border-sand-700'"
                     />
                     <p v-if="form.errors.username" class="mt-1 text-xs text-blush-500">{{ form.errors.username }}</p>
@@ -79,7 +80,7 @@ function submit() {
                         name="password"
                         :placeholder="t('Password')"
                         autocomplete="new-password"
-                        class="w-full rounded-xl border bg-white px-4 py-3.5 pr-16 text-sm text-sand-800 placeholder-sand-400 shadow-sm focus:outline-none dark:bg-sand-800 dark:text-sand-100 dark:placeholder-sand-500"
+                        class="field pr-16"
                         :class="form.errors.password ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400' : 'border-sand-200 focus:border-sand-400 focus:ring-1 focus:ring-sand-400 dark:border-sand-700'"
                     />
                     <button
@@ -92,13 +93,14 @@ function submit() {
                     <p v-if="form.errors.password" class="mt-1 text-xs text-blush-500">{{ form.errors.password }}</p>
                 </div>
 
-                <button
+                <Button
                     type="submit"
-                    class="w-full rounded-xl bg-sand-500 py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-sand-600 disabled:opacity-50 dark:bg-sand-400 dark:text-sand-900 dark:hover:bg-sand-300"
+                    size="lg"
+                    block
                     :disabled="form.processing || !form.email || !form.name || !form.username || !form.password"
                 >
                     {{ form.processing ? '...' : t('Create account') }}
-                </button>
+                </Button>
             </form>
 
             <p class="mt-5 max-w-xs text-center text-xs leading-relaxed text-sand-400 dark:text-sand-500">
