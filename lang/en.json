@@ -102,5 +102,12 @@
     "Someone liked your photo": "Someone liked your photo",
     "Someone commented on your photo": "Someone commented on your photo",
     "Enable notifications": "Enable notifications",
-    "Maybe later": "Maybe later"
+    "Maybe later": "Maybe later",
+
+    "Push notifications": "Push notifications",
+    "Post liked": "Post liked",
+    "Post commented": "Post commented",
+    "Comment liked": "Comment liked",
+    "New circle post": "New circle post",
+    "Circle invitation accepted": "Circle invitation accepted"
 }

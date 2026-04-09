@@ -31,8 +31,7 @@ class CircleActionController extends Controller
     public function update(Request $request, int $circle): RedirectResponse
     {
         $validated = $request->validate([
-            'name' => ['sometimes', 'required', 'string', 'max:255'],
-            'members_can_invite' => ['sometimes', 'boolean'],
+            'name' => ['required', 'string', 'max:255'],
         ]);
 
         $response = $this->apiClient->put("/circles/{$circle}", $validated);
@@ -42,6 +41,21 @@ class CircleActionController extends Controller
         }
 
         return back()->withErrors(['name' => $response->json('message', __('Failed to update circle'))]);
+    }
+
+    public function updateSettings(Request $request, int $circle): RedirectResponse
+    {
+        $validated = $request->validate([
+            'members_can_invite' => ['required', 'boolean'],
+        ]);
+
+        $response = $this->apiClient->put("/circles/{$circle}/settings", $validated);
+
+        if ($response->successful()) {
+            return back();
+        }
+
+        return back()->withErrors(['members_can_invite' => $response->json('message', __('Failed to update settings'))]);
     }
 
     public function destroy(int $circle): RedirectResponse

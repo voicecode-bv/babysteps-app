@@ -1,8 +1,9 @@
 <script setup lang="ts">
+import Button from '@/components/Button.vue';
+import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import { usePullToRefresh } from '@/composables/usePullToRefresh';
 import { useTranslations } from '@/composables/useTranslations';
 import AppLayout from '@/layouts/AppLayout.vue';
-import Button from '@/components/Button.vue';
 import { Link, router, useForm } from '@inertiajs/vue3';
 import { Camera, Dialog, On, Off, Events } from '@nativephp/mobile';
 import { computed, onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
@@ -63,8 +64,8 @@ const editForm = useForm({ name: props.circle.name });
 
 function toggleMembersCanInvite() {
     router.put(
-        `/circles/${props.circle.id}`,
-        { name: props.circle.name, members_can_invite: !props.circle.members_can_invite },
+        `/circles/${props.circle.id}/settings`,
+        { members_can_invite: !props.circle.members_can_invite },
         { preserveScroll: true },
     );
 }
@@ -178,28 +179,7 @@ function goBack() {
             </button>
         </template>
 
-        <!-- Pull to refresh indicator -->
-        <div
-            class="flex items-center justify-center overflow-hidden transition-[height] duration-200"
-            :class="{ 'duration-0': pullDistance > 0 && !isRefreshing }"
-            :style="{ height: `${pullDistance}px` }"
-        >
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-                stroke="currentColor"
-                class="size-6 text-sand-400 dark:text-sand-500"
-                :class="{ 'animate-spin': isRefreshing }"
-            >
-                <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.992 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182M2.985 14.652"
-                />
-            </svg>
-        </div>
+        <PullToRefreshIndicator :pull-distance="pullDistance" :is-refreshing="isRefreshing" />
 
         <!-- Edit Circle -->
         <div v-if="isEditing" class="space-y-4 border-b border-sand-200 bg-white px-4 py-4 dark:border-sand-800 dark:bg-sand-900">
@@ -231,7 +211,7 @@ function goBack() {
                 >
                     <span
                         class="inline-block size-5 transform rounded-full bg-white shadow transition-transform"
-                        :class="circle.members_can_invite ? 'translate-x-5' : 'translate-x-0.5'"
+                        :class="circle.members_can_invite ? 'translate-x-[1.375rem]' : 'translate-x-0.5'"
                     />
                 </button>
             </label>
@@ -282,14 +262,15 @@ function goBack() {
                 <template v-else>
                     <form class="flex items-center gap-2" @submit.prevent="addMember">
                         <input
-                            v-model="memberForm.identifier"
+                            :value="memberForm.identifier"
                             type="text"
                             :placeholder="t('Username or email...')"
                             class="field flex-1"
+                            @input="memberForm.identifier = ($event.target as HTMLInputElement).value.toLowerCase()"
                         />
                         <Button
                             type="submit"
-                            size="sm"
+                            size="lg"
                             :disabled="memberForm.processing || !memberForm.identifier.trim()"
                         >
                             {{ t('Invite') }}

@@ -10,6 +10,7 @@ use App\Http\Controllers\DeviceTokenController;
 use App\Http\Controllers\FeedController;
 use App\Http\Controllers\MediaProxyController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\NotificationPreferenceController;
 use App\Http\Controllers\Onboarding\NotificationController as OnboardingNotificationController;
 use App\Http\Controllers\PostActionController;
 use App\Http\Controllers\PostController;
@@ -23,6 +24,7 @@ Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
 Route::post('/register', [AuthController::class, 'register'])->name('register.submit');
 Route::get('/auth/verify', [AuthController::class, 'verify'])->name('auth.verify');
 
+Route::put('/locale', [LoginController::class, 'updateLocale'])->name('locale.update');
 Route::get('/media-proxy', MediaProxyController::class)->name('media-proxy');
 
 Route::middleware(['auth.token', HandleNativeEdge::class])->group(function () {
@@ -53,12 +55,16 @@ Route::middleware(['auth.token', HandleNativeEdge::class])->group(function () {
     Route::delete('/profile/avatar', [ProfileController::class, 'deleteAvatar'])->name('profile.delete-avatar');
     Route::put('/profile/locale', [ProfileController::class, 'updateLocale'])->name('profile.update-locale');
 
+    Route::get('/profile/notification-preferences', [NotificationPreferenceController::class, 'index'])->name('profile.notification-preferences');
+    Route::put('/profile/notification-preferences', [NotificationPreferenceController::class, 'update'])->name('profile.notification-preferences.update');
+
     Route::get('/circles', [CircleController::class, 'index'])->name('circles.index');
     Route::get('/circles/{circle}', [CircleController::class, 'show'])->name('circles.show')->whereNumber('circle');
     Route::post('/circles', [CircleActionController::class, 'store'])->name('circles.store');
     Route::post('/circles/{circle}/photo', [CircleActionController::class, 'updatePhoto'])->name('circles.update-photo')->whereNumber('circle');
     Route::delete('/circles/{circle}/photo', [CircleActionController::class, 'deletePhoto'])->name('circles.delete-photo')->whereNumber('circle');
     Route::put('/circles/{circle}', [CircleActionController::class, 'update'])->name('circles.update')->whereNumber('circle');
+    Route::put('/circles/{circle}/settings', [CircleActionController::class, 'updateSettings'])->name('circles.update-settings')->whereNumber('circle');
     Route::delete('/circles/{circle}', [CircleActionController::class, 'destroy'])->name('circles.destroy')->whereNumber('circle');
     Route::post('/circles/{circle}/members', [CircleActionController::class, 'addMember'])->name('circles.members.store')->whereNumber('circle');
     Route::post('/circle-invitations/{invitation}/accept', [CircleActionController::class, 'acceptInvitation'])->name('circle-invitations.accept')->whereNumber('invitation');

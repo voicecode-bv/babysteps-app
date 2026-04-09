@@ -4,6 +4,19 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
+@layer base {
+    * {
+        -webkit-user-select: none;
+        user-select: none;
+    }
+
+    input,
+    textarea {
+        -webkit-user-select: text;
+        user-select: text;
+    }
+}
+
 @theme inline {
     --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
@@ -50,6 +63,12 @@
     --color-night: #162020;
     --color-accent: #c25a2e;
     --color-accent-soft: #f4a47e;
+}
+
+#app {
+    @apply fixed inset-0 flex flex-col bg-white text-sand-900 dark:bg-sand-900 dark:text-sand-100;
+    padding-bottom: 6.25rem;
+    top: var(--inset-top, 0px);
 }
 
 @utility field {

@@ -34,6 +34,39 @@ const currentLocale = computed(() => page.props.locale as string);
 const isEditingBio = ref(false);
 const bioForm = useForm({ bio: props.profile.bio ?? '' });
 
+interface NotificationPreferences {
+    post_liked: boolean;
+    post_commented: boolean;
+    comment_liked: boolean;
+    new_circle_post: boolean;
+    circle_invitation_accepted: boolean;
+}
+
+const notificationPreferences = ref<NotificationPreferences | null>(null);
+const loadingPreferences = ref(false);
+
+async function loadNotificationPreferences() {
+    loadingPreferences.value = true;
+    try {
+        const response = await fetch('/profile/notification-preferences');
+        if (response.ok) {
+            notificationPreferences.value = await response.json();
+        }
+    } finally {
+        loadingPreferences.value = false;
+    }
+}
+
+function togglePreference(key: keyof NotificationPreferences) {
+    if (!notificationPreferences.value) return;
+
+    notificationPreferences.value[key] = !notificationPreferences.value[key];
+
+    router.put('/profile/notification-preferences', notificationPreferences.value, {
+        preserveScroll: true,
+    });
+}
+
 function saveBio() {
     bioForm.put('/profile/bio', {
         preserveScroll: true,
@@ -84,6 +117,10 @@ function handleButtonPressed(payload: { index: number; label: string; id?: strin
 onMounted(() => {
     On(Events.Alert.ButtonPressed, handleButtonPressed);
     On(Events.Gallery.MediaSelected, handleMediaSelected);
+
+    if (isOwnProfile.value) {
+        loadNotificationPreferences();
+    }
 });
 
 onUnmounted(() => {
@@ -173,6 +210,8 @@ onUnmounted(() => {
                     </template>
                 </div>
 
+                <div v-if="isOwnProfile" class="mx-0 mt-4 border-b border-sand-100 dark:border-sand-800" />
+
                 <!-- Language -->
                 <div v-if="isOwnProfile" class="mt-4">
                     <p class="mb-2 text-xs font-medium text-sand-500 dark:text-sand-400">{{ t('Language') }}</p>
@@ -193,6 +232,39 @@ onUnmounted(() => {
                         </Button>
                     </div>
                 </div>
+
+                <div v-if="isOwnProfile && notificationPreferences" class="mt-4 border-b border-sand-100 dark:border-sand-800" />
+
+                <!-- Notification Preferences -->
+                <div v-if="isOwnProfile && notificationPreferences" class="mt-4">
+                    <p class="mb-2 text-xs font-medium text-sand-500 dark:text-sand-400">{{ t('Push notifications') }}</p>
+                    <div class="space-y-3">
+                        <label v-for="(label, key) in {
+                            post_liked: t('Post liked'),
+                            post_commented: t('Post commented'),
+                            comment_liked: t('Comment liked'),
+                            new_circle_post: t('New circle post'),
+                            circle_invitation_accepted: t('Circle invitation accepted'),
+                        } as Record<string, string>" :key="key" class="flex items-center justify-between">
+                            <span class="text-sm text-sand-700 dark:text-sand-200">{{ label }}</span>
+                            <button
+                                type="button"
+                                role="switch"
+                                :aria-checked="notificationPreferences[key as keyof NotificationPreferences]"
+                                :class="notificationPreferences[key as keyof NotificationPreferences] ? 'bg-teal' : 'bg-sand-300 dark:bg-sand-600'"
+                                class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors"
+                                @click="togglePreference(key as keyof NotificationPreferences)"
+                            >
+                                <span
+                                    :class="notificationPreferences[key as keyof NotificationPreferences] ? 'translate-x-5.5' : 'translate-x-0.5'"
+                                    class="pointer-events-none mt-0.5 size-5 rounded-full bg-white shadow transition-transform"
+                                />
+                            </button>
+                        </label>
+                    </div>
+                </div>
+
+                <div v-if="isOwnProfile" class="mt-4 border-b border-sand-100 dark:border-sand-800" />
 
                 <!-- Logout -->
                 <Button

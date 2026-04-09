@@ -16,6 +16,11 @@ export interface PostData {
         username: string;
         avatar: string | null;
     };
+    circles?: {
+        id: number;
+        name: string;
+        photo: string | null;
+    }[];
     is_liked: boolean;
     likes_count: number;
     comments_count: number;
@@ -106,9 +111,31 @@ function timeAgo(dateString: string): string {
 
         <!-- Action Buttons -->
         <div class="flex items-center gap-4 px-4 py-3">
-            <button v-if="post.user.id !== authUserId" @click="toggleLike">
+            <div class="flex items-center gap-1">
+                <button v-if="post.user.id !== authUserId" @click="toggleLike">
+                    <svg
+                        v-if="!isLiked"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="1.5"
+                        stroke="currentColor"
+                        class="size-6 text-sand-600 dark:text-sand-300"
+                    >
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+                    </svg>
+                    <svg
+                        v-else
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        class="size-6 text-blush-400"
+                    >
+                        <path d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z" />
+                    </svg>
+                </button>
                 <svg
-                    v-if="!isLiked"
+                    v-else
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
@@ -118,33 +145,19 @@ function timeAgo(dateString: string): string {
                 >
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
                 </svg>
-                <svg
-                    v-else
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    class="size-6 text-blush-400"
-                >
-                    <path d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z" />
-                </svg>
-            </button>
-            <Link :href="`/posts/${post.id}`" class="text-sand-600 dark:text-sand-300">
+                <span v-if="likesCount > 0" class="text-sm font-medium text-sand-700 dark:text-sand-200">{{ likesCount }}</span>
+            </div>
+            <Link :href="`/posts/${post.id}`" class="flex items-center gap-1 text-sand-600 dark:text-sand-300">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337Z" />
                 </svg>
+                <span v-if="post.comments_count > 0" class="text-sm font-medium text-sand-700 dark:text-sand-200">{{ post.comments_count }}</span>
             </Link>
         </div>
 
-        <!-- Likes Count -->
-        <div class="px-4">
-            <p v-if="likesCount > 0" class="text-sm font-medium text-sand-700 dark:text-sand-200">
-                {{ likesCount === 1 ? t(':count person likes this', { count: likesCount }) : t(':count people like this', { count: likesCount }) }}
-            </p>
-        </div>
-
-        <!-- Caption -->
-        <div v-if="post.caption" class="px-4 pb-1 pt-1">
-            <p class="text-sm text-sand-800 dark:text-sand-200">
+        <div class="px-4 space-y-2">
+            <!-- Caption -->
+            <p v-if="post.caption" class="text-sm text-sand-800 dark:text-sand-200">
                 <template v-if="!showFullCaption && post.caption.length > 100">
                     {{ post.caption.substring(0, 100) }}...
                     <button class="text-sand-400 dark:text-sand-500" @click="showFullCaption = true">{{ t('more') }}</button>
@@ -153,21 +166,37 @@ function timeAgo(dateString: string): string {
                     {{ post.caption }}
                 </template>
             </p>
+
+            <!-- Timestamp -->
+            <p class="text-xs text-sand-400 dark:text-sand-500">{{ timeAgo(post.created_at) }}</p>
         </div>
 
-        <!-- Comments Preview -->
-        <div class="px-4 pb-3">
-            <Link
-                v-if="post.comments_count > 0"
-                :href="`/posts/${post.id}`"
-                class="text-sm text-sand-400 dark:text-sand-500"
-            >
-                {{ post.comments_count === 1 ? t('View the comment') : t('View all :count comments', { count: post.comments_count }) }}
-            </Link>
-            <p class="mt-1 text-xs text-sand-400 dark:text-sand-500">{{ timeAgo(post.created_at) }}</p>
+        <!-- Circles -->
+        <div v-if="post.circles && post.circles.length > 0" class="px-4 py-3">
+            <div class="flex flex-wrap gap-1.5">
+                <Link
+                    v-for="circle in post.circles"
+                    :key="circle.id"
+                    :href="`/circles/${circle.id}`"
+                    class="flex items-center gap-1.5 rounded-full bg-sand-100 py-0.5 pl-0.5 pr-2.5 dark:bg-sand-800"
+                >
+                    <img
+                        v-if="circle.photo"
+                        :src="circle.photo"
+                        :alt="circle.name"
+                        class="size-5 rounded-full object-cover"
+                    />
+                    <div v-else class="flex size-5 items-center justify-center rounded-full bg-sand-200 dark:bg-sand-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-3 text-sand-500 dark:text-sand-400">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
+                        </svg>
+                    </div>
+                    <span class="text-xs font-medium text-sand-700 dark:text-sand-200">{{ circle.name }}</span>
+                </Link>
+            </div>
         </div>
 
         <!-- Separator -->
-        <div class="mx-4 border-b border-sand-100 dark:border-sand-800" />
+        <div class="my-2 mx-4 border-b border-sand-100 dark:border-sand-800" />
     </article>
 </template>

@@ -1,15 +1,21 @@
 <script setup lang="ts">
-import { Link, useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { Link, router, useForm, usePage } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
 import { useTranslations } from '@/composables/useTranslations';
 import Button from '@/components/Button.vue';
 
 const { t } = useTranslations();
+const page = usePage();
+const currentLocale = computed(() => page.props.locale as string);
 
 const form = useForm({
     email: '',
     password: '',
 });
+
+function setLocale(locale: string) {
+    router.put('/locale', { locale }, { preserveScroll: true });
+}
 
 const showPassword = ref(false);
 
@@ -21,7 +27,14 @@ function submit() {
 </script>
 
 <template>
-    <div class="flex min-h-dvh flex-col bg-sand-50 px-8 text-sand-900 dark:bg-sand-900 dark:text-sand-100">
+    <div class="relative flex min-h-dvh flex-col bg-sand-50 px-8 text-sand-900 dark:bg-sand-900 dark:text-sand-100">
+        <button
+            class="absolute right-4 top-4 p-2 text-2xl"
+            @click="setLocale(currentLocale === 'nl' ? 'en' : 'nl')"
+        >
+            {{ currentLocale === 'nl' ? '🇳🇱' : '🇬🇧' }}
+        </button>
+
         <div class="flex flex-1 flex-col items-center justify-center">
             <div class="mb-8 text-center">
                 <h1 class="font-display text-5xl font-semibold tracking-tight text-teal">innerr<span class="text-accent">.</span></h1>
@@ -72,7 +85,7 @@ function submit() {
                 </Button>
             </form>
 
-            <button class="mt-4 text-xs font-medium text-sand-600 dark:text-sand-400">{{ t('Forgot password?') }}</button>
+            <!-- <button class="mt-4 text-xs font-medium text-sand-600 dark:text-sand-400">{{ t('Forgot password?') }}</button> -->
         </div>
 
         <div class="border-t border-sand-200 pb-8 pt-4 dark:border-sand-800">

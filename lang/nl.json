@@ -132,5 +132,12 @@
     "Someone liked your photo": "Iemand vindt je foto leuk",
     "Someone commented on your photo": "Iemand heeft gereageerd op je foto",
     "Enable notifications": "Meldingen inschakelen",
-    "Maybe later": "Misschien later"
+    "Maybe later": "Misschien later",
+
+    "Push notifications": "Pushmeldingen",
+    "Post liked": "Bericht geliked",
+    "Post commented": "Reactie op bericht",
+    "Comment liked": "Reactie geliked",
+    "New circle post": "Nieuw bericht in kring",
+    "Circle invitation accepted": "Uitnodiging geaccepteerd"
 }
