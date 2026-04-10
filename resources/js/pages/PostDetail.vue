@@ -328,7 +328,7 @@ function timeAgo(dateString: string): string {
                             </div>
                         </div>
                         <div class="mt-1 flex flex-shrink-0 flex-col items-center gap-0.5">
-                            <button v-if="comment.user.id !== authUserId" @click="toggleCommentLike(comment)">
+                            <button @click="toggleCommentLike(comment)">
                                 <svg
                                     v-if="!comment.is_liked"
                                     xmlns="http://www.w3.org/2000/svg"
@@ -374,7 +374,7 @@ function timeAgo(dateString: string): string {
                             </div>
                         </div>
                         <div class="mt-1 flex flex-shrink-0 flex-col items-center gap-0.5">
-                            <button v-if="reply.user.id !== authUserId" @click="toggleCommentLike(reply)">
+                            <button @click="toggleCommentLike(reply)">
                                 <svg
                                     v-if="!reply.is_liked"
                                     xmlns="http://www.w3.org/2000/svg"
