@@ -24,6 +24,8 @@ export function usePullToRefresh({
     function onTouchStart(e: TouchEvent) {
         if (isRefreshing.value) return;
 
+        // Reset any stale state from a previously interrupted gesture
+        pullDistance.value = 0;
         startY = e.touches[0].clientY;
         tracking = true;
         activated = false;
@@ -62,11 +64,23 @@ export function usePullToRefresh({
             isRefreshing.value = true;
             pullDistance.value = threshold * 0.6;
 
+            // Safety timeout: reset if the refresh promise never resolves
+            // (e.g. network error that doesn't trigger onFinish)
+            const safetyTimer = setTimeout(() => {
+                isRefreshing.value = false;
+                pullDistance.value = 0;
+                tracking = false;
+                activated = false;
+            }, 15_000);
+
             try {
                 await onRefresh();
             } finally {
+                clearTimeout(safetyTimer);
                 isRefreshing.value = false;
                 pullDistance.value = 0;
+                tracking = false;
+                activated = false;
             }
         } else {
             pullDistance.value = 0;
