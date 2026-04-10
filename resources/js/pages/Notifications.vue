@@ -119,6 +119,8 @@ function notificationMessage(notification: Notification): string {
             return t(':name commented: :comment', { name, comment: notification.data.comment_body ?? '' });
         case 'comment-liked':
             return t(':name liked your comment', { name });
+        case 'comment-replied':
+            return t(':name replied: :comment', { name, comment: notification.data.comment_body ?? '' });
         case 'new-circle-post':
             return t(':name shared a new moment', { name });
         case 'circle-invitation-accepted':

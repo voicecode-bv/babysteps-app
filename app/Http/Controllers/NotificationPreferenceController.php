@@ -22,6 +22,7 @@ class NotificationPreferenceController extends Controller
             'post_liked' => ['required', 'boolean'],
             'post_commented' => ['required', 'boolean'],
             'comment_liked' => ['required', 'boolean'],
+            'comment_replied' => ['required', 'boolean'],
             'new_circle_post' => ['required', 'boolean'],
             'circle_invitation_accepted' => ['required', 'boolean'],
         ]);

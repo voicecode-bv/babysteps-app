@@ -34,6 +34,7 @@ interface NotificationPreferences {
     post_liked: boolean;
     post_commented: boolean;
     comment_liked: boolean;
+    comment_replied: boolean;
     new_circle_post: boolean;
     circle_invitation_accepted: boolean;
 }
@@ -230,6 +231,7 @@ onUnmounted(() => {
                             post_liked: t('Post liked'),
                             post_commented: t('Post commented'),
                             comment_liked: t('Comment liked'),
+                            comment_replied: t('Comment replied'),
                             new_circle_post: t('New circle post'),
                             circle_invitation_accepted: t('Circle invitation accepted'),
                         } as Record<string, string>" :key="key" class="flex items-center justify-between">
