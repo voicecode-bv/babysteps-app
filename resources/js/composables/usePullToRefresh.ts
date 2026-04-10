@@ -75,10 +75,17 @@ export function usePullToRefresh({
         activated = false;
     }
 
+    function onTouchCancel() {
+        tracking = false;
+        activated = false;
+        pullDistance.value = 0;
+    }
+
     function bind(el: HTMLElement) {
         el.addEventListener('touchstart', onTouchStart, { passive: true });
         el.addEventListener('touchmove', onTouchMove, { passive: false });
         el.addEventListener('touchend', onTouchEnd, { passive: true });
+        el.addEventListener('touchcancel', onTouchCancel, { passive: true });
         boundTarget = el;
     }
 
@@ -87,6 +94,7 @@ export function usePullToRefresh({
         boundTarget.removeEventListener('touchstart', onTouchStart);
         boundTarget.removeEventListener('touchmove', onTouchMove);
         boundTarget.removeEventListener('touchend', onTouchEnd);
+        boundTarget.removeEventListener('touchcancel', onTouchCancel);
         boundTarget = null;
     }
 
