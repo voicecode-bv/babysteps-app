@@ -24,6 +24,14 @@ function submit() {
 
 <template>
     <div class="flex min-h-dvh flex-col bg-sand-50 px-8 text-sand-900 dark:bg-sand-900 dark:text-sand-100">
+        <div class="flex justify-start pt-4">
+            <Link href="/login" class="p-2 text-sand-600 dark:text-sand-400">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+                </svg>
+            </Link>
+        </div>
+
         <div class="flex flex-1 flex-col items-center justify-center">
             <div class="mb-4 text-center">
                 <h1 class="font-display text-4xl font-bold tracking-tight text-sand-800 dark:text-sand-100">{{ t('Innerr') }}</h1>
