@@ -136,6 +136,7 @@
     ":name liked your post": ":name vindt je bericht leuk",
     ":name commented: :comment": ":name reageerde: :comment",
     ":name liked your comment": ":name vindt je reactie leuk",
+    ":name replied: :comment": ":name reageerde op je reactie: :comment",
     ":name shared a new moment": ":name heeft een nieuw moment gedeeld",
     ":name accepted your invitation to :circle": ":name heeft je uitnodiging voor :circle geaccepteerd",
 
@@ -153,6 +154,7 @@
     "Post liked": "Bericht geliked",
     "Post commented": "Reactie op bericht",
     "Comment liked": "Reactie geliked",
+    "Comment replied": "Reactie op jouw reactie",
     "New circle post": "Nieuw bericht in kring",
     "Circle invitation accepted": "Uitnodiging geaccepteerd"
 }

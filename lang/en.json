@@ -101,6 +101,7 @@
     "Are you sure you want to delete this circle?": "Are you sure you want to delete this circle?",
 
     ":name shared a new moment": ":name shared a new moment",
+    ":name replied: :comment": ":name replied: :comment",
     "moment": "moment",
     "moments": "moments",
     "Write something about yourself...": "Write something about yourself...",
@@ -123,6 +124,7 @@
     "Post liked": "Post liked",
     "Post commented": "Post commented",
     "Comment liked": "Comment liked",
+    "Comment replied": "Reply to your comment",
     "New circle post": "New circle post",
     "Circle invitation accepted": "Circle invitation accepted"
 }
