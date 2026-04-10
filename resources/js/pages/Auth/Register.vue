@@ -33,13 +33,10 @@ function submit() {
         </div>
 
         <div class="flex flex-1 flex-col items-center justify-center">
-            <div class="mb-4 text-center">
-                <h1 class="font-display text-4xl font-bold tracking-tight text-sand-800 dark:text-sand-100">{{ t('Innerr') }}</h1>
+            <div class="mb-8 text-center">
+                <h1 class="font-display text-5xl font-semibold tracking-tight text-teal">innerr<span class="text-accent">.</span></h1>
+                <p class="mt-2 text-sm text-sand-500 dark:text-sand-400">{{ t('Safely share with those who matter') }}</p>
             </div>
-
-            <p class="mb-6 max-w-xs text-center text-sm text-sand-500 dark:text-sand-400">
-                {{ t('Share the most beautiful moments with your family and friends.') }}
-            </p>
 
             <form class="w-full max-w-sm space-y-3" @submit.prevent="submit">
                 <div>
