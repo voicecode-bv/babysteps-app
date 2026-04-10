@@ -84,9 +84,8 @@ export function usePullToRefresh({
             }
         } else {
             pullDistance.value = 0;
+            activated = false;
         }
-
-        activated = false;
     }
 
     function onTouchCancel() {
