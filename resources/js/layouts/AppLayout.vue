@@ -36,6 +36,8 @@ defineExpose({ mainRef });
         </div>
     </header>
 
+    <slot name="above" />
+
     <main ref="mainRef" class="flex-1 overflow-y-auto">
         <slot />
     </main>
