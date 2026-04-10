@@ -69,6 +69,7 @@ function submit() {
                         autocomplete="username"
                         class="field"
                         :class="form.errors.username ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400' : 'border-sand-200 focus:border-sand-400 focus:ring-1 focus:ring-sand-400 dark:border-sand-700'"
+                        @input="form.username = ($event.target as HTMLInputElement).value.toLowerCase()"
                     />
                     <p v-if="form.errors.username" class="mt-1 text-xs text-blush-500">{{ form.errors.username }}</p>
                 </div>
