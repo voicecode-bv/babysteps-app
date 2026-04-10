@@ -27,13 +27,15 @@ function submit() {
 </script>
 
 <template>
-    <div class="relative flex min-h-dvh flex-col bg-sand-50 px-8 text-sand-900 dark:bg-sand-900 dark:text-sand-100">
-        <button
-            class="absolute right-4 top-4 p-2 text-2xl"
-            @click="setLocale(currentLocale === 'nl' ? 'en' : 'nl')"
-        >
-            {{ currentLocale === 'nl' ? '🇳🇱' : '🇬🇧' }}
-        </button>
+    <div class="flex h-dvh flex-col bg-sand-50 px-8 text-sand-900 dark:bg-sand-900 dark:text-sand-100">
+        <div class="flex justify-end pt-4">
+            <button
+                class="p-2 text-2xl"
+                @click="setLocale(currentLocale === 'nl' ? 'en' : 'nl')"
+            >
+                {{ currentLocale === 'nl' ? '🇳🇱' : '🇬🇧' }}
+            </button>
+        </div>
 
         <div class="flex flex-1 flex-col items-center justify-center">
             <div class="mb-8 text-center">
@@ -83,16 +85,13 @@ function submit() {
                 >
                     {{ form.processing ? '...' : t('Log in') }}
                 </Button>
+
+                <Link href="/register">
+                    <Button variant="secondary" size="lg" block>
+                        {{ t('Create an account') }}
+                    </Button>
+                </Link>
             </form>
-
-            <!-- <button class="mt-4 text-xs font-medium text-sand-600 dark:text-sand-400">{{ t('Forgot password?') }}</button> -->
-        </div>
-
-        <div class="border-t border-sand-200 pb-8 pt-4 dark:border-sand-800">
-            <p class="text-center text-sm text-sand-500 dark:text-sand-400">
-                {{ t('New to Innerr?') }}
-                <Link href="/register" class="font-semibold text-sand-600 dark:text-sand-400">{{ t('Create an account') }}</Link>
-            </p>
         </div>
     </div>
 </template>
