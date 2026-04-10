@@ -7,6 +7,7 @@
     "New": "Nieuw",
     "Notifications": "Meldingen",
     "Profile": "Profiel",
+    "Settings": "Instellingen",
 
     "Invite": "Uitnodigen",
     "Family": "Familie",
@@ -15,8 +16,19 @@
     "Babysitter": "Oppas",
     "Neighbors": "Buren",
 
+    "New post": "Nieuw bericht",
     "Share your first moment": "Deel je eerste moment",
     "Add a photo and share it with your family and friends.": "Voeg een foto toe en deel het met je familie en vrienden.",
+    "Selected photo": "Geselecteerde foto",
+    "Add a photo": "Voeg een foto toe",
+    "Write a caption...": "Schrijf een bijschrift...",
+    "Share with circles": "Delen met kringen",
+    "Select all": "Alles selecteren",
+    "Deselect all": "Alles deselecteren",
+    "Share": "Delen",
+    "Take a photo": "Maak een foto",
+    "Record a video": "Neem een video op",
+    "Choose from gallery": "Kies uit galerij",
 
     "Photo": "Foto",
     "Moment": "Moment",
@@ -35,7 +47,9 @@
     "No comments yet": "Nog geen reacties",
     "Share what you think!": "Laat weten wat je ervan vindt!",
     "Reply": "Beantwoorden",
+    "Replying to": "Reageren op",
     "Write a comment...": "Schrijf een reactie...",
+    "Write a reply...": "Schrijf een antwoord...",
     "Post": "Plaatsen",
 
     "Email address": "E-mailadres",
@@ -122,6 +136,7 @@
     ":name liked your post": ":name vindt je bericht leuk",
     ":name commented: :comment": ":name reageerde: :comment",
     ":name liked your comment": ":name vindt je reactie leuk",
+    ":name shared a new moment": ":name heeft een nieuw moment gedeeld",
     ":name accepted your invitation to :circle": ":name heeft je uitnodiging voor :circle geaccepteerd",
 
     "Stay in the loop": "Blijf op de hoogte",

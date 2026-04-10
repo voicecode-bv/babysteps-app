@@ -96,6 +96,7 @@ class PostActionController extends Controller
     {
         $validated = $request->validate([
             'body' => ['required', 'string', 'max:1000'],
+            'parent_comment_id' => ['nullable', 'integer'],
         ]);
 
         $this->apiClient->post("/posts/{$post}/comments", $validated);

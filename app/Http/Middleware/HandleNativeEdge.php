@@ -2,8 +2,11 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\ApiClient;
 use Closure;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Native\Mobile\Edge\Edge;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -39,9 +42,30 @@ class HandleNativeEdge
         ]);
     }
 
+    protected function getUnreadNotificationCount(): int
+    {
+        $count = Cache::get('unread_notification_count');
+
+        if ($count !== null) {
+            return $count;
+        }
+
+        try {
+            $response = app(ApiClient::class)->get('/notifications/unread-count');
+            $count = $response->successful() ? (int) $response->json('count', 0) : 0;
+        } catch (ConnectionException) {
+            $count = 0;
+        }
+
+        Cache::put('unread_notification_count', $count, 60);
+
+        return $count;
+    }
+
     protected function setupBottomNav(Request $request): void
     {
         $routeName = $request->route()?->getName();
+        $unreadCount = $this->getUnreadNotificationCount();
 
         $contextIndex = Edge::startContext();
 
@@ -84,17 +108,17 @@ class HandleNativeEdge
             'label' => __('Notifications'),
             'url' => route('notifications'),
             'active' => $routeName === 'notifications',
-            'badge' => null,
+            'badge' => $unreadCount > 0 ? (string) $unreadCount : null,
             'badge_color' => null,
             'news' => false,
         ]);
 
         Edge::add('bottom_nav_item', [
-            'id' => 'profile',
-            'icon' => 'person',
-            'label' => __('Profile'),
-            'url' => route('profiles.show', ['username' => auth()->user()->username]),
-            'active' => str_starts_with($routeName ?? '', 'profiles'),
+            'id' => 'settings',
+            'icon' => 'gearshape',
+            'label' => __('Settings'),
+            'url' => route('settings'),
+            'active' => $routeName === 'settings',
             'badge' => null,
             'badge_color' => null,
             'news' => false,

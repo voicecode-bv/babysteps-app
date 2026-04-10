@@ -191,7 +191,7 @@ function goBack() {
                 />
                 <Button
                     type="submit"
-                    size="sm"
+                    size="lg"
                     :disabled="editForm.processing || !editForm.name.trim()"
                 >
                     {{ t('Save') }}

@@ -41,7 +41,7 @@ interface CircleInvitation {
     };
 }
 
-defineProps<{
+const props = defineProps<{
     circleInvitations?: CircleInvitation[];
     notifications: {
         data: Notification[];
@@ -49,6 +49,8 @@ defineProps<{
 }>();
 
 const { t } = useTranslations();
+
+const hasUnread = computed(() => props.notifications?.data?.some((n) => !n.read_at) ?? false);
 
 const layoutRef = useTemplateRef<InstanceType<typeof AppLayout>>('layout');
 const containerRef = computed(() => layoutRef.value?.mainRef ?? null);
@@ -113,6 +115,8 @@ function notificationMessage(notification: Notification): string {
             return t(':name commented: :comment', { name, comment: notification.data.comment_body ?? '' });
         case 'comment-liked':
             return t(':name liked your comment', { name });
+        case 'new-circle-post':
+            return t(':name shared a new moment', { name });
         case 'circle-invitation-accepted':
             return t(':name accepted your invitation to :circle', { name, circle: notification.data.circle_name ?? '' });
         default:
@@ -149,6 +153,18 @@ function timeAgo(dateString: string): string {
 
 <template>
     <AppLayout ref="layout" :title="t('Notifications')">
+        <template #header-right>
+            <button
+                v-if="hasUnread"
+                class="text-sand-600 dark:text-sand-300"
+                @click="markAllAsRead"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                </svg>
+            </button>
+        </template>
 
         <PullToRefreshIndicator :pull-distance="pullDistance" :is-refreshing="isRefreshing" />
 

@@ -7,6 +7,7 @@
     "New": "New",
     "Notifications": "Notifications",
     "Profile": "Profile",
+    "Settings": "Settings",
 
     "Invite": "Invite",
     "Family": "Family",
@@ -15,8 +16,19 @@
     "Babysitter": "Babysitter",
     "Neighbors": "Neighbors",
 
+    "New post": "New post",
     "Share your first moment": "Share your first moment",
     "Add a photo and share it with your family and friends.": "Add a photo and share it with your family and friends.",
+    "Selected photo": "Selected photo",
+    "Add a photo": "Add a photo",
+    "Write a caption...": "Write a caption...",
+    "Share with circles": "Share with circles",
+    "Select all": "Select all",
+    "Deselect all": "Deselect all",
+    "Share": "Share",
+    "Take a photo": "Take a photo",
+    "Record a video": "Record a video",
+    "Choose from gallery": "Choose from gallery",
 
     "Photo": "Photo",
     "Moment": "Moment",
@@ -35,7 +47,9 @@
     "No comments yet": "No comments yet",
     "Share what you think!": "Share what you think!",
     "Reply": "Reply",
+    "Replying to": "Replying to",
     "Write a comment...": "Write a comment...",
+    "Write a reply...": "Write a reply...",
     "Post": "Post",
 
     "Email address": "Email address",
@@ -86,6 +100,7 @@
     "Are you sure you want to delete this post?": "Are you sure you want to delete this post?",
     "Are you sure you want to delete this circle?": "Are you sure you want to delete this circle?",
 
+    ":name shared a new moment": ":name shared a new moment",
     "moment": "moment",
     "moments": "moments",
     "Write something about yourself...": "Write something about yourself...",

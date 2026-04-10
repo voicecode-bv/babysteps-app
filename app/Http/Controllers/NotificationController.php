@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Services\ApiClient;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -37,6 +38,8 @@ class NotificationController extends Controller
     public function markAsRead(ApiClient $apiClient): RedirectResponse
     {
         $apiClient->post('/notifications/read', request()->only('ids'));
+
+        Cache::forget('unread_notification_count');
 
         return back();
     }
