@@ -14,7 +14,8 @@ class SettingsController extends Controller
     {
         $username = auth()->user()->username;
 
-        $profile = Cache::get('settings_profile');
+        $cacheKey = 'settings_profile_'.auth()->id();
+        $profile = Cache::get($cacheKey);
 
         if ($profile === null) {
             try {
@@ -25,7 +26,7 @@ class SettingsController extends Controller
                 }
 
                 $profile = $apiClient->proxyMediaUrls($profileResponse->json('data'));
-                Cache::put('settings_profile', $profile, 300);
+                Cache::put($cacheKey, $profile, 300);
             } catch (ConnectionException) {
                 abort(503);
             }
