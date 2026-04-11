@@ -37,7 +37,6 @@ class HandleNativeEdge
     protected function shouldClearEdge(?string $routeName): bool
     {
         return in_array($routeName, [
-            'posts.create',
             'onboarding.notifications',
         ]);
     }
@@ -96,7 +95,7 @@ class HandleNativeEdge
             'icon' => 'plus.circle',
             'label' => __('New'),
             'url' => route('posts.create'),
-            'active' => false,
+            'active' => $routeName === 'posts.create',
             'badge' => null,
             'badge_color' => null,
             'news' => false,
