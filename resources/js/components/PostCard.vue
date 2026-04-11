@@ -42,11 +42,25 @@ function toggleLike() {
     if (isLiked.value) {
         isLiked.value = false;
         likesCount.value--;
-        router.delete(`/posts/${props.post.id}/like`, { preserveScroll: true, preserveState: true });
+        router.delete(`/posts/${props.post.id}/like`, {
+            preserveScroll: true,
+            preserveState: true,
+            onError: () => {
+                isLiked.value = true;
+                likesCount.value++;
+            },
+        });
     } else {
         isLiked.value = true;
         likesCount.value++;
-        router.post(`/posts/${props.post.id}/like`, {}, { preserveScroll: true, preserveState: true });
+        router.post(`/posts/${props.post.id}/like`, {}, {
+            preserveScroll: true,
+            preserveState: true,
+            onError: () => {
+                isLiked.value = false;
+                likesCount.value--;
+            },
+        });
     }
 }
 

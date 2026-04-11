@@ -46,6 +46,7 @@ interface Post {
     user: User;
     comments: Comment[];
     likes: Like[];
+    is_liked: boolean;
     likes_count: number;
     comments_count: number;
     circles?: Circle[];
@@ -59,7 +60,8 @@ const { t } = useTranslations();
 
 const page = usePage();
 const authUserId = computed(() => (page.props.auth as { user?: { id: number } })?.user?.id ?? null);
-const isLiked = computed(() => props.post.is_liked ?? false);
+const isLiked = ref(props.post.is_liked ?? false);
+const likesCount = ref(props.post.likes_count);
 const isOwner = computed(() => props.post.user.id === authUserId.value);
 const commentForm = useForm({ body: '', parent_comment_id: null as number | null });
 const commentInput = ref<HTMLInputElement>();
@@ -96,17 +98,52 @@ function cancelReply() {
 
 function toggleLike() {
     if (isLiked.value) {
-        router.delete(`/posts/${props.post.id}/like`, { preserveScroll: true });
+        isLiked.value = false;
+        likesCount.value--;
+        router.delete(`/posts/${props.post.id}/like`, {
+            preserveScroll: true,
+            onError: () => {
+                isLiked.value = true;
+                likesCount.value++;
+            },
+        });
     } else {
-        router.post(`/posts/${props.post.id}/like`, {}, { preserveScroll: true });
+        isLiked.value = true;
+        likesCount.value++;
+        router.post(`/posts/${props.post.id}/like`, {}, {
+            preserveScroll: true,
+            onError: () => {
+                isLiked.value = false;
+                likesCount.value--;
+            },
+        });
     }
 }
 
 function toggleCommentLike(comment: Comment) {
+    const previousIsLiked = comment.is_liked;
+    const previousLikesCount = comment.likes_count;
+
     if (comment.is_liked) {
-        router.delete(`/comments/${comment.id}/like`, { preserveScroll: true });
+        comment.is_liked = false;
+        comment.likes_count--;
+        router.delete(`/comments/${comment.id}/like`, {
+            preserveScroll: true,
+            onError: () => {
+                comment.is_liked = previousIsLiked;
+                comment.likes_count = previousLikesCount;
+            },
+        });
     } else {
-        router.post(`/comments/${comment.id}/like`, {}, { preserveScroll: true });
+        comment.is_liked = true;
+        comment.likes_count++;
+        router.post(`/comments/${comment.id}/like`, {}, {
+            preserveScroll: true,
+            onError: () => {
+                comment.is_liked = previousIsLiked;
+                comment.likes_count = previousLikesCount;
+            },
+        });
     }
 }
 
@@ -250,7 +287,7 @@ function timeAgo(dateString: string): string {
                         >
                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
                         </svg>
-                        <span v-if="post.likes_count > 0" class="text-sm font-medium text-sand-700 dark:text-sand-200">{{ post.likes_count }}</span>
+                        <span v-if="likesCount > 0" class="text-sm font-medium text-sand-700 dark:text-sand-200">{{ likesCount }}</span>
                     </div>
                     <button class="flex items-center gap-1 text-sand-600 dark:text-sand-300" @click="focusComment">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
