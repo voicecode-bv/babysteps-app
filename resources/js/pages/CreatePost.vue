@@ -228,7 +228,7 @@ function submit() {
             <div class="px-4 py-4">
                 <button
                     :disabled="!isValidForm || form.processing"
-                    class="w-full rounded-xl bg-sand-600 py-3 text-sm font-semibold text-white transition-colors active:bg-sand-700 disabled:opacity-40 dark:bg-sand-500 dark:active:bg-sand-400"
+                    class="w-full rounded-xl bg-sage-600 py-3 text-sm font-semibold text-white transition-colors active:bg-sage-700 disabled:opacity-40 dark:bg-sage-500 dark:active:bg-sage-400"
                     @click="submit"
                 >
                     {{ t('Share') }}

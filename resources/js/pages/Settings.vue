@@ -138,7 +138,7 @@ onUnmounted(() => {
 
         <PullToRefreshIndicator :pull-distance="pullDistance" :is-refreshing="isRefreshing" />
 
-        <div>
+        <div class="pb-24">
             <div class="bg-white px-4 py-6 dark:bg-sand-900">
                 <!-- Avatar & Name -->
                 <div class="flex items-center gap-4">

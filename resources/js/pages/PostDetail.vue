@@ -173,52 +173,74 @@ function timeAgo(dateString: string): string {
 
         <PullToRefreshIndicator :pull-distance="pullDistance" :is-refreshing="isRefreshing" />
 
-        <div>
-            <!-- Post Header -->
-            <div class="flex items-center gap-3 bg-white px-4 py-3 dark:bg-sand-900">
-                <Link :href="`/profiles/${post.user.username}`">
+        <div class="pb-24">
+            <div>
+                <!-- Post Header -->
+                <div class="flex items-center gap-3 bg-white px-4 py-3 dark:bg-sand-900">
+                    <Link :href="`/profiles/${post.user.username}`">
+                        <img
+                            :src="post.user.avatar ?? `https://ui-avatars.com/api/?name=${post.user.name}&background=f0dcc6&color=5c3f24&size=64`"
+                            :alt="post.user.name"
+                            class="size-10 rounded-full object-cover ring-2 ring-sand-200 dark:ring-sand-700"
+                        />
+                    </Link>
+                    <div class="flex-1">
+                        <Link :href="`/profiles/${post.user.username}`" class="text-sm font-semibold text-sand-800 dark:text-sand-100">{{ post.user.name }}</Link>
+                        <p v-if="post.location" class="text-xs text-sand-500 dark:text-sand-400">{{ post.location }}</p>
+                    </div>
+                </div>
+
+                <!-- Post Media -->
+                <div class="relative aspect-square w-full bg-sand-100 dark:bg-sand-800">
                     <img
-                        :src="post.user.avatar ?? `https://ui-avatars.com/api/?name=${post.user.name}&background=f0dcc6&color=5c3f24&size=64`"
-                        :alt="post.user.name"
-                        class="size-10 rounded-full object-cover ring-2 ring-sand-200 dark:ring-sand-700"
+                        v-if="post.media_type === 'image'"
+                        :src="post.media_url"
+                        :alt="post.caption ?? t('Photo')"
+                        class="size-full object-cover"
                     />
-                </Link>
-                <div class="flex-1">
-                    <Link :href="`/profiles/${post.user.username}`" class="text-sm font-semibold text-sand-800 dark:text-sand-100">{{ post.user.name }}</Link>
-                    <p v-if="post.location" class="text-xs text-sand-500 dark:text-sand-400">{{ post.location }}</p>
+                    <video
+                        v-else-if="post.media_type === 'video'"
+                        :src="post.media_url"
+                        class="size-full object-cover"
+                        playsinline
+                        controls
+                        preload="metadata"
+                    />
+                    <div v-else class="flex size-full items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-16 text-sand-300 dark:text-sand-600">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.91 11.672a.375.375 0 0 1 0 .656l-5.603 3.113a.375.375 0 0 1-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112Z" />
+                        </svg>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Post Media -->
-            <div class="relative aspect-square w-full bg-sand-100 dark:bg-sand-800">
-                <img
-                    v-if="post.media_type === 'image'"
-                    :src="post.media_url"
-                    :alt="post.caption ?? t('Photo')"
-                    class="size-full object-cover"
-                />
-                <video
-                    v-else-if="post.media_type === 'video'"
-                    :src="post.media_url"
-                    class="size-full object-cover"
-                    playsinline
-                    controls
-                    preload="metadata"
-                />
-                <div v-else class="flex size-full items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-16 text-sand-300 dark:text-sand-600">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.91 11.672a.375.375 0 0 1 0 .656l-5.603 3.113a.375.375 0 0 1-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112Z" />
-                    </svg>
-                </div>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="flex items-center gap-4 bg-white px-4 py-3 dark:bg-sand-900">
-                <div class="flex items-center gap-1">
-                    <button v-if="post.user.id !== authUserId" @click="toggleLike">
+                <!-- Action Buttons -->
+                <div class="flex items-center gap-4 bg-white px-4 py-3 dark:bg-sand-900">
+                    <div class="flex items-center gap-1">
+                        <button v-if="post.user.id !== authUserId" @click="toggleLike">
+                            <svg
+                                v-if="!isLiked"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke-width="1.5"
+                                stroke="currentColor"
+                                class="size-6 text-sand-600 dark:text-sand-300"
+                            >
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+                            </svg>
+                            <svg
+                                v-else
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                                class="size-6 text-blush-400"
+                            >
+                                <path d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z" />
+                            </svg>
+                        </button>
                         <svg
-                            v-if="!isLiked"
+                            v-else
                             xmlns="http://www.w3.org/2000/svg"
                             fill="none"
                             viewBox="0 0 24 24"
@@ -228,212 +250,193 @@ function timeAgo(dateString: string): string {
                         >
                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
                         </svg>
-                        <svg
-                            v-else
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                            class="size-6 text-blush-400"
-                        >
-                            <path d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z" />
-                        </svg>
-                    </button>
-                    <svg
-                        v-else
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke-width="1.5"
-                        stroke="currentColor"
-                        class="size-6 text-sand-600 dark:text-sand-300"
-                    >
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
-                    </svg>
-                    <span v-if="post.likes_count > 0" class="text-sm font-medium text-sand-700 dark:text-sand-200">{{ post.likes_count }}</span>
-                </div>
-                <button class="flex items-center gap-1 text-sand-600 dark:text-sand-300" @click="focusComment">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337Z" />
-                    </svg>
-                    <span v-if="post.comments_count > 0" class="text-sm font-medium text-sand-700 dark:text-sand-200">{{ post.comments_count }}</span>
-                </button>
-            </div>
-
-            <!-- Caption -->
-            <div v-if="post.caption" class="bg-white px-4 pb-3 dark:bg-sand-900">
-                <p class="text-sm text-sand-800 dark:text-sand-200">
-                    <span class="font-semibold">{{ post.user.name }}</span>
-                    {{ ' ' + post.caption }}
-                </p>
-                <p class="mt-1 text-xs text-sand-400 dark:text-sand-500">{{ timeAgo(post.created_at) }}</p>
-            </div>
-
-            <!-- Shared in circles (owner only) -->
-            <div v-if="isOwner && post.circles && post.circles.length > 0" class="bg-white px-4 pb-3 dark:bg-sand-900">
-                <div class="flex flex-wrap gap-2">
-                    <Link
-                        v-for="circle in post.circles"
-                        :key="circle.id"
-                        :href="`/circles/${circle.id}`"
-                        class="flex items-center gap-2 rounded-full bg-sand-100 py-1 pl-1 pr-3 dark:bg-sand-800"
-                    >
-                        <img
-                            v-if="circle.photo"
-                            :src="circle.photo"
-                            :alt="circle.name"
-                            class="size-6 rounded-full object-cover"
-                        />
-                        <div v-else class="flex size-6 items-center justify-center rounded-full bg-sand-200 dark:bg-sand-700">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-3.5 text-sand-500 dark:text-sand-400">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
-                            </svg>
-                        </div>
-                        <span class="text-xs font-medium text-sand-700 dark:text-sand-200">{{ circle.name }}</span>
-                    </Link>
-                </div>
-            </div>
-
-            <!-- Comments Section -->
-            <div class="mt-2 bg-white dark:bg-sand-900">
-                <div class="border-b border-sand-100 px-4 py-3 dark:border-sand-800">
-                    <h2 class="text-sm font-semibold text-sand-700 dark:text-sand-300">
-                        {{ t('Comments') }}
-                        <span v-if="post.comments_count > 0" class="font-normal text-sand-400 dark:text-sand-500">({{ post.comments_count }})</span>
-                    </h2>
-                </div>
-
-                <div v-if="post.comments.length === 0" class="px-4 py-8 text-center">
-                    <p class="text-sm font-medium text-sand-600 dark:text-sand-300">{{ t('No comments yet') }}</p>
-                    <p class="mt-1 text-sm text-sand-400 dark:text-sand-500">{{ t('Share what you think!') }}</p>
-                </div>
-
-                <div v-for="comment in post.comments" :key="comment.id">
-                    <!-- Top-level comment -->
-                    <div class="flex gap-3 border-b border-sand-50 px-4 py-3 dark:border-sand-800">
-                        <Link :href="`/profiles/${comment.user.username}`" class="mt-0.5 flex-shrink-0">
-                            <img
-                                :src="comment.user.avatar ?? `https://ui-avatars.com/api/?name=${comment.user.name}&background=f0dcc6&color=5c3f24&size=64`"
-                                :alt="comment.user.name"
-                                class="size-8 rounded-full object-cover"
-                            />
-                        </Link>
-                        <div class="flex-1">
-                            <p class="text-sm text-sand-800 dark:text-sand-200">
-                                <Link :href="`/profiles/${comment.user.username}`" class="font-semibold">{{ comment.user.name }}</Link>
-                                {{ ' ' + comment.body }}
-                            </p>
-                            <div class="mt-1 flex items-center gap-3">
-                                <span class="text-xs text-sand-400 dark:text-sand-500">{{ timeAgo(comment.created_at) }}</span>
-                                <button class="text-xs font-medium text-sand-500 dark:text-sand-400" @click="replyTo(comment)">{{ t('Reply') }}</button>
-                            </div>
-                        </div>
-                        <div class="mt-1 flex flex-shrink-0 flex-col items-center gap-0.5">
-                            <button @click="toggleCommentLike(comment)">
-                                <svg
-                                    v-if="!comment.is_liked"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke-width="1.5"
-                                    stroke="currentColor"
-                                    class="size-4 text-sand-400 dark:text-sand-500"
-                                >
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
-                                </svg>
-                                <svg
-                                    v-else
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    viewBox="0 0 24 24"
-                                    fill="currentColor"
-                                    class="size-4 text-blush-400"
-                                >
-                                    <path d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z" />
-                                </svg>
-                            </button>
-                            <span v-if="comment.likes_count > 0" class="text-[10px] text-sand-400 dark:text-sand-500">{{ comment.likes_count }}</span>
-                        </div>
+                        <span v-if="post.likes_count > 0" class="text-sm font-medium text-sand-700 dark:text-sand-200">{{ post.likes_count }}</span>
                     </div>
+                    <button class="flex items-center gap-1 text-sand-600 dark:text-sand-300" @click="focusComment">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337Z" />
+                        </svg>
+                        <span v-if="post.comments_count > 0" class="text-sm font-medium text-sand-700 dark:text-sand-200">{{ post.comments_count }}</span>
+                    </button>
+                </div>
 
-                    <!-- Replies -->
-                    <div v-for="reply in comment.replies" :key="reply.id" class="flex gap-3 border-b border-sand-50 py-3 pl-14 pr-4 dark:border-sand-800">
-                        <Link :href="`/profiles/${reply.user.username}`" class="mt-0.5 flex-shrink-0">
+                <!-- Caption -->
+                <div v-if="post.caption" class="bg-white px-4 pb-3 dark:bg-sand-900">
+                    <p class="text-sm text-sand-800 dark:text-sand-200">
+                        <span class="font-semibold">{{ post.user.name }}</span>
+                        {{ ' ' + post.caption }}
+                    </p>
+                    <p class="mt-1 text-xs text-sand-400 dark:text-sand-500">{{ timeAgo(post.created_at) }}</p>
+                </div>
+
+                <!-- Shared in circles (owner only) -->
+                <div v-if="isOwner && post.circles && post.circles.length > 0" class="bg-white px-4 pb-3 dark:bg-sand-900">
+                    <div class="flex flex-wrap gap-2">
+                        <Link
+                            v-for="circle in post.circles"
+                            :key="circle.id"
+                            :href="`/circles/${circle.id}`"
+                            class="flex items-center gap-2 rounded-full bg-sand-100 py-1 pl-1 pr-3 dark:bg-sand-800"
+                        >
                             <img
-                                :src="reply.user.avatar ?? `https://ui-avatars.com/api/?name=${reply.user.name}&background=f0dcc6&color=5c3f24&size=64`"
-                                :alt="reply.user.name"
+                                v-if="circle.photo"
+                                :src="circle.photo"
+                                :alt="circle.name"
                                 class="size-6 rounded-full object-cover"
                             />
+                            <div v-else class="flex size-6 items-center justify-center rounded-full bg-sand-200 dark:bg-sand-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-3.5 text-sand-500 dark:text-sand-400">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
+                                </svg>
+                            </div>
+                            <span class="text-xs font-medium text-sand-700 dark:text-sand-200">{{ circle.name }}</span>
                         </Link>
-                        <div class="flex-1">
-                            <p class="text-sm text-sand-800 dark:text-sand-200">
-                                <Link :href="`/profiles/${reply.user.username}`" class="font-semibold">{{ reply.user.name }}</Link>
-                                {{ ' ' + reply.body }}
-                            </p>
-                            <div class="mt-1 flex items-center gap-3">
-                                <span class="text-xs text-sand-400 dark:text-sand-500">{{ timeAgo(reply.created_at) }}</span>
-                                <button class="text-xs font-medium text-sand-500 dark:text-sand-400" @click="replyTo(comment)">{{ t('Reply') }}</button>
+                    </div>
+                </div>
+
+                <!-- Comments Section -->
+                <div class="mt-2 bg-white dark:bg-sand-900">
+                    <div class="border-b border-sand-100 px-4 py-3 dark:border-sand-800">
+                        <h2 class="text-sm font-semibold text-sand-700 dark:text-sand-300">
+                            {{ t('Comments') }}
+                            <span v-if="post.comments_count > 0" class="font-normal text-sand-400 dark:text-sand-500">({{ post.comments_count }})</span>
+                        </h2>
+                    </div>
+
+                    <div v-if="post.comments.length === 0" class="px-4 py-8 text-center">
+                        <p class="text-sm font-medium text-sand-600 dark:text-sand-300">{{ t('No comments yet') }}</p>
+                        <p class="mt-1 text-sm text-sand-400 dark:text-sand-500">{{ t('Share what you think!') }}</p>
+                    </div>
+
+                    <div v-for="comment in post.comments" :key="comment.id">
+                        <!-- Top-level comment -->
+                        <div class="flex gap-3 border-b border-sand-50 px-4 py-3 dark:border-sand-800">
+                            <Link :href="`/profiles/${comment.user.username}`" class="mt-0.5 flex-shrink-0">
+                                <img
+                                    :src="comment.user.avatar ?? `https://ui-avatars.com/api/?name=${comment.user.name}&background=f0dcc6&color=5c3f24&size=64`"
+                                    :alt="comment.user.name"
+                                    class="size-8 rounded-full object-cover"
+                                />
+                            </Link>
+                            <div class="flex-1">
+                                <p class="text-sm text-sand-800 dark:text-sand-200">
+                                    <Link :href="`/profiles/${comment.user.username}`" class="font-semibold">{{ comment.user.name }}</Link>
+                                    {{ ' ' + comment.body }}
+                                </p>
+                                <div class="mt-1 flex items-center gap-3">
+                                    <span class="text-xs text-sand-400 dark:text-sand-500">{{ timeAgo(comment.created_at) }}</span>
+                                    <button class="text-xs font-medium text-sand-500 dark:text-sand-400" @click="replyTo(comment)">{{ t('Reply') }}</button>
+                                </div>
+                            </div>
+                            <div class="mt-1 flex flex-shrink-0 flex-col items-center gap-0.5">
+                                <button @click="toggleCommentLike(comment)">
+                                    <svg
+                                        v-if="!comment.is_liked"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke-width="1.5"
+                                        stroke="currentColor"
+                                        class="size-4 text-sand-400 dark:text-sand-500"
+                                    >
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+                                    </svg>
+                                    <svg
+                                        v-else
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 24 24"
+                                        fill="currentColor"
+                                        class="size-4 text-blush-400"
+                                    >
+                                        <path d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z" />
+                                    </svg>
+                                </button>
+                                <span v-if="comment.likes_count > 0" class="text-[10px] text-sand-400 dark:text-sand-500">{{ comment.likes_count }}</span>
                             </div>
                         </div>
-                        <div class="mt-1 flex flex-shrink-0 flex-col items-center gap-0.5">
-                            <button @click="toggleCommentLike(reply)">
-                                <svg
-                                    v-if="!reply.is_liked"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke-width="1.5"
-                                    stroke="currentColor"
-                                    class="size-4 text-sand-400 dark:text-sand-500"
-                                >
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
-                                </svg>
-                                <svg
-                                    v-else
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    viewBox="0 0 24 24"
-                                    fill="currentColor"
-                                    class="size-4 text-blush-400"
-                                >
-                                    <path d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z" />
-                                </svg>
-                            </button>
-                            <span v-if="reply.likes_count > 0" class="text-[10px] text-sand-400 dark:text-sand-500">{{ reply.likes_count }}</span>
+
+                        <!-- Replies -->
+                        <div v-for="reply in comment.replies" :key="reply.id" class="flex gap-3 border-b border-sand-50 py-3 pl-14 pr-4 dark:border-sand-800">
+                            <Link :href="`/profiles/${reply.user.username}`" class="mt-0.5 flex-shrink-0">
+                                <img
+                                    :src="reply.user.avatar ?? `https://ui-avatars.com/api/?name=${reply.user.name}&background=f0dcc6&color=5c3f24&size=64`"
+                                    :alt="reply.user.name"
+                                    class="size-6 rounded-full object-cover"
+                                />
+                            </Link>
+                            <div class="flex-1">
+                                <p class="text-sm text-sand-800 dark:text-sand-200">
+                                    <Link :href="`/profiles/${reply.user.username}`" class="font-semibold">{{ reply.user.name }}</Link>
+                                    {{ ' ' + reply.body }}
+                                </p>
+                                <div class="mt-1 flex items-center gap-3">
+                                    <span class="text-xs text-sand-400 dark:text-sand-500">{{ timeAgo(reply.created_at) }}</span>
+                                    <button class="text-xs font-medium text-sand-500 dark:text-sand-400" @click="replyTo(comment)">{{ t('Reply') }}</button>
+                                </div>
+                            </div>
+                            <div class="mt-1 flex flex-shrink-0 flex-col items-center gap-0.5">
+                                <button @click="toggleCommentLike(reply)">
+                                    <svg
+                                        v-if="!reply.is_liked"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke-width="1.5"
+                                        stroke="currentColor"
+                                        class="size-4 text-sand-400 dark:text-sand-500"
+                                    >
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+                                    </svg>
+                                    <svg
+                                        v-else
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 24 24"
+                                        fill="currentColor"
+                                        class="size-4 text-blush-400"
+                                    >
+                                        <path d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z" />
+                                    </svg>
+                                </button>
+                                <span v-if="reply.likes_count > 0" class="text-[10px] text-sand-400 dark:text-sand-500">{{ reply.likes_count }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Comment Input -->
+            <div class="border-t border-sand-200 bg-white dark:border-sand-800 dark:bg-sand-900">
+                <div v-if="replyingTo" class="flex items-center justify-between border-b border-sand-100 px-4 py-2 dark:border-sand-800">
+                    <span class="text-xs text-sand-500 dark:text-sand-400">
+                        {{ t('Replying to') }} <span class="font-semibold">{{ replyingTo.user.name }}</span>
+                    </span>
+                    <button class="text-xs font-medium text-sand-500 dark:text-sand-400" @click="cancelReply">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="flex items-center gap-3 px-4 py-3">
+                    <div class="size-8 flex-shrink-0 rounded-full bg-sand-200 dark:bg-sand-800" />
+                    <form class="flex flex-1 items-center gap-2" @submit.prevent="submitComment">
+                        <input
+                            ref="commentInput"
+                            v-model="commentForm.body"
+                            type="text"
+                            :placeholder="replyingTo ? t('Write a reply...') : t('Write a comment...')"
+                            class="flex-1 bg-transparent text-sm text-sand-800 placeholder-sand-400 focus:outline-none dark:text-sand-100 dark:placeholder-sand-500"
+                        />
+                        <button
+                            type="submit"
+                            class="text-sm font-semibold text-sand-600 disabled:opacity-30 dark:text-sand-400"
+                            :disabled="!commentForm.body.trim() || commentForm.processing"
+                        >
+                            {{ t('Post') }}
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
 
-        <!-- Comment Input -->
-        <div class="border-t border-sand-200 bg-white dark:border-sand-800 dark:bg-sand-900">
-            <div v-if="replyingTo" class="flex items-center justify-between border-b border-sand-100 px-4 py-2 dark:border-sand-800">
-                <span class="text-xs text-sand-500 dark:text-sand-400">
-                    {{ t('Replying to') }} <span class="font-semibold">{{ replyingTo.user.name }}</span>
-                </span>
-                <button class="text-xs font-medium text-sand-500 dark:text-sand-400" @click="cancelReply">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-            <div class="flex items-center gap-3 px-4 py-3">
-                <div class="size-8 flex-shrink-0 rounded-full bg-sand-200 dark:bg-sand-800" />
-                <form class="flex flex-1 items-center gap-2" @submit.prevent="submitComment">
-                    <input
-                        ref="commentInput"
-                        v-model="commentForm.body"
-                        type="text"
-                        :placeholder="replyingTo ? t('Write a reply...') : t('Write a comment...')"
-                        class="flex-1 bg-transparent text-sm text-sand-800 placeholder-sand-400 focus:outline-none dark:text-sand-100 dark:placeholder-sand-500"
-                    />
-                    <button
-                        type="submit"
-                        class="text-sm font-semibold text-sand-600 disabled:opacity-30 dark:text-sand-400"
-                        :disabled="!commentForm.body.trim() || commentForm.processing"
-                    >
-                        {{ t('Post') }}
-                    </button>
-                </form>
-            </div>
-        </div>
     </AppLayout>
 </template>

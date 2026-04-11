@@ -83,7 +83,7 @@ function goBack() {
             <div class="h-2 bg-sand-100 dark:bg-sand-800" />
 
             <!-- Posts -->
-            <InfiniteScroll v-if="posts" data="posts" only-next>
+            <InfiniteScroll v-if="posts" data="posts" class="pb-24">
                 <PostCard v-for="post in posts.data" :key="post.id" :post="post" />
             </InfiniteScroll>
 
