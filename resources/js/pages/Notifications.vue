@@ -245,7 +245,7 @@ function timeAgo(dateString: string): string {
         </template>
 
         <!-- Notifications list -->
-        <InfiniteScroll v-else-if="notifications" data="notifications" only-next>
+        <InfiniteScroll v-else-if="notifications" data="notifications" class="pb-24">
             <button
                 v-for="notification in notifications.data"
                 :key="notification.id"

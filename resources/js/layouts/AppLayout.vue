@@ -20,7 +20,6 @@ defineExpose({ mainRef });
 </script>
 
 <template>
-    <style>#app { padding-bottom:0 !important; }</style>
     <header
         v-if="props.showHeader"
         class="flex items-center justify-between border-b border-sand-200 bg-white px-4 py-3 dark:border-sand-800 dark:bg-sand-900"

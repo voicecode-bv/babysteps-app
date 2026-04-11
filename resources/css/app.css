@@ -67,7 +67,6 @@
 
 #app {
     @apply fixed inset-0 flex flex-col bg-white text-sand-900 dark:bg-sand-900 dark:text-sand-100;
-    padding-bottom: 6.25rem;
     top: var(--inset-top, 0px);
 }
 

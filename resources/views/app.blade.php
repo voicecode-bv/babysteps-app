@@ -11,7 +11,8 @@
             <title>{{ config('app.name', 'Innerr') }}</title>
         </x-inertia::head>
     </head>
-    <body class="bg-sand-50 dark:bg-sand-900 font-sans antialiased nativephp-safe-area">
+    {{--  nativephp-safe-area min-h-svh --}}
+    <body class="bg-sand-50 dark:bg-sand-900 font-sans antialiased">
         <x-inertia::app />
     </body>
 </html>
