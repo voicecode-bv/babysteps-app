@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Services\ApiClient;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -15,23 +14,15 @@ class NotificationController extends Controller
     {
         return Inertia::render('Notifications', [
             'circleInvitations' => fn () => $apiClient->get('/circle-invitations')->json('data', []),
-            'notifications' => Inertia::scroll(function () use ($apiClient) {
-                $page = request()->integer('page', 1);
-                $response = $apiClient->get('/notifications?page='.$page);
+            'notifications' => function () use ($apiClient) {
+                $response = $apiClient->get('/notifications');
 
                 if ($response->failed()) {
-                    return new LengthAwarePaginator([], 0, 15);
+                    return [];
                 }
 
-                $data = $response->json();
-
-                return new LengthAwarePaginator(
-                    items: $apiClient->proxyMediaUrls($data['data']),
-                    total: $data['meta']['total'],
-                    perPage: $data['meta']['per_page'],
-                    currentPage: $data['meta']['current_page'],
-                );
-            }),
+                return $apiClient->proxyMediaUrls($response->json('data', []));
+            },
         ]);
     }
 

@@ -3,7 +3,7 @@ import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import { usePullToRefresh } from '@/composables/usePullToRefresh';
 import { useTranslations } from '@/composables/useTranslations';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { InfiniteScroll, router } from '@inertiajs/vue3';
+import { router } from '@inertiajs/vue3';
 import { computed, onMounted, ref, useTemplateRef } from 'vue';
 
 interface Notification {
@@ -43,9 +43,7 @@ interface CircleInvitation {
 
 const props = defineProps<{
     circleInvitations?: CircleInvitation[];
-    notifications: {
-        data: Notification[];
-    };
+    notifications: Notification[];
 }>();
 
 const { t } = useTranslations();
@@ -54,7 +52,7 @@ function goBack() {
     window.history.back();
 }
 
-const hasUnread = computed(() => props.notifications?.data?.some((n) => !n.read_at) ?? false);
+const hasUnread = computed(() => props.notifications?.some((n) => !n.read_at) ?? false);
 
 const layoutRef = useTemplateRef<InstanceType<typeof AppLayout>>('layout');
 const containerRef = computed(() => layoutRef.value?.mainRef ?? null);
@@ -65,7 +63,6 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
         new Promise<void>((resolve) => {
             router.reload({
                 only: ['notifications', 'circleInvitations'],
-                reset: ['notifications'],
                 onFinish: () => resolve(),
             });
         }),
@@ -75,7 +72,6 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
 onMounted(() => {
     router.reload({
         only: ['notifications', 'circleInvitations'],
-        reset: ['notifications'],
         onFinish: () => {
             isLoading.value = false;
         },
@@ -245,9 +241,9 @@ function timeAgo(dateString: string): string {
         </template>
 
         <!-- Notifications list -->
-        <InfiniteScroll v-else-if="notifications" data="notifications" only-next :buffer="500" preserve-url class="pb-24">
+        <div v-else-if="notifications" class="pb-24">
             <button
-                v-for="notification in notifications.data"
+                v-for="notification in notifications"
                 :key="notification.id"
                 class="flex w-full items-start gap-3 border-b border-sand-100 px-4 py-3 text-left dark:border-sand-800"
                 :class="{ 'bg-sand-50 dark:bg-sand-800/50': !notification.read_at }"
@@ -288,10 +284,10 @@ function timeAgo(dateString: string): string {
                 <!-- Unread indicator -->
                 <div v-if="!notification.read_at" class="mt-2 size-2 flex-shrink-0 rounded-full bg-blue-500" />
             </button>
-        </InfiniteScroll>
+        </div>
 
         <!-- Empty state -->
-        <div v-if="!isLoading && notifications && notifications.data.length === 0 && (!circleInvitations || circleInvitations.length === 0)" class="flex flex-col items-center justify-center px-8 py-20">
+        <div v-if="!isLoading && notifications && notifications.length === 0 && (!circleInvitations || circleInvitations.length === 0)" class="flex flex-col items-center justify-center px-8 py-20">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor" class="mb-4 size-16 text-sand-300 dark:text-sand-600">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
             </svg>
