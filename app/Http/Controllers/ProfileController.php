@@ -6,6 +6,7 @@ use App\Services\ApiClient;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -45,6 +46,7 @@ class ProfileController extends Controller
         ]);
 
         $apiClient->put('/profile', $validated);
+        Cache::forget('settings_profile');
 
         return back();
     }
@@ -77,6 +79,7 @@ class ProfileController extends Controller
         if ($response->successful()) {
             $avatarUrl = $response->json('user.avatar');
             $request->user()->update(['avatar' => $avatarUrl]);
+            Cache::forget('settings_profile');
         }
 
         return back();
@@ -86,6 +89,7 @@ class ProfileController extends Controller
     {
         $apiClient->delete('/profile/avatar');
         $request->user()->update(['avatar' => null]);
+        Cache::forget('settings_profile');
 
         return back();
     }
@@ -100,6 +104,7 @@ class ProfileController extends Controller
 
         $request->user()->update($validated);
         app()->setLocale($validated['locale']);
+        Cache::forget('settings_profile');
 
         return back();
     }
