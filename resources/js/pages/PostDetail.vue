@@ -297,7 +297,8 @@ function timeAgo(dateString: string): string {
                             v-if="post.media_status === 'ready'"
                             :class="[
                                 'absolute z-10 flex gap-2',
-                                isFullscreen ? 'top-3 right-3' : 'bottom-3 right-3',
+                                isFullscreen ? 'right-3' : 'bottom-3 right-3',
+                                isFullscreen ? 'top-[calc(env(safe-area-inset-top)+1.5rem)]' : '',
                             ]"
                         >
                             <button
