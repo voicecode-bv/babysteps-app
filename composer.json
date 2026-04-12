@@ -10,11 +10,13 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
+        "codingwithrk/package-info": "^1.0",
         "inertiajs/inertia-laravel": "^3.0",
         "laravel/framework": "^13.0",
         "laravel/tinker": "^3.0",
         "laravel/wayfinder": "^0.1.14",
         "nativephp/mobile": "^3.0",
+        "nativephp/mobile-background-tasks": "^0.0.2",
         "nativephp/mobile-camera": "^1.0",
         "nativephp/mobile-dialog": "^1.0",
         "nativephp/mobile-firebase": "^1.1",

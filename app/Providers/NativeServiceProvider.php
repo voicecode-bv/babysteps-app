@@ -42,6 +42,8 @@ class NativeServiceProvider extends ServiceProvider
             CameraServiceProvider::class,
             DialogServiceProvider::class,
             PushNotificationsServiceProvider::class,
+            \NativePHP\BackgroundTasks\BackgroundTasksServiceProvider::class,
+            \Codingwithrk\PackageInfo\PackageInfoServiceProvider::class,
         ];
     }
 }

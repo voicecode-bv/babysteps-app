@@ -101,7 +101,7 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
 
         <PullToRefreshIndicator :pull-distance="pullDistance" :is-refreshing="isRefreshing" />
 
-        <InfiniteScroll v-if="posts" data="posts" only-next :buffer="500" preserve-url class="pb-24">
+        <InfiniteScroll v-if="posts" data="posts" only-next :buffer="1500" preserve-url class="pb-24">
             <PostCard v-for="post in posts.data" :key="post.id" :post="post" />
         </InfiniteScroll>
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SyncDeviceInfo;
 use App\Models\User;
 use App\Services\ApiClient;
 use Illuminate\Http\RedirectResponse;
@@ -28,6 +29,8 @@ class AuthController extends Controller
         }
 
         $this->syncLocalUser($result['user']);
+
+        SyncDeviceInfo::dispatch();
 
         if (Auth::user()?->notifications_prompted_at === null) {
             return redirect()->route('onboarding.notifications');
@@ -59,6 +62,8 @@ class AuthController extends Controller
         }
 
         $this->syncLocalUser($result['user']);
+
+        SyncDeviceInfo::dispatch();
 
         return redirect()->route('onboarding.notifications');
     }
