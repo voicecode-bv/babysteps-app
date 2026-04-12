@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\CircleActionController;
 use App\Http\Controllers\CircleController;
 use App\Http\Controllers\CreatePostController;
+use App\Http\Controllers\DefaultCircleController;
 use App\Http\Controllers\DeviceTokenController;
 use App\Http\Controllers\FeedController;
 use App\Http\Controllers\MediaProxyController;
@@ -59,6 +60,9 @@ Route::middleware(['auth.token', HandleNativeEdge::class])->group(function () {
 
     Route::get('/profile/notification-preferences', [NotificationPreferenceController::class, 'index'])->name('profile.notification-preferences');
     Route::put('/profile/notification-preferences', [NotificationPreferenceController::class, 'update'])->name('profile.notification-preferences.update');
+
+    Route::get('/profile/default-circles', [DefaultCircleController::class, 'index'])->name('profile.default-circles');
+    Route::put('/profile/default-circles', [DefaultCircleController::class, 'update'])->name('profile.default-circles.update');
 
     Route::get('/circles', [CircleController::class, 'index'])->name('circles.index');
     Route::get('/circles/{circle}', [CircleController::class, 'show'])->name('circles.show')->whereNumber('circle');

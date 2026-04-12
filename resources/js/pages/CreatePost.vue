@@ -14,14 +14,19 @@ interface Circle {
 
 const props = defineProps<{
     circles: Circle[];
+    defaultCircleIds: number[];
 }>();
 
 const { t } = useTranslations();
 
+// Pre-select default circles, but only those that exist in the available circles
+const availableCircleIds = props.circles.map((c) => c.id);
+const initialCircleIds = props.defaultCircleIds.filter((id) => availableCircleIds.includes(id));
+
 const form = useForm({
     media_path: null as string | null,
     caption: '',
-    circle_ids: [] as number[],
+    circle_ids: initialCircleIds,
 });
 
 const mediaPreview = ref<string | null>(null);

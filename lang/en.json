@@ -120,6 +120,9 @@
     "Enable notifications": "Enable notifications",
     "Maybe later": "Maybe later",
 
+    "Default circles for new posts": "Default circles for new posts",
+    "These circles will be pre-selected when you create a new post.": "These circles will be pre-selected when you create a new post.",
+
     "Push notifications": "Push notifications",
     "Post liked": "Post liked",
     "Post commented": "Post commented",

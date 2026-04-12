@@ -150,6 +150,9 @@
     "Enable notifications": "Meldingen inschakelen",
     "Maybe later": "Misschien later",
 
+    "Default circles for new posts": "Standaard kringen voor nieuwe berichten",
+    "These circles will be pre-selected when you create a new post.": "Deze kringen worden automatisch geselecteerd wanneer je een nieuw bericht maakt.",
+
     "Push notifications": "Pushmeldingen",
     "Post liked": "Bericht geliked",
     "Post commented": "Reactie op bericht",

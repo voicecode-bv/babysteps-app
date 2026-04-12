@@ -32,8 +32,11 @@ class SettingsController extends Controller
             }
         }
 
+        $circles = $apiClient->get('/circles')->json('data') ?? [];
+
         return Inertia::render('Settings', [
             'profile' => $profile,
+            'circles' => $circles,
         ]);
     }
 }

@@ -12,6 +12,7 @@ class CreatePostController extends Controller
     {
         return Inertia::render('CreatePost', [
             'circles' => $apiClient->get('/circles')->json('data'),
+            'defaultCircleIds' => $apiClient->get('/default-circles')->json('data') ?? [],
         ]);
     }
 }

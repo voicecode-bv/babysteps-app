@@ -18,8 +18,15 @@ interface Profile {
     posts_count: number;
 }
 
+interface Circle {
+    id: number;
+    name: string;
+    members_count: number;
+}
+
 const props = defineProps<{
     profile: Profile;
+    circles: Circle[];
 }>();
 
 const { t } = useTranslations();
@@ -41,6 +48,9 @@ interface NotificationPreferences {
 
 const notificationPreferences = ref<NotificationPreferences | null>(null);
 const loadingPreferences = ref(false);
+
+const defaultCircleIds = ref<number[]>([]);
+const loadingDefaultCircles = ref(false);
 
 const layoutRef = useTemplateRef<InstanceType<typeof AppLayout>>('layout');
 const containerRef = computed(() => layoutRef.value?.mainRef ?? null);
@@ -66,6 +76,31 @@ async function loadNotificationPreferences() {
     } finally {
         loadingPreferences.value = false;
     }
+}
+
+async function loadDefaultCircles() {
+    loadingDefaultCircles.value = true;
+    try {
+        const response = await fetch('/profile/default-circles');
+        if (response.ok) {
+            defaultCircleIds.value = await response.json();
+        }
+    } finally {
+        loadingDefaultCircles.value = false;
+    }
+}
+
+function toggleDefaultCircle(circleId: number) {
+    const index = defaultCircleIds.value.indexOf(circleId);
+    if (index === -1) {
+        defaultCircleIds.value.push(circleId);
+    } else {
+        defaultCircleIds.value.splice(index, 1);
+    }
+
+    router.put('/profile/default-circles', { circle_ids: defaultCircleIds.value }, {
+        preserveScroll: true,
+    });
 }
 
 function togglePreference(key: keyof NotificationPreferences) {
@@ -125,6 +160,7 @@ onMounted(() => {
     On(Events.Alert.ButtonPressed, handleButtonPressed);
     On(Events.Gallery.MediaSelected, handleMediaSelected);
     loadNotificationPreferences();
+    loadDefaultCircles();
 });
 
 onUnmounted(() => {
@@ -218,6 +254,32 @@ onUnmounted(() => {
                         >
                             English
                         </Button>
+                    </div>
+                </div>
+
+                <!-- Default Circles -->
+                <div v-if="circles.length > 0" class="mt-4 border-b border-sand-100 dark:border-sand-800" />
+
+                <div v-if="circles.length > 0" class="mt-4">
+                    <p class="mb-2 text-xs font-medium text-sand-500 dark:text-sand-400">{{ t('Default circles for new posts') }}</p>
+                    <p class="mb-3 text-xs text-sand-400 dark:text-sand-500">{{ t('These circles will be pre-selected when you create a new post.') }}</p>
+                    <div class="space-y-3">
+                        <label v-for="circle in circles" :key="circle.id" class="flex items-center justify-between">
+                            <span class="text-sm text-sand-700 dark:text-sand-200">{{ circle.name }}</span>
+                            <button
+                                type="button"
+                                role="switch"
+                                :aria-checked="defaultCircleIds.includes(circle.id)"
+                                :class="defaultCircleIds.includes(circle.id) ? 'bg-teal' : 'bg-sand-300 dark:bg-sand-600'"
+                                class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors"
+                                @click="toggleDefaultCircle(circle.id)"
+                            >
+                                <span
+                                    :class="defaultCircleIds.includes(circle.id) ? 'translate-x-5.5' : 'translate-x-0.5'"
+                                    class="pointer-events-none mt-0.5 size-5 rounded-full bg-white shadow transition-transform"
+                                />
+                            </button>
+                        </label>
                     </div>
                 </div>
 
