@@ -241,7 +241,7 @@ function submit() {
             </div>
         </div>
 
-        <!-- Source Picker Overlay -->
+        <!-- Source Picker Modal -->
         <Teleport to="body">
             <Transition
                 enter-active-class="transition duration-200"
@@ -251,50 +251,49 @@ function submit() {
                 leave-from-class="opacity-100"
                 leave-to-class="opacity-0"
             >
-                <div v-if="showSourcePicker" class="fixed inset-0 z-50 flex items-end justify-center bg-black/40" @click.self="showSourcePicker = false">
+                <div v-if="showSourcePicker" class="fixed inset-0 z-50 flex items-center justify-center px-6 bg-black/40" @click.self="showSourcePicker = false">
                     <Transition
                         enter-active-class="transition duration-200 ease-out"
-                        enter-from-class="translate-y-full"
-                        enter-to-class="translate-y-0"
+                        enter-from-class="scale-95 opacity-0"
+                        enter-to-class="scale-100 opacity-100"
                         leave-active-class="transition duration-150 ease-in"
-                        leave-from-class="translate-y-0"
-                        leave-to-class="translate-y-full"
+                        leave-from-class="scale-100 opacity-100"
+                        leave-to-class="scale-95 opacity-0"
                     >
-                        <div v-if="showSourcePicker" class="w-full max-w-lg" style="padding-bottom: max(0.75rem, env(safe-area-inset-bottom))">
-                            <div class="mx-3 overflow-hidden rounded-xl bg-white dark:bg-sand-800">
-                                <button
-                                    class="flex w-full items-center gap-3 px-4 py-3.5 text-left text-sm font-medium text-sand-700 active:bg-sand-50 dark:text-sand-200 dark:active:bg-sand-700"
-                                    @click="openCamera"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 text-sand-500 dark:text-sand-400">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
-                                    </svg>
-                                    {{ t('Take a photo') }}
-                                </button>
-                                <div class="mx-4 border-t border-sand-100 dark:border-sand-700" />
-                                <button
-                                    class="flex w-full items-center gap-3 px-4 py-3.5 text-left text-sm font-medium text-sand-700 active:bg-sand-50 dark:text-sand-200 dark:active:bg-sand-700"
-                                    @click="recordVideo"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 text-sand-500 dark:text-sand-400">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z" />
-                                    </svg>
-                                    {{ t('Record a video') }}
-                                </button>
-                                <div class="mx-4 border-t border-sand-100 dark:border-sand-700" />
-                                <button
-                                    class="flex w-full items-center gap-3 px-4 py-3.5 text-left text-sm font-medium text-sand-700 active:bg-sand-50 dark:text-sand-200 dark:active:bg-sand-700"
-                                    @click="selectFromGallery"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 text-sand-500 dark:text-sand-400">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21ZM8.25 8.625a1.125 1.125 0 1 0 0-2.25 1.125 1.125 0 0 0 0 2.25Z" />
-                                    </svg>
-                                    {{ t('Choose from gallery') }}
-                                </button>
-                            </div>
+                        <div v-if="showSourcePicker" class="w-full max-w-sm overflow-hidden rounded-2xl bg-white dark:bg-sand-800">
                             <button
-                                class="mx-3 mt-2 w-[calc(100%-1.5rem)] rounded-xl bg-white py-3.5 text-center text-sm font-semibold text-sand-700 active:bg-sand-50 dark:bg-sand-800 dark:text-sand-200 dark:active:bg-sand-700"
+                                class="flex w-full items-center gap-3 px-5 py-4 text-left text-sm font-medium text-sand-700 active:bg-sand-50 dark:text-sand-200 dark:active:bg-sand-700"
+                                @click="openCamera"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 text-sand-500 dark:text-sand-400">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
+                                </svg>
+                                {{ t('Take a photo') }}
+                            </button>
+                            <div class="mx-5 border-t border-sand-100 dark:border-sand-700" />
+                            <button
+                                class="flex w-full items-center gap-3 px-5 py-4 text-left text-sm font-medium text-sand-700 active:bg-sand-50 dark:text-sand-200 dark:active:bg-sand-700"
+                                @click="recordVideo"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 text-sand-500 dark:text-sand-400">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z" />
+                                </svg>
+                                {{ t('Record a video') }}
+                            </button>
+                            <div class="mx-5 border-t border-sand-100 dark:border-sand-700" />
+                            <button
+                                class="flex w-full items-center gap-3 px-5 py-4 text-left text-sm font-medium text-sand-700 active:bg-sand-50 dark:text-sand-200 dark:active:bg-sand-700"
+                                @click="selectFromGallery"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 text-sand-500 dark:text-sand-400">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21ZM8.25 8.625a1.125 1.125 0 1 0 0-2.25 1.125 1.125 0 0 0 0 2.25Z" />
+                                </svg>
+                                {{ t('Choose from gallery') }}
+                            </button>
+                            <div class="border-t border-sand-100 dark:border-sand-700" />
+                            <button
+                                class="w-full py-3.5 text-center text-sm font-semibold text-sand-500 active:bg-sand-50 dark:text-sand-400 dark:active:bg-sand-700"
                                 @click="showSourcePicker = false"
                             >
                                 {{ t('Cancel') }}
