@@ -8,6 +8,7 @@ export interface PostData {
     media_url: string;
     media_type: string;
     thumbnail_url: string | null;
+    media_status: 'processing' | 'ready' | 'failed';
     caption: string | null;
     location: string | null;
     created_at: string;
@@ -106,18 +107,40 @@ function timeAgo(dateString: string): string {
                 />
             </div>
         </Link>
-        <div v-else-if="post.media_type === 'video'" class="relative aspect-square w-full bg-sand-100 dark:bg-sand-800">
-            <video
-                :src="post.media_url"
-                :poster="post.thumbnail_url ?? undefined"
-                class="size-full object-cover"
-                playsinline
-                muted
-                autoplay
-                loop
-                preload="metadata"
-            />
-        </div>
+        <Link v-else-if="post.media_type === 'video'" :href="`/posts/${post.id}`" class="block">
+            <div class="relative aspect-square w-full bg-sand-100 dark:bg-sand-800">
+                <!-- Video ready: autoplay muted -->
+                <video
+                    v-if="post.media_status === 'ready'"
+                    :src="post.media_url"
+                    :poster="post.thumbnail_url ?? undefined"
+                    class="size-full object-cover"
+                    playsinline
+                    muted
+                    autoplay
+                    loop
+                    preload="metadata"
+                />
+                <!-- Video processing: show thumbnail with spinner overlay -->
+                <template v-else>
+                    <img
+                        v-if="post.thumbnail_url"
+                        :src="post.thumbnail_url"
+                        :alt="post.caption ?? t('Moment')"
+                        class="size-full object-cover"
+                    />
+                    <div class="absolute inset-0 flex items-center justify-center bg-black/20">
+                        <div class="flex flex-col items-center gap-2">
+                            <svg class="size-8 animate-spin text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                            </svg>
+                            <span class="text-xs font-medium text-white">{{ t('Processing video...') }}</span>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </Link>
         <Link v-else :href="`/posts/${post.id}`" class="block">
             <div class="relative aspect-square w-full bg-sand-100 dark:bg-sand-800">
                 <div class="flex size-full items-center justify-center">

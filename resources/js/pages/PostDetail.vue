@@ -41,6 +41,7 @@ interface Post {
     media_url: string;
     media_type: string;
     thumbnail_url: string | null;
+    media_status: 'processing' | 'ready' | 'failed';
     caption: string | null;
     location: string | null;
     created_at: string;
@@ -240,15 +241,34 @@ function timeAgo(dateString: string): string {
                         :alt="post.caption ?? t('Photo')"
                         class="size-full object-cover"
                     />
-                    <video
-                        v-else-if="post.media_type === 'video'"
-                        :src="post.media_url"
-                        :poster="post.thumbnail_url ?? undefined"
-                        class="size-full object-cover"
-                        playsinline
-                        controls
-                        preload="metadata"
-                    />
+                    <template v-else-if="post.media_type === 'video'">
+                        <video
+                            v-if="post.media_status === 'ready'"
+                            :src="post.media_url"
+                            :poster="post.thumbnail_url ?? undefined"
+                            class="size-full object-cover"
+                            playsinline
+                            controls
+                            preload="metadata"
+                        />
+                        <template v-else>
+                            <img
+                                v-if="post.thumbnail_url"
+                                :src="post.thumbnail_url"
+                                :alt="post.caption ?? t('Moment')"
+                                class="size-full object-cover"
+                            />
+                            <div class="absolute inset-0 flex items-center justify-center bg-black/20">
+                                <div class="flex flex-col items-center gap-2">
+                                    <svg class="size-8 animate-spin text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                    </svg>
+                                    <span class="text-xs font-medium text-white">{{ t('Processing video...') }}</span>
+                                </div>
+                            </div>
+                        </template>
+                    </template>
                     <div v-else class="flex size-full items-center justify-center">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-16 text-sand-300 dark:text-sand-600">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
