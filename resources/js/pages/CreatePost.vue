@@ -190,8 +190,8 @@ function submit() {
             </div>
 
             <!-- Circle Selection -->
-            <div v-if="circles.length > 0" class="border-b border-sand-200 bg-white px-4 py-3 dark:border-sand-800 dark:bg-sand-900">
-                <div class="mb-2 flex items-center justify-between">
+            <div v-if="circles.length > 0" class="border-b border-sand-200 bg-white px-4 py-4 dark:border-sand-800 dark:bg-sand-900">
+                <div class="mb-3 flex items-center justify-between">
                     <p class="text-xs font-medium text-sand-500 dark:text-sand-400">{{ t('Share with circles') }}</p>
                     <button
                         class="text-xs font-medium text-sand-500 dark:text-sand-400"
@@ -200,11 +200,11 @@ function submit() {
                         {{ allCirclesSelected ? t('Deselect all') : t('Select all') }}
                     </button>
                 </div>
-                <div class="flex flex-wrap gap-2">
+                <div class="flex flex-wrap gap-2.5">
                     <button
                         v-for="circle in circles"
                         :key="circle.id"
-                        class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
+                        class="rounded-full border px-4 py-2 text-sm font-medium transition-colors"
                         :class="form.circle_ids.includes(circle.id)
                             ? 'border-sand-500 bg-sand-500 text-white dark:border-sand-600 dark:bg-sand-600'
                             : 'border-sand-200 text-sand-600 dark:border-sand-700 dark:text-sand-400'"
