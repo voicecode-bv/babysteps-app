@@ -7,6 +7,7 @@ export interface PostData {
     id: number;
     media_url: string;
     media_type: string;
+    thumbnail_url: string | null;
     caption: string | null;
     location: string | null;
     created_at: string;
@@ -95,26 +96,31 @@ function timeAgo(dateString: string): string {
         </div>
 
         <!-- Post Media -->
-        <Link :href="`/posts/${post.id}`" class="block">
+        <Link v-if="post.media_type === 'image'" :href="`/posts/${post.id}`" class="block">
             <div class="relative aspect-square w-full bg-sand-100 dark:bg-sand-800">
                 <img
-                    v-if="post.media_type === 'image'"
                     :src="post.media_url"
                     :alt="post.caption ?? t('Photo')"
                     class="size-full object-cover"
                     loading="lazy"
                 />
-                <video
-                    v-else-if="post.media_type === 'video'"
-                    :src="post.media_url"
-                    class="size-full object-cover"
-                    playsinline
-                    muted
-                    loop
-                    controls
-                    preload="metadata"
-                />
-                <div v-else class="flex size-full items-center justify-center">
+            </div>
+        </Link>
+        <div v-else-if="post.media_type === 'video'" class="relative aspect-square w-full bg-sand-100 dark:bg-sand-800">
+            <video
+                :src="post.media_url"
+                :poster="post.thumbnail_url ?? undefined"
+                class="size-full object-cover"
+                playsinline
+                muted
+                autoplay
+                loop
+                preload="metadata"
+            />
+        </div>
+        <Link v-else :href="`/posts/${post.id}`" class="block">
+            <div class="relative aspect-square w-full bg-sand-100 dark:bg-sand-800">
+                <div class="flex size-full items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-12 text-sand-300 dark:text-sand-600">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.91 11.672a.375.375 0 0 1 0 .656l-5.603 3.113a.375.375 0 0 1-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112Z" />

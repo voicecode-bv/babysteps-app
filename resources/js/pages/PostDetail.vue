@@ -40,6 +40,7 @@ interface Post {
     id: number;
     media_url: string;
     media_type: string;
+    thumbnail_url: string | null;
     caption: string | null;
     location: string | null;
     created_at: string;
@@ -242,6 +243,7 @@ function timeAgo(dateString: string): string {
                     <video
                         v-else-if="post.media_type === 'video'"
                         :src="post.media_url"
+                        :poster="post.thumbnail_url ?? undefined"
                         class="size-full object-cover"
                         playsinline
                         controls
