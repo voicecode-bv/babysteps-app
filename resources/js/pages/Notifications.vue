@@ -46,13 +46,19 @@ const props = defineProps<{
     notifications: Notification[];
 }>();
 
+const optimisticallyRead = ref<Set<string>>(new Set());
+
 const { t } = useTranslations();
 
 function goBack() {
     window.history.back();
 }
 
-const hasUnread = computed(() => props.notifications?.some((n) => !n.read_at) ?? false);
+function isRead(notification: Notification): boolean {
+    return !!notification.read_at || optimisticallyRead.value.has(notification.id);
+}
+
+const hasUnread = computed(() => props.notifications?.some((n) => !isRead(n)) ?? false);
 
 const layoutRef = useTemplateRef<InstanceType<typeof AppLayout>>('layout');
 const containerRef = computed(() => layoutRef.value?.mainRef ?? null);
@@ -79,21 +85,35 @@ onMounted(() => {
 });
 
 function markAllAsRead() {
-    router.post('/notifications/read', {}, { preserveScroll: true });
+    // Optimistically mark all as read
+    const unreadIds = props.notifications.filter((n) => !n.read_at).map((n) => n.id);
+    unreadIds.forEach((id) => optimisticallyRead.value.add(id));
+
+    router.post('/notifications/read', {}, {
+        preserveScroll: true,
+        onError: () => {
+            // Rollback on failure
+            unreadIds.forEach((id) => optimisticallyRead.value.delete(id));
+        },
+    });
 }
 
 function openNotification(notification: Notification) {
     const url = notificationUrl(notification);
-    if (!notification.read_at) {
+
+    if (!isRead(notification)) {
+        // Optimistically mark as read
+        optimisticallyRead.value.add(notification.id);
+
         router.post('/notifications/read', { ids: [notification.id] }, {
             preserveScroll: true,
-            onSuccess: () => {
-                if (url !== '#') {
-                    router.visit(url);
-                }
+            onError: () => {
+                optimisticallyRead.value.delete(notification.id);
             },
         });
-    } else if (url !== '#') {
+    }
+
+    if (url !== '#') {
         router.visit(url);
     }
 }
@@ -246,7 +266,7 @@ function timeAgo(dateString: string): string {
                 v-for="notification in notifications"
                 :key="notification.id"
                 class="flex w-full items-start gap-3 border-b border-sand-100 px-4 py-3 text-left dark:border-sand-800"
-                :class="{ 'bg-sand-50 dark:bg-sand-800/50': !notification.read_at }"
+                :class="{ 'bg-sand-50 dark:bg-sand-800/50': !isRead(notification) }"
                 @click="openNotification(notification)"
             >
                 <!-- Avatar -->
@@ -266,7 +286,7 @@ function timeAgo(dateString: string): string {
 
                 <!-- Content -->
                 <div class="min-w-0 flex-1">
-                    <p class="text-sm text-sand-800 dark:text-sand-200" :class="{ 'font-semibold': !notification.read_at }">
+                    <p class="text-sm text-sand-800 dark:text-sand-200" :class="{ 'font-semibold': !isRead(notification) }">
                         {{ notificationMessage(notification) }}
                     </p>
                     <p class="mt-0.5 text-xs text-sand-500 dark:text-sand-400">
@@ -282,7 +302,7 @@ function timeAgo(dateString: string): string {
                 />
 
                 <!-- Unread indicator -->
-                <div v-if="!notification.read_at" class="mt-2 size-2 flex-shrink-0 rounded-full bg-blue-500" />
+                <div v-if="!isRead(notification)" class="mt-2 size-2 flex-shrink-0 rounded-full bg-blue-500" />
             </button>
         </div>
 
