@@ -5,7 +5,7 @@ import { usePullToRefresh } from '@/composables/usePullToRefresh';
 import { useTranslations } from '@/composables/useTranslations';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { InfiniteScroll, Link, router } from '@inertiajs/vue3';
-import { computed, useTemplateRef } from 'vue';
+import { computed, onUnmounted, useTemplateRef } from 'vue';
 
 interface Circle {
     id: number;
@@ -27,6 +27,26 @@ const { t } = useTranslations();
 
 const layoutRef = useTemplateRef<InstanceType<typeof AppLayout>>('layout');
 const containerRef = computed(() => layoutRef.value?.mainRef ?? null);
+
+// Scroll to top when tapping the Home tab while already on the feed.
+// Partial reloads (infinite scroll, pull-to-refresh) have visit.only populated,
+// so we only intercept full-page visits where only is empty.
+const removeBeforeListener = router.on('before', (event) => {
+    const visit = event.detail.visit;
+
+    // Let partial reloads (infinite scroll, pull-to-refresh) pass through
+    if (visit.only.length > 0) return;
+
+    const targetPath = visit.url.pathname;
+    const currentPath = window.location.pathname;
+
+    if (targetPath === currentPath && containerRef.value && containerRef.value.scrollTop > 0) {
+        event.preventDefault();
+        containerRef.value.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+});
+
+onUnmounted(() => removeBeforeListener());
 
 const { pullDistance, isRefreshing } = usePullToRefresh({
     onRefresh: () =>
