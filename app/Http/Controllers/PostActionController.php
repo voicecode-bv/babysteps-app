@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\ApiClient;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -80,14 +81,22 @@ class PostActionController extends Controller
 
     public function like(int $post): RedirectResponse
     {
-        $this->apiClient->post("/posts/{$post}/like");
+        try {
+            $this->apiClient->post("/posts/{$post}/like");
+        } catch (ConnectionException) {
+            return back()->withErrors(['like' => __('Could not connect to the server.')]);
+        }
 
         return back();
     }
 
     public function unlike(int $post): RedirectResponse
     {
-        $this->apiClient->delete("/posts/{$post}/like");
+        try {
+            $this->apiClient->delete("/posts/{$post}/like");
+        } catch (ConnectionException) {
+            return back()->withErrors(['like' => __('Could not connect to the server.')]);
+        }
 
         return back();
     }
@@ -99,28 +108,44 @@ class PostActionController extends Controller
             'parent_comment_id' => ['nullable', 'integer'],
         ]);
 
-        $this->apiClient->post("/posts/{$post}/comments", $validated);
+        try {
+            $this->apiClient->post("/posts/{$post}/comments", $validated);
+        } catch (ConnectionException) {
+            return back()->withErrors(['comment' => __('Could not connect to the server.')]);
+        }
 
         return back();
     }
 
     public function destroyComment(int $comment): RedirectResponse
     {
-        $this->apiClient->delete("/comments/{$comment}");
+        try {
+            $this->apiClient->delete("/comments/{$comment}");
+        } catch (ConnectionException) {
+            return back()->withErrors(['comment' => __('Could not connect to the server.')]);
+        }
 
         return back();
     }
 
     public function likeComment(int $comment): RedirectResponse
     {
-        $this->apiClient->post("/comments/{$comment}/like");
+        try {
+            $this->apiClient->post("/comments/{$comment}/like");
+        } catch (ConnectionException) {
+            return back()->withErrors(['like' => __('Could not connect to the server.')]);
+        }
 
         return back();
     }
 
     public function unlikeComment(int $comment): RedirectResponse
     {
-        $this->apiClient->delete("/comments/{$comment}/like");
+        try {
+            $this->apiClient->delete("/comments/{$comment}/like");
+        } catch (ConnectionException) {
+            return back()->withErrors(['like' => __('Could not connect to the server.')]);
+        }
 
         return back();
     }

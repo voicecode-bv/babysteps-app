@@ -102,6 +102,7 @@ function toggleLike() {
         likesCount.value--;
         router.delete(`/posts/${props.post.id}/like`, {
             preserveScroll: true,
+            preserveState: true,
             onError: () => {
                 isLiked.value = true;
                 likesCount.value++;
@@ -112,6 +113,7 @@ function toggleLike() {
         likesCount.value++;
         router.post(`/posts/${props.post.id}/like`, {}, {
             preserveScroll: true,
+            preserveState: true,
             onError: () => {
                 isLiked.value = false;
                 likesCount.value--;
@@ -129,6 +131,7 @@ function toggleCommentLike(comment: Comment) {
         comment.likes_count--;
         router.delete(`/comments/${comment.id}/like`, {
             preserveScroll: true,
+            preserveState: true,
             onError: () => {
                 comment.is_liked = previousIsLiked;
                 comment.likes_count = previousLikesCount;
@@ -139,6 +142,7 @@ function toggleCommentLike(comment: Comment) {
         comment.likes_count++;
         router.post(`/comments/${comment.id}/like`, {}, {
             preserveScroll: true,
+            preserveState: true,
             onError: () => {
                 comment.is_liked = previousIsLiked;
                 comment.likes_count = previousLikesCount;
