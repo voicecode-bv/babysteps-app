@@ -71,14 +71,29 @@ function handleKeydown(e: KeyboardEvent) {
     }
 }
 
+// Lock scroll on the actual scroll container (<main>) when fullscreen
 watch(isFullscreen, (val) => {
-    document.body.style.overflow = val ? 'hidden' : '';
+    const scrollContainer = document.querySelector('main[scroll-region]') as HTMLElement | null;
+    if (scrollContainer) {
+        scrollContainer.style.overflow = val ? 'hidden' : '';
+    }
 });
 
-onMounted(() => document.addEventListener('keydown', handleKeydown));
+onMounted(() => {
+    if (props.post.media_type === 'video') {
+        document.addEventListener('keydown', handleKeydown);
+    }
+});
 onUnmounted(() => {
-    document.removeEventListener('keydown', handleKeydown);
-    document.body.style.overflow = '';
+    if (props.post.media_type === 'video') {
+        document.removeEventListener('keydown', handleKeydown);
+        if (isFullscreen.value) {
+            const scrollContainer = document.querySelector('main[scroll-region]') as HTMLElement | null;
+            if (scrollContainer) {
+                scrollContainer.style.overflow = '';
+            }
+        }
+    }
 });
 
 function toggleLike() {

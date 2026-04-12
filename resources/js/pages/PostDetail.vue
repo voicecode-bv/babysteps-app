@@ -85,7 +85,10 @@ function toggleFullscreen() {
 }
 
 watch(isFullscreen, (val) => {
-    document.body.style.overflow = val ? 'hidden' : '';
+    const scrollContainer = document.querySelector('main[scroll-region]') as HTMLElement | null;
+    if (scrollContainer) {
+        scrollContainer.style.overflow = val ? 'hidden' : '';
+    }
 });
 
 const layoutRef = useTemplateRef<InstanceType<typeof AppLayout>>('layout');
@@ -213,7 +216,12 @@ onMounted(() => {
 onUnmounted(() => {
     Off(Events.Alert.ButtonPressed, handleButtonPressed);
     document.removeEventListener('keydown', handleKeydown);
-    document.body.style.overflow = '';
+    if (isFullscreen.value) {
+        const scrollContainer = document.querySelector('main[scroll-region]') as HTMLElement | null;
+        if (scrollContainer) {
+            scrollContainer.style.overflow = '';
+        }
+    }
 });
 
 function timeAgo(dateString: string): string {
