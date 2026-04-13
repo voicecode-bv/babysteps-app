@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Services\ApiClient;
-use Codingwithrk\PackageInfo\PackageInfo;
+use Codingwithrk\PackageInfo\Facades\PackageInfo;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
