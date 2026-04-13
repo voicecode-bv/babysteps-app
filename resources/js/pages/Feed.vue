@@ -66,8 +66,8 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
     <AppLayout ref="layout" :show-header="false">
         <template #above>
             <!-- Family Circles -->
-            <div class="flex gap-3 overflow-x-auto scrollbar-none border-b border-sand-200 bg-white px-4 py-3 dark:border-sand-800 dark:bg-sand-900">
-                <Link href="/circles" class="flex flex-shrink-0 flex-col items-center gap-1.5">
+            <div class="pt-[--inset-top] left-[--inset-left] right-[--inset-right] fixed flex gap-3 overflow-x-auto no-scrollbar border-b border-sand-200 bg-white px-4 py-3 dark:border-sand-800 dark:bg-sand-900">
+                <Link href="/circles" class="flex shrink-0 flex-col items-center gap-1.5">
                     <div class="rounded-full p-0.5">
                         <div class="flex size-14 items-center justify-center rounded-full border-2 border-dashed border-sand-300 dark:border-sand-600">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-sand-400 dark:text-sand-500">
@@ -80,8 +80,8 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
 
                 <!-- Skeleton while loading -->
                 <template v-if="!circles">
-                    <div v-for="n in 4" :key="n" class="flex flex-shrink-0 flex-col items-center gap-1.5">
-                        <div class="size-[60px] animate-pulse rounded-full bg-sand-200 dark:bg-sand-700" />
+                    <div v-for="n in 4" :key="n" class="flex shrink-0 flex-col items-center gap-1.5">
+                        <div class="size-15 animate-pulse rounded-full bg-sand-200 dark:bg-sand-700" />
                         <div class="h-3 w-12 animate-pulse rounded bg-sand-200 dark:bg-sand-700" />
                     </div>
                 </template>
@@ -91,7 +91,7 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
                     v-for="circle in circles"
                     :key="circle.id"
                     :href="`/circles/${circle.id}`"
-                    class="flex flex-shrink-0 flex-col items-center gap-1.5"
+                    class="flex shrink-0 flex-col items-center gap-1.5"
                 >
                     <div class="relative rounded-full bg-sand-200 p-0.5 dark:bg-sand-800">
                         <img
@@ -135,5 +135,6 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
                 {{ t('Add a photo and share it with your family and friends.') }}
             </p>
         </div>
+
     </AppLayout>
 </template>

@@ -27,7 +27,7 @@ function submit() {
 </script>
 
 <template>
-    <div class="flex h-dvh flex-col bg-sand-50 px-8 text-sand-900 dark:bg-sand-900 dark:text-sand-100">
+    <div class="nativephp-safe-area flex h-dvh flex-col px-8">
         <div class="flex justify-end pt-4">
             <button
                 class="p-2 text-2xl"
