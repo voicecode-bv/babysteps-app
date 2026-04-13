@@ -1,16 +1,25 @@
 <script setup lang="ts">
-import { Link, useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { Link, useForm, usePage } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
 import { useTranslations } from '@/composables/useTranslations';
 import Button from '@/components/Button.vue';
 
 const { t } = useTranslations();
+const page = usePage();
+const currentLocale = computed(() => page.props.locale as string);
+
+const termsUrl = computed(() =>
+    currentLocale.value === 'nl'
+        ? 'https://innerr.app/nl/voorwaarden/'
+        : 'https://innerr.app/en/terms/',
+);
 
 const form = useForm({
     email: '',
     name: '',
     username: '',
     password: '',
+    terms_accepted: false,
 });
 
 const showPassword = ref(false);
@@ -99,19 +108,29 @@ function submit() {
                     <p v-if="form.errors.password" class="mt-1 text-xs text-blush-500">{{ form.errors.password }}</p>
                 </div>
 
+                <div class="flex items-start gap-3">
+                    <input
+                        id="terms"
+                        v-model="form.terms_accepted"
+                        type="checkbox"
+                        class="mt-0.5 size-5 shrink-0 rounded border-sand-300 text-teal accent-teal focus:ring-teal dark:border-sand-600"
+                    />
+                    <label for="terms" class="text-sm leading-relaxed text-sand-500 dark:text-sand-400">
+                        {{ t('I agree to the') }}
+                        <a :href="termsUrl" target="_blank" class="font-semibold text-teal underline">{{ t('Terms and Conditions') }}</a>
+                    </label>
+                </div>
+                <p v-if="form.errors.terms_accepted" class="mt-1 text-xs text-blush-500">{{ form.errors.terms_accepted }}</p>
+
                 <Button
                     type="submit"
                     size="lg"
                     block
-                    :disabled="form.processing || !form.email || !form.name || !form.username || !form.password"
+                    :disabled="form.processing || !form.email || !form.name || !form.username || !form.password || !form.terms_accepted"
                 >
                     {{ form.processing ? '...' : t('Create account') }}
                 </Button>
             </form>
-
-            <p class="mt-5 max-w-xs text-center text-xs leading-relaxed text-sand-400 dark:text-sand-500">
-                {{ t('By registering you agree to our Terms and Privacy Policy. Your data is safe with us.') }}
-            </p>
         </div>
 
         <div class="border-t border-sand-200 pb-8 pt-4 dark:border-sand-800">

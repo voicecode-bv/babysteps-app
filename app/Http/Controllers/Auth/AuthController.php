@@ -46,6 +46,7 @@ class AuthController extends Controller
             'username' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255'],
             'password' => ['required', 'string', 'min:8'],
+            'terms_accepted' => ['accepted'],
         ]);
 
         $result = $this->apiClient->register(
