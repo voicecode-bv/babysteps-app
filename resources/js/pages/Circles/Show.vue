@@ -179,10 +179,11 @@ function goBack() {
             </button>
         </template>
 
-        <PullToRefreshIndicator :pull-distance="pullDistance" :is-refreshing="isRefreshing" />
+        <div class="mt-10 pb-24">
+            <PullToRefreshIndicator :pull-distance="pullDistance" :is-refreshing="isRefreshing" />
 
-        <!-- Edit Circle -->
-        <div v-if="isEditing" class="space-y-4 border-b border-sand-200 bg-white px-4 py-4 dark:border-sand-800 dark:bg-sand-900">
+            <!-- Edit Circle -->
+            <div v-if="isEditing" class="space-y-4 border-b border-sand-200 bg-white px-4 py-4 dark:border-sand-800 dark:bg-sand-900">
             <form class="flex items-center gap-2" @submit.prevent="updateCircle">
                 <input
                     v-model="editForm.name"
@@ -350,6 +351,7 @@ function goBack() {
                 <p class="text-sm font-medium text-sand-600 dark:text-sand-300">{{ t('No members yet') }}</p>
                 <p class="mt-1 text-sm text-sand-400 dark:text-sand-500">{{ t('Add people by their username or invite them by email.') }}</p>
             </div>
+        </div>
         </div>
     </AppLayout>
 </template>

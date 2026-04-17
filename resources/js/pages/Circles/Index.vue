@@ -68,29 +68,29 @@ function createCircle() {
             </button>
         </template>
 
-        <PullToRefreshIndicator :pull-distance="pullDistance" :is-refreshing="isRefreshing" />
+        <div class="mt-10 pb-24">
+            <PullToRefreshIndicator :pull-distance="pullDistance" :is-refreshing="isRefreshing" />
 
-        <!-- Create Circle Form -->
-        <div v-if="showCreateForm" class="border-b border-sand-200 bg-white px-4 py-3 dark:border-sand-800 dark:bg-sand-900">
-            <form class="flex items-center gap-2" @submit.prevent="createCircle">
-                <input
-                    v-model="form.name"
-                    type="text"
-                    :placeholder="t('Circle name...')"
-                    class="field flex-1"
-                />
-                <Button
-                    type="submit"
-                    size="sm"
-                    :disabled="form.processing || !form.name.trim()"
-                >
-                    {{ t('Create') }}
-                </Button>
-            </form>
-            <p v-if="form.errors.name" class="mt-1 text-xs text-blush-500">{{ form.errors.name }}</p>
-        </div>
+            <!-- Create Circle Form -->
+            <div v-if="showCreateForm" class="border-b border-sand-200 bg-white px-4 py-3 dark:border-sand-800 dark:bg-sand-900">
+                <form class="flex items-center gap-2" @submit.prevent="createCircle">
+                    <input
+                        v-model="form.name"
+                        type="text"
+                        :placeholder="t('Circle name...')"
+                        class="field flex-1"
+                    />
+                    <Button
+                        type="submit"
+                        size="sm"
+                        :disabled="form.processing || !form.name.trim()"
+                    >
+                        {{ t('Create') }}
+                    </Button>
+                </form>
+                <p v-if="form.errors.name" class="mt-1 text-xs text-blush-500">{{ form.errors.name }}</p>
+            </div>
 
-        <div class="pb-24">
             <!-- Circles List -->
             <Deferred data="circles">
                 <template #fallback>
@@ -146,6 +146,7 @@ function createCircle() {
                     </p>
                 </div>
             </Deferred>
+            
         </div>
     </AppLayout>
 </template>

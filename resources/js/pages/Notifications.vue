@@ -195,6 +195,7 @@ function timeAgo(dateString: string): string {
             </button>
         </template>
 
+        <div class="mt-10 pb-24">
         <PullToRefreshIndicator :pull-distance="pullDistance" :is-refreshing="isRefreshing" />
 
         <!-- Circle Invitations -->
@@ -261,7 +262,7 @@ function timeAgo(dateString: string): string {
         </template>
 
         <!-- Notifications list -->
-        <div v-else-if="notifications" class="pb-24">
+        <div v-else-if="notifications">
             <button
                 v-for="notification in notifications"
                 :key="notification.id"
@@ -315,6 +316,7 @@ function timeAgo(dateString: string): string {
             <p class="mt-1 text-center text-sm text-sand-500 dark:text-sand-400">
                 {{ t("When someone interacts with your posts, you'll see it here.") }}
             </p>
+        </div>
         </div>
     </AppLayout>
 </template>

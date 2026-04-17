@@ -167,7 +167,7 @@ function timeAgo(dateString: string): string {
             <div
                 :class="[
                     isFullscreen
-                        ? 'fixed inset-0 z-50 flex items-center justify-center bg-black'
+                        ? 'fixed inset-0 z-9999 flex items-center justify-center bg-black'
                         : 'relative aspect-square w-full bg-sand-100 dark:bg-sand-800',
                 ]"
                 @click="navigateToPost"

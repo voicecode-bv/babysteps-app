@@ -172,9 +172,10 @@ onUnmounted(() => {
 <template>
     <AppLayout ref="layout" :title="t('Settings')">
 
+        <div class="mt-10 pb-24">
         <PullToRefreshIndicator :pull-distance="pullDistance" :is-refreshing="isRefreshing" />
 
-        <div class="pb-24">
+        <div>
             <div class="bg-white px-4 py-6 dark:bg-sand-900">
                 <!-- Avatar & Name -->
                 <div class="flex items-center gap-4">
@@ -327,6 +328,7 @@ onUnmounted(() => {
                     {{ t('Log out') }}
                 </Button>
             </div>
+        </div>
         </div>
     </AppLayout>
 </template>

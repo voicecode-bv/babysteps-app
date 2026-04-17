@@ -254,9 +254,10 @@ function timeAgo(dateString: string): string {
             </button>
         </template>
 
+        <div class="mt-10 pb-24">
         <PullToRefreshIndicator :pull-distance="pullDistance" :is-refreshing="isRefreshing" />
 
-        <div class="pb-24">
+        <div>
             <div>
                 <!-- Post Header -->
                 <div class="flex items-center gap-3 bg-white px-4 py-3 dark:bg-sand-900">
@@ -580,6 +581,7 @@ function timeAgo(dateString: string): string {
                     </form>
                 </div>
             </div>
+        </div>
         </div>
 
     </AppLayout>

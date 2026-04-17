@@ -66,7 +66,7 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
     <AppLayout ref="layout" :show-header="false">
         <template #above>
             <!-- Family Circles -->
-            <div class="pt-[--inset-top] left-[--inset-left] right-[--inset-right] fixed flex gap-3 overflow-x-auto no-scrollbar border-b border-sand-200 bg-white px-4 py-3 dark:border-sand-800 dark:bg-sand-900">
+            <div class="pt-[var(--inset-top)] left-[var(--inset-left)] right-[var(--inset-right)] fixed z-100 flex gap-3 overflow-x-auto no-scrollbar border-b border-sand-200 bg-white px-4 py-3 dark:border-sand-800 dark:bg-sand-900">
                 <Link href="/circles" class="flex shrink-0 flex-col items-center gap-1.5">
                     <div class="rounded-full p-0.5">
                         <div class="flex size-14 items-center justify-center rounded-full border-2 border-dashed border-sand-300 dark:border-sand-600">
@@ -119,21 +119,23 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
             </div>
         </template>
 
-        <PullToRefreshIndicator :pull-distance="pullDistance" :is-refreshing="isRefreshing" />
+        <div class="pb-24 mt-23.75" scroll-region>
+            <PullToRefreshIndicator :pull-distance="pullDistance" :is-refreshing="isRefreshing" />
 
-        <InfiniteScroll v-if="posts" data="posts" only-next :buffer="1500" preserve-url class="pb-24">
-            <PostCard v-for="post in posts.data" :key="post.id" :post="post" />
-        </InfiniteScroll>
+            <InfiniteScroll v-if="posts" data="posts" only-next :buffer="500" preserve-url class="no-scrollbar">
+                <PostCard v-for="post in posts.data" :key="post.id" :post="post" />
+            </InfiniteScroll>
 
-        <div v-if="posts && posts.data.length === 0" class="flex flex-col items-center justify-center px-8 py-20">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor" class="mb-4 size-16 text-sand-300 dark:text-sand-600">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
-                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
-            </svg>
-            <h3 class="font-display text-lg font-semibold text-sand-800 dark:text-sand-200">{{ t('Share your first moment') }}</h3>
-            <p class="mt-1 text-center text-sm text-sand-500 dark:text-sand-400">
-                {{ t('Add a photo and share it with your family and friends.') }}
-            </p>
+            <div v-if="posts && posts.data.length === 0" class="flex flex-col items-center justify-center px-8 py-20">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor" class="mb-4 size-16 text-sand-300 dark:text-sand-600">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
+                </svg>
+                <h3 class="font-display text-lg font-semibold text-sand-800 dark:text-sand-200">{{ t('Share your first moment') }}</h3>
+                <p class="mt-1 text-center text-sm text-sand-500 dark:text-sand-400">
+                    {{ t('Add a photo and share it with your family and friends.') }}
+                </p>
+            </div>
         </div>
 
     </AppLayout>

@@ -56,6 +56,7 @@ function goBack() {
             </button>
         </template>
 
+        <div class="mt-10 pb-24">
         <PullToRefreshIndicator :pull-distance="pullDistance" :is-refreshing="isRefreshing" />
 
         <div>
@@ -95,6 +96,7 @@ function goBack() {
                 <h3 class="font-display text-lg font-semibold text-sand-800 dark:text-sand-200">{{ t('No moments yet') }}</h3>
             </div>
 
+        </div>
         </div>
     </AppLayout>
 </template>

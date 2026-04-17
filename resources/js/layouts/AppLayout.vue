@@ -22,7 +22,7 @@ defineExpose({ mainRef });
 <template>
     <header
         v-if="props.showHeader"
-        class="flex items-center justify-between border-b border-sand-200 bg-white px-4 py-3 dark:border-sand-800 dark:bg-sand-900"
+        class="pt-[var(--inset-top)] left-[var(--inset-left)] right-[var(--inset-right)] fixed z-100 flex items-center justify-between border-b border-sand-200 bg-white px-4 py-3 dark:border-sand-800 dark:bg-sand-900"
     >
         <div class="flex w-16 items-center">
             <slot name="header-left">
@@ -37,7 +37,7 @@ defineExpose({ mainRef });
 
     <slot name="above" />
 
-    <main ref="mainRef" class="flex h-dvh flex-col flex-1 overflow-y-auto" scroll-region>
+    <main ref="mainRef" class="pt-[var(--inset-top)] flex h-dvh flex-col flex-1 overflow-y-auto">
         <slot />
     </main>
 

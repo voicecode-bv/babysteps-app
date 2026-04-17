@@ -141,7 +141,7 @@ function submit() {
             <span />
         </template>
 
-        <div class="flex flex-col">
+        <div class="mt-10 flex flex-col pb-24">
             <!-- Media Section -->
             <div class="border-b border-sand-200 bg-white dark:border-sand-800 dark:bg-sand-900">
                 <!-- Preview -->
