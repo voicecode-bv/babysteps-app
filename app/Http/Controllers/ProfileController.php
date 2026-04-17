@@ -15,8 +15,6 @@ class ProfileController extends Controller
 {
     public function show(string $username, ApiClient $apiClient): Response
     {
-        $page = request()->integer('page', 1);
-
         $profileResponse = $apiClient->get("/profiles/{$username}");
 
         if ($profileResponse->failed() || $profileResponse->json('data') === null) {
@@ -24,18 +22,20 @@ class ProfileController extends Controller
         }
 
         $profile = $apiClient->proxyMediaUrls($profileResponse->json('data'));
-        $postsResponse = $apiClient->get("/profiles/{$username}/posts?page={$page}")->json();
-
-        $paginator = new LengthAwarePaginator(
-            items: $apiClient->proxyMediaUrls($postsResponse['data']),
-            total: $postsResponse['meta']['total'],
-            perPage: $postsResponse['meta']['per_page'],
-            currentPage: $postsResponse['meta']['current_page'],
-        );
 
         return Inertia::render('Profile', [
             'profile' => $profile,
-            'posts' => Inertia::scroll($paginator),
+            'posts' => Inertia::scroll(function () use ($username, $apiClient) {
+                $page = request()->integer('page', 1);
+                $postsResponse = $apiClient->get("/profiles/{$username}/posts?page={$page}")->json();
+
+                return new LengthAwarePaginator(
+                    items: $apiClient->proxyMediaUrls($postsResponse['data']),
+                    total: $postsResponse['meta']['total'],
+                    perPage: $postsResponse['meta']['per_page'],
+                    currentPage: $postsResponse['meta']['current_page'],
+                );
+            }),
         ]);
     }
 

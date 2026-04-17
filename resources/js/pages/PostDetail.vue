@@ -72,6 +72,7 @@ const replyingTo = ref<Comment | null>(null);
 const isMuted = ref(true);
 const isFullscreen = ref(false);
 const videoRef = ref<HTMLVideoElement>();
+const mediaLoaded = ref(false);
 
 function toggleMute() {
     isMuted.value = !isMuted.value;
@@ -279,14 +280,17 @@ function timeAgo(dateString: string): string {
                     :class="[
                         isFullscreen
                             ? 'fixed inset-0 z-50 flex items-center justify-center bg-black'
-                            : 'relative aspect-square w-full bg-sand-100 dark:bg-sand-800',
+                            : 'relative aspect-square w-full overflow-hidden bg-sand-100 dark:bg-sand-800',
                     ]"
                 >
+                    <div v-if="!mediaLoaded && !isFullscreen && (post.media_type === 'image' || (post.media_type === 'video' && post.media_status === 'ready'))" class="shimmer absolute inset-0" />
                     <img
                         v-if="post.media_type === 'image'"
                         :src="post.media_url"
                         :alt="post.caption ?? t('Photo')"
-                        class="size-full object-cover"
+                        class="size-full object-cover transition-opacity duration-500"
+                        :class="mediaLoaded ? 'opacity-100' : 'opacity-0'"
+                        @load="mediaLoaded = true"
                     />
                     <template v-else-if="post.media_type === 'video'">
                         <video
@@ -294,12 +298,17 @@ function timeAgo(dateString: string): string {
                             ref="videoRef"
                             :src="post.media_url"
                             :poster="post.thumbnail_url ?? undefined"
-                            :class="isFullscreen ? 'max-h-full max-w-full object-contain' : 'size-full object-cover'"
+                            :class="[
+                                isFullscreen ? 'max-h-full max-w-full object-contain' : 'size-full object-cover',
+                                'transition-opacity duration-500',
+                                mediaLoaded ? 'opacity-100' : 'opacity-0',
+                            ]"
                             playsinline
                             muted
                             autoplay
                             loop
                             preload="metadata"
+                            @loadeddata="mediaLoaded = true"
                         />
                         <!-- Video controls: mute + fullscreen -->
                         <div

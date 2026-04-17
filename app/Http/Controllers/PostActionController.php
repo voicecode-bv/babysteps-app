@@ -7,6 +7,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\File;
 
 class PostActionController extends Controller
@@ -79,7 +80,7 @@ class PostActionController extends Controller
         return redirect()->route('feed');
     }
 
-    public function like(int $post): RedirectResponse
+    public function like(int $post): Response|RedirectResponse
     {
         try {
             $this->apiClient->post("/posts/{$post}/like");
@@ -87,10 +88,10 @@ class PostActionController extends Controller
             return back()->withErrors(['like' => __('Could not connect to the server.')]);
         }
 
-        return back();
+        return response()->noContent();
     }
 
-    public function unlike(int $post): RedirectResponse
+    public function unlike(int $post): Response|RedirectResponse
     {
         try {
             $this->apiClient->delete("/posts/{$post}/like");
@@ -98,7 +99,7 @@ class PostActionController extends Controller
             return back()->withErrors(['like' => __('Could not connect to the server.')]);
         }
 
-        return back();
+        return response()->noContent();
     }
 
     public function comment(Request $request, int $post): RedirectResponse
@@ -128,7 +129,7 @@ class PostActionController extends Controller
         return back();
     }
 
-    public function likeComment(int $comment): RedirectResponse
+    public function likeComment(int $comment): Response|RedirectResponse
     {
         try {
             $this->apiClient->post("/comments/{$comment}/like");
@@ -136,10 +137,10 @@ class PostActionController extends Controller
             return back()->withErrors(['like' => __('Could not connect to the server.')]);
         }
 
-        return back();
+        return response()->noContent();
     }
 
-    public function unlikeComment(int $comment): RedirectResponse
+    public function unlikeComment(int $comment): Response|RedirectResponse
     {
         try {
             $this->apiClient->delete("/comments/{$comment}/like");
@@ -147,6 +148,6 @@ class PostActionController extends Controller
             return back()->withErrors(['like' => __('Could not connect to the server.')]);
         }
 
-        return back();
+        return response()->noContent();
     }
 }

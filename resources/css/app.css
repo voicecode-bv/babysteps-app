@@ -82,3 +82,34 @@
 @utility no-scrollbar {
   @apply [scrollbar-width:none] [&::-webkit-scrollbar]:hidden;
 }
+
+@utility shimmer {
+    background: linear-gradient(
+        110deg,
+        var(--color-sand-100) 30%,
+        var(--color-sand-200) 50%,
+        var(--color-sand-100) 70%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.8s linear infinite;
+}
+
+.dark .shimmer {
+    background: linear-gradient(
+        110deg,
+        var(--color-sand-800) 30%,
+        var(--color-sand-700) 50%,
+        var(--color-sand-800) 70%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.8s linear infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}

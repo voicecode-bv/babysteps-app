@@ -9,6 +9,7 @@ use App\Services\ApiClient;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Native\Mobile\Edge\Edge;
 
 class AuthController extends Controller
@@ -71,9 +72,17 @@ class AuthController extends Controller
 
     public function logout(): RedirectResponse
     {
+        $userId = Auth::id();
+
         $this->apiClient->logout();
 
         Auth::logout();
+
+        if ($userId !== null) {
+            Cache::forget('settings_profile_'.$userId);
+        }
+        Cache::forget('circles');
+        Cache::forget('unread_notification_count');
 
         request()->session()->invalidate();
         request()->session()->regenerateToken();
