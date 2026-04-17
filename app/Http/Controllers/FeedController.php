@@ -19,7 +19,7 @@ class FeedController extends Controller
                 $response = $apiClient->get('/feed?page='.$page);
 
                 if ($response->failed()) {
-                    return new LengthAwarePaginator([], 0, 15);
+                    return new LengthAwarePaginator([], 0, 10);
                 }
 
                 $data = $response->json();

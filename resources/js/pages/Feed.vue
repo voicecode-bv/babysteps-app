@@ -119,7 +119,7 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
             </div>
         </template>
 
-        <div class="pb-24 mt-23.75" scroll-region>
+        <div class="pb-24 mt-23.75">
             <PullToRefreshIndicator :pull-distance="pullDistance" :is-refreshing="isRefreshing" />
 
             <InfiniteScroll v-if="posts" data="posts" only-next :buffer="500" preserve-url class="no-scrollbar">
