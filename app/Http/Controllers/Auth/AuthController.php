@@ -110,6 +110,8 @@ class AuthController extends Controller
 
         $this->syncLocalUser($result['user']);
 
+        SyncDeviceInfo::dispatch();
+
         $this->primeSettingsCache();
 
         return redirect()->route('feed');
