@@ -34,7 +34,7 @@ class FeedController extends Controller
                     perPage: $data['meta']['per_page'],
                     currentPage: $data['meta']['current_page'],
                 );
-            })->matchOn('data.id'),
+            })->matchOn('data.id')->defer(),
             'circles' => Inertia::defer(fn () => $apiClient->cachedCircles()),
         ]);
     }
