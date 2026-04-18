@@ -5,6 +5,7 @@ namespace App\Services;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Native\Mobile\Facades\SecureStorage;
 
@@ -174,6 +175,68 @@ class ApiClient
     public function authenticated(): PendingRequest
     {
         return $this->request()->withToken($this->getToken());
+    }
+
+    public const SETTINGS_CACHE_TTL = 300;
+
+    public static function profileCacheKey(int $userId): string
+    {
+        return 'settings_profile_'.$userId;
+    }
+
+    public static function circlesCacheKey(): string
+    {
+        return 'circles';
+    }
+
+    /**
+     * Fetch and cache the profile for a given username. Returns null on failure.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function cachedProfile(int $userId, string $username): ?array
+    {
+        return Cache::remember(
+            self::profileCacheKey($userId),
+            self::SETTINGS_CACHE_TTL,
+            function () use ($username) {
+                try {
+                    $response = $this->get("/profiles/{$username}");
+                } catch (ConnectionException) {
+                    return null;
+                }
+
+                if ($response->failed() || $response->json('data') === null) {
+                    return null;
+                }
+
+                return $this->proxyMediaUrls($response->json('data'));
+            },
+        );
+    }
+
+    /**
+     * Fetch and cache the current user's circles.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function cachedCircles(): array
+    {
+        return Cache::remember(
+            self::circlesCacheKey(),
+            self::SETTINGS_CACHE_TTL,
+            function () {
+                try {
+                    $response = $this->get('/circles');
+                } catch (ConnectionException) {
+                    return [];
+                }
+
+                return $response->successful()
+                    ? $this->proxyMediaUrls($response->json('data')) ?? []
+                    : [];
+            },
+        );
     }
 
     /**

@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Services\ApiClient;
-use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -12,31 +10,17 @@ class SettingsController extends Controller
 {
     public function show(ApiClient $apiClient): Response
     {
-        $username = auth()->user()->username;
+        $user = auth()->user();
 
-        $cacheKey = 'settings_profile_'.auth()->id();
-        $profile = Cache::get($cacheKey);
+        $profile = $apiClient->cachedProfile($user->id, $user->username);
 
         if ($profile === null) {
-            try {
-                $profileResponse = $apiClient->get("/profiles/{$username}");
-
-                if ($profileResponse->failed() || $profileResponse->json('data') === null) {
-                    abort(404);
-                }
-
-                $profile = $apiClient->proxyMediaUrls($profileResponse->json('data'));
-                Cache::put($cacheKey, $profile, 300);
-            } catch (ConnectionException) {
-                abort(503);
-            }
+            abort(503);
         }
-
-        $circles = $apiClient->get('/circles')->json('data') ?? [];
 
         return Inertia::render('Settings', [
             'profile' => $profile,
-            'circles' => $circles,
+            'circles' => $apiClient->cachedCircles(),
         ]);
     }
 }

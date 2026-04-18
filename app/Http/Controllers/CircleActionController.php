@@ -21,7 +21,7 @@ class CircleActionController extends Controller
         $response = $this->apiClient->post('/circles', $validated);
 
         if ($response->successful()) {
-            Cache::forget('circles');
+            Cache::forget(ApiClient::circlesCacheKey());
             $circleId = $response->json('data.id');
 
             return redirect()->route('circles.show', $circleId);
@@ -39,7 +39,7 @@ class CircleActionController extends Controller
         $response = $this->apiClient->put("/circles/{$circle}", $validated);
 
         if ($response->successful()) {
-            Cache::forget('circles');
+            Cache::forget(ApiClient::circlesCacheKey());
 
             return back();
         }
@@ -56,7 +56,7 @@ class CircleActionController extends Controller
         $response = $this->apiClient->put("/circles/{$circle}/settings", $validated);
 
         if ($response->successful()) {
-            Cache::forget('circles');
+            Cache::forget(ApiClient::circlesCacheKey());
 
             return back();
         }
@@ -67,7 +67,7 @@ class CircleActionController extends Controller
     public function destroy(int $circle): RedirectResponse
     {
         $this->apiClient->delete("/circles/{$circle}");
-        Cache::forget('circles');
+        Cache::forget(ApiClient::circlesCacheKey());
 
         return redirect()->route('circles.index');
     }
@@ -85,7 +85,7 @@ class CircleActionController extends Controller
         $response = $this->apiClient->post("/circles/{$circle}/members", $data);
 
         if ($response->successful()) {
-            Cache::forget('circles');
+            Cache::forget(ApiClient::circlesCacheKey());
 
             return back();
         }
@@ -118,7 +118,7 @@ class CircleActionController extends Controller
             ->attach('photo', file_get_contents($path), $filename, ['Content-Type' => $mimeType])
             ->post("/circles/{$circle}/photo");
 
-        Cache::forget('circles');
+        Cache::forget(ApiClient::circlesCacheKey());
 
         return back();
     }
@@ -126,7 +126,7 @@ class CircleActionController extends Controller
     public function deletePhoto(int $circle): RedirectResponse
     {
         $this->apiClient->delete("/circles/{$circle}/photo");
-        Cache::forget('circles');
+        Cache::forget(ApiClient::circlesCacheKey());
 
         return back();
     }
@@ -134,7 +134,7 @@ class CircleActionController extends Controller
     public function acceptInvitation(int $invitation): RedirectResponse
     {
         $this->apiClient->post("/circle-invitations/{$invitation}/accept");
-        Cache::forget('circles');
+        Cache::forget(ApiClient::circlesCacheKey());
 
         return back();
     }
@@ -142,7 +142,7 @@ class CircleActionController extends Controller
     public function declineInvitation(int $invitation): RedirectResponse
     {
         $this->apiClient->post("/circle-invitations/{$invitation}/decline");
-        Cache::forget('circles');
+        Cache::forget(ApiClient::circlesCacheKey());
 
         return back();
     }
@@ -150,7 +150,7 @@ class CircleActionController extends Controller
     public function cancelInvitation(int $circle, int $invitation): RedirectResponse
     {
         $this->apiClient->delete("/circles/{$circle}/invitations/{$invitation}");
-        Cache::forget('circles');
+        Cache::forget(ApiClient::circlesCacheKey());
 
         return back();
     }
@@ -158,7 +158,7 @@ class CircleActionController extends Controller
     public function removeMember(int $circle, int $user): RedirectResponse
     {
         $this->apiClient->delete("/circles/{$circle}/members/{$user}");
-        Cache::forget('circles');
+        Cache::forget(ApiClient::circlesCacheKey());
 
         return back();
     }
@@ -171,7 +171,7 @@ class CircleActionController extends Controller
             return back()->withErrors(['leave' => $response->json('message', __('Failed to leave circle'))]);
         }
 
-        Cache::forget('circles');
+        Cache::forget(ApiClient::circlesCacheKey());
 
         return redirect()->route('circles.index');
     }

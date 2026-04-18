@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Native\Mobile\Edge\Edge;
 
 class AuthController extends Controller
@@ -32,6 +33,8 @@ class AuthController extends Controller
         $this->syncLocalUser($result['user']);
 
         SyncDeviceInfo::dispatch();
+
+        $this->primeSettingsCache();
 
         if (Auth::user()?->notifications_prompted_at === null) {
             return redirect()->route('onboarding.notifications');
@@ -67,6 +70,8 @@ class AuthController extends Controller
 
         SyncDeviceInfo::dispatch();
 
+        $this->primeSettingsCache();
+
         return redirect()->route('onboarding.notifications');
     }
 
@@ -79,9 +84,9 @@ class AuthController extends Controller
         Auth::logout();
 
         if ($userId !== null) {
-            Cache::forget('settings_profile_'.$userId);
+            Cache::forget(ApiClient::profileCacheKey($userId));
         }
-        Cache::forget('circles');
+        Cache::forget(ApiClient::circlesCacheKey());
         Cache::forget('unread_notification_count');
 
         request()->session()->invalidate();
@@ -105,7 +110,31 @@ class AuthController extends Controller
 
         $this->syncLocalUser($result['user']);
 
+        $this->primeSettingsCache();
+
         return redirect()->route('feed');
+    }
+
+    /**
+     * Prime the settings cache so the Settings page can render from cache on first visit.
+     */
+    protected function primeSettingsCache(): void
+    {
+        $user = Auth::user();
+
+        if ($user === null) {
+            return;
+        }
+
+        try {
+            Cache::forget(ApiClient::profileCacheKey($user->id));
+            Cache::forget(ApiClient::circlesCacheKey());
+
+            $this->apiClient->cachedProfile($user->id, $user->username);
+            $this->apiClient->cachedCircles();
+        } catch (\Throwable $e) {
+            Log::warning('Failed to prime settings cache after auth', ['error' => $e->getMessage()]);
+        }
     }
 
     /**

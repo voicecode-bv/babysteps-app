@@ -2,6 +2,7 @@
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useTranslations } from '@/composables/useTranslations';
+import { likePost, unlikePost } from '@/http/likes';
 
 export interface PostData {
     id: number;
@@ -98,29 +99,16 @@ onUnmounted(() => {
 });
 
 function toggleLike() {
-    if (isLiked.value) {
-        isLiked.value = false;
-        likesCount.value--;
-        router.delete(`/posts/${props.post.id}/like`, {
-            preserveScroll: true,
-            preserveState: true,
-            onError: () => {
-                isLiked.value = true;
-                likesCount.value++;
-            },
-        });
-    } else {
-        isLiked.value = true;
-        likesCount.value++;
-        router.post(`/posts/${props.post.id}/like`, {}, {
-            preserveScroll: true,
-            preserveState: true,
-            onError: () => {
-                isLiked.value = false;
-                likesCount.value--;
-            },
-        });
-    }
+    const wasLiked = isLiked.value;
+    isLiked.value = !wasLiked;
+    likesCount.value += wasLiked ? -1 : 1;
+
+    const request = wasLiked ? unlikePost(props.post.id) : likePost(props.post.id);
+
+    request.catch(() => {
+        isLiked.value = wasLiked;
+        likesCount.value += wasLiked ? 1 : -1;
+    });
 }
 
 function timeAgo(dateString: string): string {

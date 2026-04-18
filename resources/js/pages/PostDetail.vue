@@ -4,6 +4,7 @@ import { usePullToRefresh } from '@/composables/usePullToRefresh';
 import { useTranslations } from '@/composables/useTranslations';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Link, router, useForm, usePage } from '@inertiajs/vue3';
+import { likeComment as likeCommentRequest, likePost, unlikeComment as unlikeCommentRequest, unlikePost } from '@/http/likes';
 import { Dialog, On, Off, Events } from '@nativephp/mobile';
 import { computed, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
@@ -122,58 +123,29 @@ function cancelReply() {
 }
 
 function toggleLike() {
-    if (isLiked.value) {
-        isLiked.value = false;
-        likesCount.value--;
-        router.delete(`/posts/${props.post.id}/like`, {
-            preserveScroll: true,
-            preserveState: true,
-            onError: () => {
-                isLiked.value = true;
-                likesCount.value++;
-            },
-        });
-    } else {
-        isLiked.value = true;
-        likesCount.value++;
-        router.post(`/posts/${props.post.id}/like`, {}, {
-            preserveScroll: true,
-            preserveState: true,
-            onError: () => {
-                isLiked.value = false;
-                likesCount.value--;
-            },
-        });
-    }
+    const wasLiked = isLiked.value;
+    isLiked.value = !wasLiked;
+    likesCount.value += wasLiked ? -1 : 1;
+
+    const request = wasLiked ? unlikePost(props.post.id) : likePost(props.post.id);
+
+    request.catch(() => {
+        isLiked.value = wasLiked;
+        likesCount.value += wasLiked ? 1 : -1;
+    });
 }
 
 function toggleCommentLike(comment: Comment) {
-    const previousIsLiked = comment.is_liked;
-    const previousLikesCount = comment.likes_count;
+    const wasLiked = comment.is_liked;
+    comment.is_liked = !wasLiked;
+    comment.likes_count += wasLiked ? -1 : 1;
 
-    if (comment.is_liked) {
-        comment.is_liked = false;
-        comment.likes_count--;
-        router.delete(`/comments/${comment.id}/like`, {
-            preserveScroll: true,
-            preserveState: true,
-            onError: () => {
-                comment.is_liked = previousIsLiked;
-                comment.likes_count = previousLikesCount;
-            },
-        });
-    } else {
-        comment.is_liked = true;
-        comment.likes_count++;
-        router.post(`/comments/${comment.id}/like`, {}, {
-            preserveScroll: true,
-            preserveState: true,
-            onError: () => {
-                comment.is_liked = previousIsLiked;
-                comment.likes_count = previousLikesCount;
-            },
-        });
-    }
+    const request = wasLiked ? unlikeCommentRequest(comment.id) : likeCommentRequest(comment.id);
+
+    request.catch(() => {
+        comment.is_liked = wasLiked;
+        comment.likes_count += wasLiked ? 1 : -1;
+    });
 }
 
 function submitComment() {
@@ -483,7 +455,7 @@ function timeAgo(dateString: string): string {
                                 </div>
                             </div>
                             <div class="mt-1 flex flex-shrink-0 flex-col items-center gap-0.5">
-                                <button @click="toggleCommentLike(comment)">
+                                <button :disabled="comment.user.id === authUserId" @click="toggleCommentLike(comment)">
                                     <svg
                                         v-if="!comment.is_liked"
                                         xmlns="http://www.w3.org/2000/svg"
@@ -529,7 +501,7 @@ function timeAgo(dateString: string): string {
                                 </div>
                             </div>
                             <div class="mt-1 flex flex-shrink-0 flex-col items-center gap-0.5">
-                                <button @click="toggleCommentLike(reply)">
+                                <button :disabled="reply.user.id === authUserId" @click="toggleCommentLike(reply)">
                                     <svg
                                         v-if="!reply.is_liked"
                                         xmlns="http://www.w3.org/2000/svg"

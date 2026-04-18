@@ -122,8 +122,19 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
         <div class="pb-24 mt-23.75">
             <PullToRefreshIndicator :pull-distance="pullDistance" :is-refreshing="isRefreshing" />
 
-            <InfiniteScroll v-if="posts" data="posts" only-next :buffer="500" preserve-url class="no-scrollbar">
-                <PostCard v-for="post in posts.data" :key="post.id" :post="post" />
+            <InfiniteScroll v-if="posts" data="posts" only-next :buffer="1000" preserve-url class="no-scrollbar">
+                <template #default>
+                    <PostCard v-for="post in posts.data" :key="post.id" :post="post" />
+                </template>
+                <template #loading>
+                    <div class="flex items-center justify-center gap-2 py-6 text-sm text-sand-500 dark:text-sand-400">
+                        <svg class="size-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                        </svg>
+                        {{ t('Loading more...') }}
+                    </div>
+                </template>
             </InfiniteScroll>
 
             <div v-if="posts && posts.data.length === 0" class="flex flex-col items-center justify-center px-8 py-20">

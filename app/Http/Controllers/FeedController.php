@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Services\ApiClient;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -16,10 +15,15 @@ class FeedController extends Controller
         return Inertia::render('Feed', [
             'posts' => Inertia::scroll(function () use ($apiClient) {
                 $page = request()->integer('page', 1);
-                $response = $apiClient->get('/feed?page='.$page);
+
+                try {
+                    $response = $apiClient->get('/feed?page='.$page);
+                } catch (ConnectionException) {
+                    return new LengthAwarePaginator([], 0, 10, $page);
+                }
 
                 if ($response->failed()) {
-                    return new LengthAwarePaginator([], 0, 10);
+                    return new LengthAwarePaginator([], 0, 10, $page);
                 }
 
                 $data = $response->json();
@@ -30,27 +34,8 @@ class FeedController extends Controller
                     perPage: $data['meta']['per_page'],
                     currentPage: $data['meta']['current_page'],
                 );
-            }),
-            'circles' => Inertia::defer(function () use ($apiClient) {
-                $cached = Cache::get('circles');
-
-                if ($cached !== null) {
-                    return $cached;
-                }
-
-                try {
-                    $response = $apiClient->get('/circles');
-                    $circles = $response->successful()
-                        ? $apiClient->proxyMediaUrls($response->json('data'))
-                        : [];
-                } catch (ConnectionException) {
-                    return [];
-                }
-
-                Cache::put('circles', $circles, 300);
-
-                return $circles;
-            }),
+            })->matchOn('data.id'),
+            'circles' => Inertia::defer(fn () => $apiClient->cachedCircles()),
         ]);
     }
 }

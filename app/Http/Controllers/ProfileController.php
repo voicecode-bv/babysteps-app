@@ -46,7 +46,7 @@ class ProfileController extends Controller
         ]);
 
         $apiClient->put('/profile', $validated);
-        Cache::forget('settings_profile_'.auth()->id());
+        Cache::forget(ApiClient::profileCacheKey(auth()->id()));
 
         return back();
     }
@@ -79,7 +79,7 @@ class ProfileController extends Controller
         if ($response->successful()) {
             $avatarUrl = $response->json('user.avatar');
             $request->user()->update(['avatar' => $avatarUrl]);
-            Cache::forget('settings_profile_'.auth()->id());
+            Cache::forget(ApiClient::profileCacheKey(auth()->id()));
         }
 
         return back();
@@ -89,7 +89,7 @@ class ProfileController extends Controller
     {
         $apiClient->delete('/profile/avatar');
         $request->user()->update(['avatar' => null]);
-        Cache::forget('settings_profile_'.auth()->id());
+        Cache::forget(ApiClient::profileCacheKey(auth()->id()));
 
         return back();
     }
@@ -104,7 +104,7 @@ class ProfileController extends Controller
 
         $request->user()->update($validated);
         app()->setLocale($validated['locale']);
-        Cache::forget('settings_profile_'.auth()->id());
+        Cache::forget(ApiClient::profileCacheKey(auth()->id()));
 
         return to_route('settings');
     }
