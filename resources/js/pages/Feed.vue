@@ -25,6 +25,9 @@ defineProps<{
 
 const { t } = useTranslations();
 
+const infiniteScrollBuffer = 0;
+console.log('[Feed] InfiniteScroll buffer:', infiniteScrollBuffer);
+
 const layoutRef = useTemplateRef<InstanceType<typeof AppLayout>>('layout');
 const containerRef = computed(() => layoutRef.value?.mainRef ?? null);
 
@@ -136,7 +139,7 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
                 </div>
             </template>
 
-            <InfiniteScroll v-else data="posts" only-next :buffer="1000" preserve-url class="no-scrollbar">
+            <InfiniteScroll v-else data="posts" only-next :buffer="infiniteScrollBuffer" preserve-url class="no-scrollbar">
                 <template #default>
                     <PostCard v-for="post in posts.data" :key="post.id" :post="post" />
                 </template>
