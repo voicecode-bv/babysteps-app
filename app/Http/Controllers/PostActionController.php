@@ -110,7 +110,24 @@ class PostActionController extends Controller
         return response()->noContent();
     }
 
-    public function comment(Request $request, int $post): RedirectResponse
+    public function indexComments(int $post): JsonResponse
+    {
+        try {
+            $response = $this->apiClient->get("/posts/{$post}");
+        } catch (ConnectionException) {
+            return response()->json(['message' => __('Could not connect to the server.')], 503);
+        }
+
+        if ($response->failed()) {
+            return response()->json(['message' => $response->json('message', __('Failed to load comments'))], $response->status());
+        }
+
+        $data = $this->apiClient->proxyMediaUrls($response->json('data')) ?? [];
+
+        return response()->json($data['comments'] ?? []);
+    }
+
+    public function comment(Request $request, int $post): RedirectResponse|JsonResponse
     {
         $validated = $request->validate([
             'body' => ['required', 'string', 'max:1000'],
@@ -118,9 +135,21 @@ class PostActionController extends Controller
         ]);
 
         try {
-            $this->apiClient->post("/posts/{$post}/comments", $validated);
+            $response = $this->apiClient->post("/posts/{$post}/comments", $validated);
         } catch (ConnectionException) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => __('Could not connect to the server.')], 503);
+            }
+
             return back()->withErrors(['comment' => __('Could not connect to the server.')]);
+        }
+
+        if ($request->expectsJson()) {
+            if ($response->failed()) {
+                return response()->json(['message' => $response->json('message', __('Failed to post comment'))], $response->status());
+            }
+
+            return response()->json($this->apiClient->proxyMediaUrls($response->json('data')));
         }
 
         return back();
