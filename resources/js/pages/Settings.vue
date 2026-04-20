@@ -4,7 +4,7 @@ import { usePullToRefresh } from '@/composables/usePullToRefresh';
 import { useTranslations } from '@/composables/useTranslations';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Button from '@/components/Button.vue';
-import { router, useForm, usePage } from '@inertiajs/vue3';
+import { Link, router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
 import { Camera, Dialog, On, Off, Events } from '@nativephp/mobile';
 
@@ -317,6 +317,13 @@ onUnmounted(() => {
                 </div>
 
                 <div class="mt-4 border-b border-sand-100 dark:border-sand-800" />
+
+                <!-- Account subpage link -->
+                <Link :href="'/settings/account'" class="mt-4 block">
+                    <Button variant="secondary" block>
+                        {{ t('Account') }}
+                    </Button>
+                </Link>
 
                 <!-- Logout -->
                 <Button

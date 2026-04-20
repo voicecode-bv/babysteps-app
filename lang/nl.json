@@ -162,5 +162,18 @@
     "New circle post": "Nieuw bericht in kring",
     "Circle invitation accepted": "Uitnodiging geaccepteerd",
 
-    "Processing video...": "Video wordt verwerkt..."
+    "Processing video...": "Video wordt verwerkt...",
+
+    "Back": "Terug",
+    "Account": "Account",
+    "Delete account": "Account verwijderen",
+    "Delete my account": "Mijn account verwijderen",
+    "This cannot be undone. Your profile will be anonymized and your photos and videos will be permanently deleted.": "Dit kan niet ongedaan worden gemaakt. Je profiel wordt geanonimiseerd en je foto's en video's worden permanent verwijderd.",
+    "Deleting your account removes your personal data in line with GDPR. The following happens:": "Door je account te verwijderen worden je persoonsgegevens in lijn met de AVG verwijderd. Het volgende gebeurt:",
+    "Your name, username, email, avatar and bio are permanently removed.": "Je naam, gebruikersnaam, e-mailadres, avatar en bio worden definitief verwijderd.",
+    "All of your posts, including photos and videos, are permanently deleted.": "Al je berichten, inclusief foto's en video's, worden definitief verwijderd.",
+    "All of your comments and likes are permanently deleted.": "Al je reacties en likes worden definitief verwijderd.",
+    "Circles you created are deleted along with everything in them.": "Kringen die je hebt aangemaakt worden verwijderd, inclusief alles daarin.",
+    "This action cannot be undone.": "Deze actie kan niet ongedaan worden gemaakt.",
+    "We could not delete your account. Please try again later.": "Je account kon niet worden verwijderd. Probeer het later opnieuw."
 }

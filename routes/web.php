@@ -16,6 +16,7 @@ use App\Http\Controllers\Onboarding\NotificationController as OnboardingNotifica
 use App\Http\Controllers\PostActionController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Settings\AccountController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Middleware\HandleNativeEdge;
 use Illuminate\Support\Facades\Route;
@@ -52,6 +53,8 @@ Route::middleware(['auth.token', HandleNativeEdge::class])->group(function () {
     Route::post('/notifications/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
 
     Route::get('/settings', [SettingsController::class, 'show'])->name('settings');
+    Route::get('/settings/account', [AccountController::class, 'show'])->name('settings.account');
+    Route::delete('/account', [AccountController::class, 'destroy'])->name('account.destroy');
     Route::get('/profiles/{username}', [ProfileController::class, 'show'])->name('profiles.show');
     Route::put('/profile/bio', [ProfileController::class, 'updateBio'])->name('profile.update-bio');
     Route::post('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.update-avatar');

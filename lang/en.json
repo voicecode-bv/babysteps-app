@@ -132,5 +132,18 @@
     "New circle post": "New circle post",
     "Circle invitation accepted": "Circle invitation accepted",
 
-    "Processing video...": "Processing video..."
+    "Processing video...": "Processing video...",
+
+    "Back": "Back",
+    "Account": "Account",
+    "Delete account": "Delete account",
+    "Delete my account": "Delete my account",
+    "This cannot be undone. Your profile will be anonymized and your photos and videos will be permanently deleted.": "This cannot be undone. Your profile will be anonymized and your photos and videos will be permanently deleted.",
+    "Deleting your account removes your personal data in line with GDPR. The following happens:": "Deleting your account removes your personal data in line with GDPR. The following happens:",
+    "Your name, username, email, avatar and bio are permanently removed.": "Your name, username, email, avatar and bio are permanently removed.",
+    "All of your posts, including photos and videos, are permanently deleted.": "All of your posts, including photos and videos, are permanently deleted.",
+    "All of your comments and likes are permanently deleted.": "All of your comments and likes are permanently deleted.",
+    "Circles you created are deleted along with everything in them.": "Circles you created are deleted along with everything in them.",
+    "This action cannot be undone.": "This action cannot be undone.",
+    "We could not delete your account. Please try again later.": "We could not delete your account. Please try again later."
 }

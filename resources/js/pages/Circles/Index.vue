@@ -32,6 +32,7 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
     onRefresh: () =>
         new Promise<void>((resolve) => {
             router.reload({
+                only: ['circles'],
                 onFinish: () => resolve(),
             });
         }),
