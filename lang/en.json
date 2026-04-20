@@ -60,6 +60,13 @@
     "Forgot password?": "Forgot password?",
     "New to Innerr?": "New to Innerr?",
     "Create an account": "Create an account",
+    "Continue with Apple": "Continue with Apple",
+    "Continue with Google": "Continue with Google",
+    "Sign up with Apple": "Sign up with Apple",
+    "Sign up with Google": "Sign up with Google",
+    "or": "or",
+    "Social sign-in failed": "Social sign-in failed",
+    "Social sign-in failed: missing email": "Social sign-in failed: we couldn't read your email address",
 
     "Share the most beautiful moments with your family and friends.": "Share the most beautiful moments with your family and friends.",
     "Your name": "Your name",

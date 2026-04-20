@@ -1,0 +1,52 @@
+<?php
+
+namespace App\Http\Controllers\Auth\Concerns;
+
+use App\Models\User;
+use App\Services\ApiClient;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+
+trait HandlesAuthenticatedSession
+{
+    /**
+     * @param  array<string, mixed>  $userData
+     */
+    protected function syncLocalUser(array $userData): void
+    {
+        $user = User::updateOrCreate(
+            ['email' => $userData['email']],
+            [
+                'api_user_id' => $userData['id'],
+                'name' => $userData['name'],
+                'username' => $userData['username'],
+                'avatar' => $userData['avatar'] ?? null,
+                'bio' => $userData['bio'] ?? null,
+                'locale' => $userData['locale'] ?? config('app.locale'),
+                'password' => 'api-managed',
+            ],
+        );
+
+        Auth::login($user);
+    }
+
+    protected function primeSettingsCache(ApiClient $apiClient): void
+    {
+        $user = Auth::user();
+
+        if ($user === null) {
+            return;
+        }
+
+        try {
+            Cache::forget(ApiClient::profileCacheKey($user->id));
+            Cache::forget(ApiClient::circlesCacheKey());
+
+            $apiClient->cachedProfile($user->id, $user->username);
+            $apiClient->cachedCircles();
+        } catch (\Throwable $e) {
+            Log::warning('Failed to prime settings cache after auth', ['error' => $e->getMessage()]);
+        }
+    }
+}

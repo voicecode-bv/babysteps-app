@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\CircleActionController;
 use App\Http\Controllers\CircleController;
 use App\Http\Controllers\CreatePostController;
@@ -26,6 +27,12 @@ Route::get('/register', [RegisterController::class, 'show'])->name('register');
 Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
 Route::post('/register', [AuthController::class, 'register'])->name('register.submit');
 Route::get('/auth/verify', [AuthController::class, 'verify'])->name('auth.verify');
+
+Route::get('/auth/social/{provider}', [SocialAuthController::class, 'start'])
+    ->where('provider', 'google|apple')
+    ->name('auth.social.start');
+
+Route::get('/oauth/callback', [SocialAuthController::class, 'callback'])->name('oauth.callback');
 
 Route::put('/locale', [LoginController::class, 'updateLocale'])->name('locale.update');
 Route::get('/media-proxy', MediaProxyController::class)->name('media-proxy');

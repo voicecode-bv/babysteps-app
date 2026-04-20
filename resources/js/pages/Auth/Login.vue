@@ -3,10 +3,14 @@ import { Link, router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import { useTranslations } from '@/composables/useTranslations';
 import Button from '@/components/Button.vue';
+import AppleAuthButton from '@/components/auth/AppleAuthButton.vue';
+import GoogleAuthButton from '@/components/auth/GoogleAuthButton.vue';
+import { start as socialStart } from '@/routes/auth/social';
 
 const { t } = useTranslations();
 const page = usePage();
 const currentLocale = computed(() => page.props.locale as string);
+const flashError = computed(() => (page.props.errors as Record<string, string> | undefined)?.email);
 
 const form = useForm({
     email: '',
@@ -44,6 +48,25 @@ function submit() {
             </div>
 
             <form class="w-full max-w-sm space-y-3" @submit.prevent="submit">
+                <p v-if="flashError" class="rounded-lg bg-blush-50 px-3 py-2 text-center text-xs text-blush-600 dark:bg-blush-900/20">
+                    {{ flashError }}
+                </p>
+
+                <AppleAuthButton
+                    :href="socialStart('apple').url"
+                    :label="t('Continue with Apple')"
+                />
+                <GoogleAuthButton
+                    :href="socialStart('google').url"
+                    :label="t('Continue with Google')"
+                />
+
+                <div class="flex items-center gap-3 py-2">
+                    <div class="h-px flex-1 bg-sand-200 dark:bg-sand-700" />
+                    <span class="text-xs uppercase tracking-wider text-sand-400 dark:text-sand-500">{{ t('or') }}</span>
+                    <div class="h-px flex-1 bg-sand-200 dark:bg-sand-700" />
+                </div>
+
                 <div>
                     <input
                         v-model="form.email"

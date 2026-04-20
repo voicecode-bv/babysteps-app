@@ -2,19 +2,20 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Http\Controllers\Auth\Concerns\HandlesAuthenticatedSession;
 use App\Http\Controllers\Controller;
 use App\Jobs\SyncDeviceInfo;
-use App\Models\User;
 use App\Services\ApiClient;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
 use Native\Mobile\Edge\Edge;
 
 class AuthController extends Controller
 {
+    use HandlesAuthenticatedSession;
+
     public function __construct(protected ApiClient $apiClient) {}
 
     public function login(Request $request): RedirectResponse
@@ -34,7 +35,7 @@ class AuthController extends Controller
 
         SyncDeviceInfo::dispatch();
 
-        $this->primeSettingsCache();
+        $this->primeSettingsCache($this->apiClient);
 
         if (Auth::user()?->notifications_prompted_at === null) {
             return redirect()->route('onboarding.notifications');
@@ -70,7 +71,7 @@ class AuthController extends Controller
 
         SyncDeviceInfo::dispatch();
 
-        $this->primeSettingsCache();
+        $this->primeSettingsCache($this->apiClient);
 
         return redirect()->route('onboarding.notifications');
     }
@@ -92,7 +93,6 @@ class AuthController extends Controller
         request()->session()->invalidate();
         request()->session()->regenerateToken();
 
-        // Clear bottom bar to make it disappear.
         Edge::clear();
 
         return redirect()->route('login');
@@ -112,51 +112,8 @@ class AuthController extends Controller
 
         SyncDeviceInfo::dispatch();
 
-        $this->primeSettingsCache();
+        $this->primeSettingsCache($this->apiClient);
 
         return redirect()->route('feed');
-    }
-
-    /**
-     * Prime the settings cache so the Settings page can render from cache on first visit.
-     */
-    protected function primeSettingsCache(): void
-    {
-        $user = Auth::user();
-
-        if ($user === null) {
-            return;
-        }
-
-        try {
-            Cache::forget(ApiClient::profileCacheKey($user->id));
-            Cache::forget(ApiClient::circlesCacheKey());
-
-            $this->apiClient->cachedProfile($user->id, $user->username);
-            $this->apiClient->cachedCircles();
-        } catch (\Throwable $e) {
-            Log::warning('Failed to prime settings cache after auth', ['error' => $e->getMessage()]);
-        }
-    }
-
-    /**
-     * @param  array<string, mixed>  $userData
-     */
-    protected function syncLocalUser(array $userData): void
-    {
-        $user = User::updateOrCreate(
-            ['email' => $userData['email']],
-            [
-                'api_user_id' => $userData['id'],
-                'name' => $userData['name'],
-                'username' => $userData['username'],
-                'avatar' => $userData['avatar'] ?? null,
-                'bio' => $userData['bio'] ?? null,
-                'locale' => $userData['locale'] ?? config('app.locale'),
-                'password' => 'api-managed',
-            ],
-        );
-
-        Auth::login($user);
     }
 }
