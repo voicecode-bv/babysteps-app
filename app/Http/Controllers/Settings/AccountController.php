@@ -22,6 +22,32 @@ class AccountController extends Controller
         return Inertia::render('Settings/Account');
     }
 
+    public function export(): RedirectResponse
+    {
+        try {
+            $response = $this->apiClient->post('/account/export');
+        } catch (ConnectionException $e) {
+            Log::warning('Account export failed: connection error', ['error' => $e->getMessage()]);
+
+            return back()->withErrors([
+                'export' => __('Could not connect to the server'),
+            ]);
+        }
+
+        if ($response->failed()) {
+            Log::warning('Account export failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            return back()->withErrors([
+                'export' => __('We could not request your data export. Please try again later.'),
+            ]);
+        }
+
+        return back();
+    }
+
     public function destroy(): RedirectResponse
     {
         $user = Auth::user();

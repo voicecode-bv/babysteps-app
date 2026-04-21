@@ -69,6 +69,7 @@ Route::middleware(['auth.token', HandleNativeEdge::class, EnsureOnboarded::class
 
     Route::get('/settings', [SettingsController::class, 'show'])->name('settings');
     Route::get('/settings/account', [AccountController::class, 'show'])->name('settings.account');
+    Route::post('/account/export', [AccountController::class, 'export'])->name('account.export');
     Route::delete('/account', [AccountController::class, 'destroy'])->name('account.destroy');
     Route::get('/profiles/{username}', [ProfileController::class, 'show'])->name('profiles.show');
     Route::put('/profile/bio', [ProfileController::class, 'updateBio'])->name('profile.update-bio');

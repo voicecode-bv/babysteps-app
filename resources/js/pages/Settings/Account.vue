@@ -1,20 +1,29 @@
 <script setup lang="ts">
+import AccountController from '@/actions/App/Http/Controllers/Settings/AccountController';
 import Button from '@/components/Button.vue';
 import IconTile from '@/components/IconTile.vue';
 import SurfaceCard from '@/components/SurfaceCard.vue';
 import { useTranslations } from '@/composables/useTranslations';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { router, usePage } from '@inertiajs/vue3';
+import { router, useForm, usePage } from '@inertiajs/vue3';
 import { Dialog, Events, Off, On } from '@nativephp/mobile';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
+import downloadIcon from '../../../svg/doodle-icons/arrow-circle-down.svg';
 import userDeleteIcon from '../../../svg/doodle-icons/user-delete.svg';
 
 const { t } = useTranslations();
 
 const page = usePage<{ errors: Record<string, string> }>();
 const accountError = computed(() => page.props.errors?.account ?? null);
+const exportError = computed(() => page.props.errors?.export ?? null);
 
 const isDeleting = ref(false);
+
+const exportForm = useForm({});
+
+function requestExport() {
+    exportForm.submit(AccountController.export(), { preserveScroll: true });
+}
 
 function goBack() {
     router.visit('/settings');
@@ -65,6 +74,48 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
             </div>
 
             <div class="relative space-y-4 px-4 pt-4 pb-24">
+                <SurfaceCard>
+                    <h3 class="flex items-center gap-3 text-sm font-semibold text-sand-900 dark:text-sand-100">
+                        <IconTile :icon="downloadIcon" size="sm" tone="sage" />
+                        {{ t('Download your data') }}
+                    </h3>
+
+                    <p class="mt-3 text-sm text-sand-700 dark:text-sand-300">
+                        {{ t('Request an email with a download link to all your data. The link is valid for 24 hours.') }}
+                    </p>
+
+                    <Transition
+                        enter-active-class="transition duration-200 ease-out"
+                        enter-from-class="opacity-0"
+                        enter-to-class="opacity-100"
+                        leave-active-class="transition duration-150 ease-in"
+                        leave-from-class="opacity-100"
+                        leave-to-class="opacity-0"
+                        mode="out-in"
+                    >
+                        <div
+                            v-if="exportForm.recentlySuccessful"
+                            class="mt-4 rounded-lg bg-sage-100/70 px-4 py-3 text-sm font-medium text-sage-700 dark:bg-sage-800/40 dark:text-sage-200"
+                        >
+                            {{ t('Check your inbox — we sent you a download link.') }}
+                        </div>
+                        <Button
+                            v-else
+                            size="lg"
+                            block
+                            class="mt-4"
+                            :disabled="exportForm.processing"
+                            @click="requestExport"
+                        >
+                            {{ exportForm.processing ? t('Preparing your download...') : t('Request download') }}
+                        </Button>
+                    </Transition>
+
+                    <p v-if="exportError" class="mt-4 rounded-lg bg-blush-50 p-3 text-sm text-blush-700 dark:bg-blush-900/30 dark:text-blush-200">
+                        {{ exportError }}
+                    </p>
+                </SurfaceCard>
+
                 <SurfaceCard>
                     <h3 class="flex items-center gap-3 text-sm font-semibold text-sand-900 dark:text-sand-100">
                         <IconTile :icon="userDeleteIcon" size="sm" tone="sage" />
