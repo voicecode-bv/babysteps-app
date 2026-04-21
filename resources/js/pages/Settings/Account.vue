@@ -2,9 +2,9 @@
 import Button from '@/components/Button.vue';
 import { useTranslations } from '@/composables/useTranslations';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Link, router } from '@inertiajs/vue3';
+import { Link, router, usePage } from '@inertiajs/vue3';
 import { Dialog, Events, Off, On } from '@nativephp/mobile';
-import { onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import userDeleteIcon from '../../../svg/doodle-icons/user-delete.svg';
 
 function iconMaskStyle(url: string) {
@@ -22,6 +22,9 @@ function iconMaskStyle(url: string) {
 
 const { t } = useTranslations();
 
+const page = usePage<{ errors: Record<string, string> }>();
+const accountError = computed(() => page.props.errors?.account ?? null);
+
 const isDeleting = ref(false);
 
 async function confirmDelete() {
@@ -34,14 +37,17 @@ async function confirmDelete() {
 }
 
 function handleButtonPressed(payload: { index: number; id?: string | null }) {
-    if (payload.id === 'delete-account-confirm' && payload.index === 1) {
-        isDeleting.value = true;
-        router.delete('/account', {
-            onFinish: () => {
-                isDeleting.value = false;
-            },
-        });
+    if (payload.id !== 'delete-account-confirm' || payload.index !== 1) {
+        return;
     }
+
+    isDeleting.value = true;
+    router.delete('/account', {
+        preserveScroll: true,
+        onFinish: () => {
+            isDeleting.value = false;
+        },
+    });
 }
 
 onMounted(() => On(Events.Alert.ButtonPressed, handleButtonPressed));
@@ -90,6 +96,10 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
                     >
                         {{ t('Delete my account') }}
                     </Button>
+
+                    <p v-if="accountError" class="mt-4 rounded-2xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-200">
+                        {{ accountError }}
+                    </p>
                 </section>
             </div>
         </div>

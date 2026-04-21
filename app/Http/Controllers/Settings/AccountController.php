@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Services\ApiClient;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 use Native\Mobile\Edge\Edge;
@@ -22,11 +24,25 @@ class AccountController extends Controller
 
     public function destroy(): RedirectResponse
     {
-        $userId = Auth::id();
+        $user = Auth::user();
+        $userId = $user?->id;
 
-        $response = $this->apiClient->delete('/account');
+        try {
+            $response = $this->apiClient->delete('/account');
+        } catch (ConnectionException $e) {
+            Log::warning('Account deletion failed: connection error', ['error' => $e->getMessage()]);
+
+            return back()->withErrors([
+                'account' => __('Could not connect to the server'),
+            ]);
+        }
 
         if ($response->failed()) {
+            Log::warning('Account deletion failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
             return back()->withErrors([
                 'account' => __('We could not delete your account. Please try again later.'),
             ]);
@@ -35,6 +51,8 @@ class AccountController extends Controller
         $this->apiClient->clearToken();
 
         Auth::logout();
+
+        $user?->delete();
 
         if ($userId !== null) {
             Cache::forget(ApiClient::profileCacheKey($userId));
