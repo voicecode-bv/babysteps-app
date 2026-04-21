@@ -1,12 +1,29 @@
 <script setup lang="ts">
+import { Link, router, useForm, usePage } from '@inertiajs/vue3';
+import { Camera, Dialog, Events, Off, On } from '@nativephp/mobile';
+import { computed, onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
+import Button from '@/components/Button.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import { usePullToRefresh } from '@/composables/usePullToRefresh';
 import { useTranslations } from '@/composables/useTranslations';
 import AppLayout from '@/layouts/AppLayout.vue';
-import Button from '@/components/Button.vue';
-import { Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { computed, onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
-import { Camera, Dialog, On, Off, Events } from '@nativephp/mobile';
+import bellIcon from '../../svg/doodle-icons/bell.svg';
+import globeIcon from '../../svg/doodle-icons/globe.svg';
+import lockIcon from '../../svg/doodle-icons/lock.svg';
+import usersIcon from '../../svg/doodle-icons/user.svg';
+
+function iconMaskStyle(url: string) {
+    return {
+        maskImage: `url(${url})`,
+        WebkitMaskImage: `url(${url})`,
+        maskSize: 'contain',
+        WebkitMaskSize: 'contain',
+        maskRepeat: 'no-repeat',
+        WebkitMaskRepeat: 'no-repeat',
+        maskPosition: 'center',
+        WebkitMaskPosition: 'center',
+    };
+}
 
 interface Profile {
     id: number;
@@ -68,8 +85,10 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
 
 async function loadNotificationPreferences() {
     loadingPreferences.value = true;
+
     try {
         const response = await fetch('/profile/notification-preferences');
+
         if (response.ok) {
             notificationPreferences.value = await response.json();
         }
@@ -80,8 +99,10 @@ async function loadNotificationPreferences() {
 
 async function loadDefaultCircles() {
     loadingDefaultCircles.value = true;
+
     try {
         const response = await fetch('/profile/default-circles');
+
         if (response.ok) {
             defaultCircleIds.value = await response.json();
         }
@@ -92,6 +113,7 @@ async function loadDefaultCircles() {
 
 function toggleDefaultCircle(circleId: number) {
     const index = defaultCircleIds.value.indexOf(circleId);
+
     if (index === -1) {
         defaultCircleIds.value.push(circleId);
     } else {
@@ -104,7 +126,9 @@ function toggleDefaultCircle(circleId: number) {
 }
 
 function togglePreference(key: keyof NotificationPreferences) {
-    if (!notificationPreferences.value) return;
+    if (!notificationPreferences.value) {
+        return;
+    }
 
     notificationPreferences.value[key] = !notificationPreferences.value[key];
 
@@ -136,7 +160,10 @@ async function pickAvatar() {
 }
 
 function handleMediaSelected(payload: { success: boolean; files: { path: string; mimeType: string }[]; cancelled: boolean }) {
-    if (!payload.success || payload.cancelled || !payload.files.length) return;
+    if (!payload.success || payload.cancelled || !payload.files.length) {
+        return;
+    }
+
     router.post('/profile/avatar', { avatar_path: payload.files[0].path }, { preserveScroll: true });
 }
 
@@ -171,78 +198,99 @@ onUnmounted(() => {
 
 <template>
     <AppLayout ref="layout" :title="t('Settings')">
+        <div class="relative mt-10 min-h-full bg-warmwhite pb-[calc(theme(spacing.40)+env(safe-area-inset-bottom))] dark:bg-sand-900">
+            <!-- Soft blobs -->
+            <div aria-hidden="true" class="pointer-events-none absolute inset-x-0 top-0 h-72 overflow-hidden">
+                <div class="absolute -left-16 top-0 size-64 rounded-full bg-sage-200/40 blur-3xl dark:bg-sage-700/20"></div>
+                <div class="absolute -right-16 top-10 size-64 rounded-full bg-accent-soft/30 blur-3xl dark:bg-accent/10"></div>
+            </div>
 
-        <div class="mt-10 pb-24">
-        <PullToRefreshIndicator :pull-distance="pullDistance" :is-refreshing="isRefreshing" />
+            <PullToRefreshIndicator :pull-distance="pullDistance" :is-refreshing="isRefreshing" />
 
-        <div>
-            <div class="bg-white px-4 py-6 dark:bg-sand-900">
-                <!-- Avatar & Name -->
-                <div class="flex items-center gap-4">
-                    <button class="relative" @click="pickAvatar">
-                        <img
-                            :src="profile.avatar ?? `https://ui-avatars.com/api/?name=${profile.name}&background=f0dcc6&color=5c3f24&size=128`"
-                            :alt="profile.name"
-                            class="size-20 rounded-full object-cover ring-2 ring-sand-200 dark:ring-sand-700"
-                        />
-                        <div class="absolute bottom-0 right-0 flex size-6 items-center justify-center rounded-full bg-sage-600 ring-2 ring-white dark:ring-sand-900">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5 text-white">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
-                            </svg>
-                        </div>
-                    </button>
-                    <div class="flex-1">
-                        <h2 class="font-display text-lg font-semibold text-sand-800 dark:text-sand-100">{{ profile.name }}</h2>
-                        <p class="text-sm text-sand-500 dark:text-sand-400">@{{ profile.username }}</p>
-                    </div>
-                </div>
-
-                <!-- Bio display / edit -->
-                <div class="mt-3">
-                    <template v-if="isEditingBio">
-                        <form @submit.prevent="saveBio" class="space-y-2">
-                            <textarea
-                                v-model="bioForm.bio"
-                                :placeholder="t('Write something about yourself...')"
-                                maxlength="150"
-                                rows="2"
-                                class="field-area"
-                            />
-                            <div class="flex items-center justify-between">
-                                <span class="text-xs text-sand-400 dark:text-sand-500">{{ bioForm.bio.length }}/150</span>
-                                <div class="flex gap-2">
-                                    <button type="button" class="text-sm text-sand-500 dark:text-sand-400" @click="cancelEditBio">{{ t('Cancel') }}</button>
-                                    <Button
-                                        type="submit"
-                                        size="sm"
-                                        :disabled="bioForm.processing"
-                                    >
-                                        {{ t('Save') }}
-                                    </Button>
-                                </div>
-                            </div>
-                        </form>
-                    </template>
-                    <template v-else>
-                        <p v-if="profile.bio" class="text-sm text-sand-700 dark:text-sand-300">{{ profile.bio }}</p>
+            <div class="relative space-y-5 px-4 pt-4 pb-24">
+                <!-- Profile card -->
+                <section class="rounded-[2rem] bg-white/90 p-5 shadow-sm backdrop-blur-sm dark:border-sand-700/50 dark:bg-sand-800/70">
+                    <div class="flex items-center gap-4">
                         <button
-                            class="mt-1 text-xs font-medium text-sand-500 dark:text-sand-400"
-                            @click="isEditingBio = true"
+                            class="relative shrink-0"
+                            :aria-label="t('Change profile picture')"
+                            @click="pickAvatar"
                         >
-                            {{ profile.bio ? t('Edit bio') : t('Add a bio...') }}
+                            <img
+                                :src="profile.avatar ?? `https://ui-avatars.com/api/?name=${profile.name}&background=f0dcc6&color=5c3f24&size=128`"
+                                :alt="profile.name"
+                                class="size-24 rounded-full object-cover ring-4 ring-white shadow-md dark:ring-sand-800"
+                            />
+                            <span class="absolute -bottom-1 -right-1 flex size-9 items-center justify-center rounded-full bg-teal ring-4 ring-white shadow-md dark:ring-sand-800">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5 text-white">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
+                                </svg>
+                            </span>
                         </button>
-                    </template>
-                </div>
+                        <Link :href="`/profiles/${profile.username}`" class="min-w-0 flex-1">
+                            <h2 class="truncate font-display text-2xl font-semibold text-teal">{{ profile.name }}</h2>
+                            <p class="truncate text-base text-sand-600 dark:text-sand-300">@{{ profile.username }}</p>
+                        </Link>
+                    </div>
 
-                <div class="mx-0 mt-4 border-b border-sand-100 dark:border-sand-800" />
+                    <div class="mt-5">
+                        <template v-if="isEditingBio">
+                            <form class="space-y-3" @submit.prevent="saveBio">
+                                <textarea
+                                    v-model="bioForm.bio"
+                                    :placeholder="t('Write something about yourself...')"
+                                    maxlength="150"
+                                    rows="3"
+                                    class="field-area text-base"
+                                />
+                                <div class="flex items-center justify-between gap-3">
+                                    <span class="text-sm text-sand-500 dark:text-sand-400">{{ bioForm.bio.length }}/150</span>
+                                    <div class="flex gap-2">
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="md"
+                                            @click="cancelEditBio"
+                                        >
+                                            {{ t('Cancel') }}
+                                        </Button>
+                                        <Button
+                                            type="submit"
+                                            size="md"
+                                            :disabled="bioForm.processing"
+                                        >
+                                            {{ t('Save') }}
+                                        </Button>
+                                    </div>
+                                </div>
+                            </form>
+                        </template>
+                        <template v-else>
+                            <p v-if="profile.bio" class="text-base leading-relaxed text-sand-800 dark:text-sand-200">{{ profile.bio }}</p>
+                            <button
+                                class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-sand-100 px-4 py-2 text-sm font-medium text-teal transition hover:bg-sand-200 dark:bg-sand-700/60 dark:text-sand-200 dark:hover:bg-sand-700"
+                                @click="isEditingBio = true"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487z" />
+                                </svg>
+                                {{ profile.bio ? t('Edit bio') : t('Add a bio...') }}
+                            </button>
+                        </template>
+                    </div>
+                </section>
 
                 <!-- Language -->
-                <div class="mt-4">
-                    <p class="mb-2 text-xs font-medium text-sand-500 dark:text-sand-400">{{ t('Language') }}</p>
+                <section class="rounded-[2rem] bg-white/90 p-5 shadow-sm dark:border-sand-700/50 dark:bg-sand-800/70">
+                    <h3 class="mb-3 flex items-center gap-2 text-base font-semibold text-sand-900 dark:text-sand-100">
+                        <span aria-hidden="true" class="inline-block size-6 bg-current" :style="iconMaskStyle(globeIcon)"></span>
+                        {{ t('Language') }}
+                    </h3>
                     <div class="flex gap-2">
                         <Button
                             block
+                            size="lg"
                             :variant="currentLocale === 'nl' ? 'primary' : 'secondary'"
                             @click="setLocale('nl')"
                         >
@@ -250,92 +298,104 @@ onUnmounted(() => {
                         </Button>
                         <Button
                             block
+                            size="lg"
                             :variant="currentLocale === 'en' ? 'primary' : 'secondary'"
                             @click="setLocale('en')"
                         >
                             English
                         </Button>
                     </div>
-                </div>
+                </section>
 
-                <!-- Default Circles -->
-                <div v-if="circles.length > 0" class="mt-4 border-b border-sand-100 dark:border-sand-800" />
+                <!-- Default circles -->
+                <section v-if="circles.length > 0" class="rounded-[2rem] bg-white/90 p-5 shadow-sm dark:border-sand-700/50 dark:bg-sand-800/70">
+                    <h3 class="flex items-center gap-2 text-base font-semibold text-sand-900 dark:text-sand-100">
+                        <span aria-hidden="true" class="inline-block size-6 bg-current" :style="iconMaskStyle(usersIcon)"></span>
+                        {{ t('Default circles for new posts') }}
+                    </h3>
+                    <p class="mt-1 text-sm text-sand-600 dark:text-sand-400">
+                        {{ t('These circles will be pre-selected when you create a new post.') }}
+                    </p>
+                    <ul class="mt-3 divide-y divide-sand-100 dark:divide-sand-700/60">
+                        <li v-for="circle in circles" :key="circle.id">
+                            <label class="flex cursor-pointer items-center justify-between gap-3 py-3">
+                                <span class="text-base text-sand-800 dark:text-sand-100">{{ circle.name }}</span>
+                                <button
+                                    type="button"
+                                    role="switch"
+                                    :aria-checked="defaultCircleIds.includes(circle.id)"
+                                    :class="defaultCircleIds.includes(circle.id) ? 'bg-teal' : 'bg-sand-300 dark:bg-sand-600'"
+                                    class="relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal/40"
+                                    @click="toggleDefaultCircle(circle.id)"
+                                >
+                                    <span
+                                        :class="defaultCircleIds.includes(circle.id) ? 'translate-x-7' : 'translate-x-1'"
+                                        class="pointer-events-none mt-1 size-6 rounded-full bg-white shadow transition-transform"
+                                    />
+                                </button>
+                            </label>
+                        </li>
+                    </ul>
+                </section>
 
-                <div v-if="circles.length > 0" class="mt-4">
-                    <p class="mb-2 text-xs font-medium text-sand-500 dark:text-sand-400">{{ t('Default circles for new posts') }}</p>
-                    <p class="mb-3 text-xs text-sand-400 dark:text-sand-500">{{ t('These circles will be pre-selected when you create a new post.') }}</p>
-                    <div class="space-y-3">
-                        <label v-for="circle in circles" :key="circle.id" class="flex items-center justify-between">
-                            <span class="text-sm text-sand-700 dark:text-sand-200">{{ circle.name }}</span>
-                            <button
-                                type="button"
-                                role="switch"
-                                :aria-checked="defaultCircleIds.includes(circle.id)"
-                                :class="defaultCircleIds.includes(circle.id) ? 'bg-teal' : 'bg-sand-300 dark:bg-sand-600'"
-                                class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors"
-                                @click="toggleDefaultCircle(circle.id)"
-                            >
-                                <span
-                                    :class="defaultCircleIds.includes(circle.id) ? 'translate-x-5.5' : 'translate-x-0.5'"
-                                    class="pointer-events-none mt-0.5 size-5 rounded-full bg-white shadow transition-transform"
-                                />
-                            </button>
-                        </label>
-                    </div>
-                </div>
-
-                <div v-if="notificationPreferences" class="mt-4 border-b border-sand-100 dark:border-sand-800" />
-
-                <!-- Notification Preferences -->
-                <div v-if="notificationPreferences" class="mt-4">
-                    <p class="mb-2 text-xs font-medium text-sand-500 dark:text-sand-400">{{ t('Push notifications') }}</p>
-                    <div class="space-y-3">
-                        <label v-for="(label, key) in {
+                <!-- Notifications -->
+                <section v-if="notificationPreferences" class="rounded-[2rem] bg-white/90 p-5 shadow-sm dark:border-sand-700/50 dark:bg-sand-800/70">
+                    <h3 class="flex items-center gap-2 text-base font-semibold text-sand-900 dark:text-sand-100">
+                        <span aria-hidden="true" class="inline-block size-6 bg-current" :style="iconMaskStyle(bellIcon)"></span>
+                        {{ t('Push notifications') }}
+                    </h3>
+                    <ul class="mt-3 divide-y divide-sand-100 dark:divide-sand-700/60">
+                        <li v-for="(label, key) in ({
                             post_liked: t('Post liked'),
                             post_commented: t('Post commented'),
                             comment_liked: t('Comment liked'),
                             comment_replied: t('Comment replied'),
                             new_circle_post: t('New circle post'),
                             circle_invitation_accepted: t('Circle invitation accepted'),
-                        } as Record<string, string>" :key="key" class="flex items-center justify-between">
-                            <span class="text-sm text-sand-700 dark:text-sand-200">{{ label }}</span>
-                            <button
-                                type="button"
-                                role="switch"
-                                :aria-checked="notificationPreferences[key as keyof NotificationPreferences]"
-                                :class="notificationPreferences[key as keyof NotificationPreferences] ? 'bg-teal' : 'bg-sand-300 dark:bg-sand-600'"
-                                class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors"
-                                @click="togglePreference(key as keyof NotificationPreferences)"
-                            >
-                                <span
-                                    :class="notificationPreferences[key as keyof NotificationPreferences] ? 'translate-x-5.5' : 'translate-x-0.5'"
-                                    class="pointer-events-none mt-0.5 size-5 rounded-full bg-white shadow transition-transform"
-                                />
-                            </button>
-                        </label>
+                        } as Record<string, string>)" :key="key">
+                            <label class="flex cursor-pointer items-center justify-between gap-3 py-3">
+                                <span class="text-base text-sand-800 dark:text-sand-100">{{ label }}</span>
+                                <button
+                                    type="button"
+                                    role="switch"
+                                    :aria-checked="notificationPreferences[key as keyof NotificationPreferences]"
+                                    :class="notificationPreferences[key as keyof NotificationPreferences] ? 'bg-teal' : 'bg-sand-300 dark:bg-sand-600'"
+                                    class="relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal/40"
+                                    @click="togglePreference(key as keyof NotificationPreferences)"
+                                >
+                                    <span
+                                        :class="notificationPreferences[key as keyof NotificationPreferences] ? 'translate-x-7' : 'translate-x-1'"
+                                        class="pointer-events-none mt-1 size-6 rounded-full bg-white shadow transition-transform"
+                                    />
+                                </button>
+                            </label>
+                        </li>
+                    </ul>
+                </section>
+
+                <!-- Account link -->
+                <Link :href="'/settings/account'" class="block">
+                    <div class="flex items-center justify-between gap-3 rounded-[2rem] bg-white/90 p-5 shadow-sm transition hover:bg-white dark:border-sand-700/50 dark:bg-sand-800/70">
+                        <span class="flex items-center gap-3 text-base font-semibold text-sand-900 dark:text-sand-100">
+                            <span aria-hidden="true" class="inline-block size-6 bg-current" :style="iconMaskStyle(lockIcon)"></span>
+                            {{ t('Account') }}
+                        </span>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5 text-sand-500 dark:text-sand-400">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                        </svg>
                     </div>
-                </div>
-
-                <div class="mt-4 border-b border-sand-100 dark:border-sand-800" />
-
-                <!-- Account subpage link -->
-                <Link :href="'/settings/account'" class="mt-4 block">
-                    <Button variant="secondary" block>
-                        {{ t('Account') }}
-                    </Button>
                 </Link>
 
                 <!-- Logout -->
                 <Button
                     variant="danger"
+                    size="lg"
                     block
-                    class="mt-4"
                     @click="logout"
                 >
                     {{ t('Log out') }}
                 </Button>
             </div>
-        </div>
         </div>
     </AppLayout>
 </template>

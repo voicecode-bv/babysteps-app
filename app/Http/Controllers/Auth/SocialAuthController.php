@@ -9,27 +9,12 @@ use App\Services\ApiClient;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Native\Mobile\Facades\Browser;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class SocialAuthController extends Controller
 {
     use HandlesAuthenticatedSession;
 
     public function __construct(protected ApiClient $apiClient) {}
-
-    public function start(string $provider): RedirectResponse
-    {
-        if (! in_array($provider, ['google', 'apple'], true)) {
-            throw new NotFoundHttpException("Unsupported provider: {$provider}");
-        }
-
-        $url = rtrim((string) config('api-client.base_url'), '/')."/oauth/{$provider}/redirect";
-
-        Browser::auth($url);
-
-        return redirect()->route('login');
-    }
 
     public function callback(Request $request): RedirectResponse
     {
@@ -66,7 +51,7 @@ class SocialAuthController extends Controller
         $this->primeSettingsCache($this->apiClient);
 
         if (Auth::user()?->notifications_prompted_at === null) {
-            return redirect()->route('onboarding.notifications');
+            return redirect()->route('onboarding.intro');
         }
 
         return redirect()->route('feed');

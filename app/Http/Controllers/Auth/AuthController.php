@@ -38,7 +38,7 @@ class AuthController extends Controller
         $this->primeSettingsCache($this->apiClient);
 
         if (Auth::user()?->notifications_prompted_at === null) {
-            return redirect()->route('onboarding.notifications');
+            return redirect()->route('onboarding.intro');
         }
 
         return redirect()->route('feed');
@@ -73,16 +73,19 @@ class AuthController extends Controller
 
         $this->primeSettingsCache($this->apiClient);
 
-        return redirect()->route('onboarding.notifications');
+        return redirect()->route('onboarding.intro');
     }
 
     public function logout(): RedirectResponse
     {
-        $userId = Auth::id();
+        $user = Auth::user();
+        $userId = $user?->id;
 
         $this->apiClient->logout();
 
         Auth::logout();
+
+        $user?->delete();
 
         if ($userId !== null) {
             Cache::forget(ApiClient::profileCacheKey($userId));
@@ -113,6 +116,10 @@ class AuthController extends Controller
         SyncDeviceInfo::dispatch();
 
         $this->primeSettingsCache($this->apiClient);
+
+        if (Auth::user()?->notifications_prompted_at === null) {
+            return redirect()->route('onboarding.intro');
+        }
 
         return redirect()->route('feed');
     }

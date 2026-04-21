@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use Codingwithrk\PackageInfo\PackageInfoServiceProvider;
 use Illuminate\Support\ServiceProvider;
+use Native\Mobile\Providers\BrowserServiceProvider;
 use Native\Mobile\Providers\CameraServiceProvider;
 use Native\Mobile\Providers\DialogServiceProvider;
 use Native\Mobile\Providers\PushNotificationsServiceProvider;
@@ -42,8 +44,9 @@ class NativeServiceProvider extends ServiceProvider
             CameraServiceProvider::class,
             DialogServiceProvider::class,
             PushNotificationsServiceProvider::class,
-            \NativePHP\BackgroundTasks\BackgroundTasksServiceProvider::class,
-            \Codingwithrk\PackageInfo\PackageInfoServiceProvider::class,
+            // \NativePHP\BackgroundTasks\BackgroundTasksServiceProvider::class,
+            PackageInfoServiceProvider::class,
+            BrowserServiceProvider::class,
         ];
     }
 }

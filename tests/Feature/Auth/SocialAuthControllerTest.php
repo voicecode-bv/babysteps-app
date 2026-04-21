@@ -3,31 +3,10 @@
 use App\Jobs\SyncDeviceInfo;
 use App\Services\ApiClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
-use Native\Mobile\Browser;
 
 uses(RefreshDatabase::class);
-
-beforeEach(function () {
-    config()->set('api-client.base_url', 'https://api.innerr.test/api');
-});
-
-it('returns 404 for an unknown provider on start', function () {
-    $this->get('/auth/social/facebook')->assertNotFound();
-});
-
-it('opens the browser session and redirects to login on start', function () {
-    $browser = Mockery::mock(Browser::class);
-    $browser->shouldReceive('auth')
-        ->once()
-        ->with('https://api.innerr.test/api/oauth/google/redirect')
-        ->andReturn(true);
-
-    $this->app->instance(Browser::class, $browser);
-
-    $this->get('/auth/social/google')
-        ->assertRedirect(route('login'));
-});
 
 it('stores the token and syncs the user on a successful callback', function () {
     Queue::fake();
@@ -87,4 +66,34 @@ it('clears the token and errors out when validateToken fails after storing', fun
         ->assertSessionHasErrors(['email']);
 
     $this->assertGuest();
+});
+
+it('stores the token in the session and rotates the session id when the browser completes OAuth', function () {
+    Queue::fake();
+
+    config(['api-client.token_driver' => 'session']);
+
+    Http::fake([
+        '*/auth/me' => Http::response([
+            'user' => [
+                'id' => 42,
+                'name' => 'Jane',
+                'username' => 'jane',
+                'email' => 'jane@example.com',
+                'avatar' => null,
+                'bio' => null,
+                'locale' => 'en',
+            ],
+        ], 200),
+        '*' => Http::response([], 200),
+    ]);
+
+    $this->startSession();
+    $preLoginSessionId = session()->getId();
+
+    $this->get('/oauth/callback?token=browser-token')->assertRedirect();
+
+    expect(session('api_token'))->toBe('browser-token');
+    expect(session()->getId())->not->toBe($preLoginSessionId);
+    $this->assertAuthenticated();
 });

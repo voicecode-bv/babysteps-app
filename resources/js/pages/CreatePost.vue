@@ -5,6 +5,22 @@ import { store } from '@/actions/App/Http/Controllers/PostActionController';
 import { Link, useForm } from '@inertiajs/vue3';
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { Camera, On, Off, Events } from '@nativephp/mobile';
+import cameraIcon from '../../svg/doodle-icons/camera.svg';
+import photoIcon from '../../svg/doodle-icons/photo.svg';
+import videoCameraIcon from '../../svg/doodle-icons/video-camera.svg';
+
+function iconMaskStyle(url: string) {
+    return {
+        maskImage: `url(${url})`,
+        WebkitMaskImage: `url(${url})`,
+        maskSize: 'contain',
+        WebkitMaskSize: 'contain',
+        maskRepeat: 'no-repeat',
+        WebkitMaskRepeat: 'no-repeat',
+        maskPosition: 'center',
+        WebkitMaskPosition: 'center',
+    };
+}
 
 interface Circle {
     id: number;
@@ -12,16 +28,25 @@ interface Circle {
     members_count: number;
 }
 
-const props = defineProps<{
-    circles: Circle[];
-    defaultCircleIds: number[];
-}>();
+const props = withDefaults(
+    defineProps<{
+        circles?: Circle[] | null;
+        defaultCircleIds?: number[] | null;
+    }>(),
+    {
+        circles: () => [],
+        defaultCircleIds: () => [],
+    },
+);
 
 const { t } = useTranslations();
 
+const circles = computed<Circle[]>(() => props.circles ?? []);
+const defaultCircleIds = computed<number[]>(() => props.defaultCircleIds ?? []);
+
 // Pre-select default circles, but only those that exist in the available circles
-const availableCircleIds = props.circles.map((c) => c.id);
-const initialCircleIds = props.defaultCircleIds.filter((id) => availableCircleIds.includes(id));
+const availableCircleIds = circles.value.map((c) => c.id);
+const initialCircleIds = defaultCircleIds.value.filter((id) => availableCircleIds.includes(id));
 
 const form = useForm({
     media_path: null as string | null,
@@ -104,13 +129,13 @@ onUnmounted(() => {
     Off(Events.Gallery.MediaSelected, handleMediaSelected);
 });
 
-const allCirclesSelected = computed(() => props.circles.length > 0 && form.circle_ids.length === props.circles.length);
+const allCirclesSelected = computed(() => circles.value.length > 0 && form.circle_ids.length === circles.value.length);
 
 function toggleAllCircles() {
     if (allCirclesSelected.value) {
         form.circle_ids = [];
     } else {
-        form.circle_ids = props.circles.map((c) => c.id);
+        form.circle_ids = circles.value.map((c) => c.id);
     }
 }
 
@@ -141,97 +166,103 @@ function submit() {
             <span />
         </template>
 
-        <div class="mt-10 flex flex-col pb-24">
-            <!-- Media Section -->
-            <div class="border-b border-sand-200 bg-white dark:border-sand-800 dark:bg-sand-900">
-                <!-- Preview -->
-                <div v-if="mediaPreview" class="relative">
-                    <video v-if="mediaIsVideo" :src="mediaPreview" class="w-full object-cover" controls />
-                    <img v-else :src="mediaPreview" class="w-full object-cover" :alt="t('Selected photo')" />
-                    <button
-                        class="absolute right-3 top-3 rounded-full bg-black/50 p-1.5 text-white"
-                        @click="removeMedia"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
+        <div class="relative mt-10 min-h-full bg-warmwhite pb-[calc(theme(spacing.40)+env(safe-area-inset-bottom))] dark:bg-sand-900">
+            <!-- Soft blobs -->
+            <div aria-hidden="true" class="pointer-events-none absolute inset-x-0 top-0 h-72 overflow-hidden">
+                <div class="absolute -left-16 top-0 size-64 rounded-full bg-sage-200/40 blur-3xl dark:bg-sage-700/20"></div>
+                <div class="absolute -right-16 top-10 size-64 rounded-full bg-accent-soft/30 blur-3xl dark:bg-accent/10"></div>
+            </div>
 
-                <!-- Upload Placeholder -->
-                <button v-else class="flex w-full flex-col items-center justify-center px-8 py-16 active:bg-sand-50 dark:active:bg-sand-800" @click="openSourcePicker">
-                    <div class="flex size-20 items-center justify-center rounded-full bg-sand-100 dark:bg-sand-800">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.2" stroke="currentColor" class="size-10 text-sand-400 dark:text-sand-500">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
-                        </svg>
+            <div class="relative space-y-5 px-4 pt-4 pb-24">
+                <!-- Media -->
+                <section class="overflow-hidden rounded-lg bg-white/50 shadow-sm backdrop-blur-sm dark:bg-sand-800/60">
+                    <div v-if="mediaPreview" class="relative">
+                        <video v-if="mediaIsVideo" :src="mediaPreview" class="w-full object-cover" controls />
+                        <img v-else :src="mediaPreview" class="w-full object-cover" :alt="t('Selected photo')" />
+                        <button
+                            class="absolute right-3 top-3 flex size-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm"
+                            :aria-label="t('Cancel')"
+                            @click="removeMedia"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                            </svg>
+                        </button>
                     </div>
-                    <span class="mt-3 text-sm font-medium text-sand-500 dark:text-sand-400">{{ t('Add a photo') }}</span>
-                </button>
 
-                <p v-if="form.errors.media_path" class="px-4 pb-3 text-xs text-blush-500">{{ form.errors.media_path }}</p>
-            </div>
-
-            <!-- Caption -->
-            <div class="border-b border-sand-200 bg-white px-4 py-3 dark:border-sand-800 dark:bg-sand-900">
-                <textarea
-                    v-model="form.caption"
-                    :placeholder="t('Write a caption...')"
-                    rows="3"
-                    maxlength="2200"
-                    class="w-full resize-none border-0 bg-transparent p-0 text-sm text-sand-800 placeholder-sand-400 focus:outline-none focus:ring-0 dark:text-sand-100 dark:placeholder-sand-500"
-                />
-                <p v-if="form.errors.caption" class="mt-1 text-xs text-blush-500">{{ form.errors.caption }}</p>
-            </div>
-
-            <!-- Circle Selection -->
-            <div v-if="circles.length > 0" class="border-b border-sand-200 bg-white px-4 py-4 dark:border-sand-800 dark:bg-sand-900">
-                <div class="mb-3 flex items-center justify-between">
-                    <p class="text-xs font-medium text-sand-500 dark:text-sand-400">{{ t('Share with circles') }}</p>
-                    <button
-                        class="text-xs font-medium text-sand-500 dark:text-sand-400"
-                        @click="toggleAllCircles"
-                    >
-                        {{ allCirclesSelected ? t('Deselect all') : t('Select all') }}
+                    <button v-else class="flex w-full flex-col items-center justify-center gap-3 px-8 py-14 active:bg-sand-100/40 dark:active:bg-sand-800/40" @click="openSourcePicker">
+                        <div class="flex size-20 items-center justify-center rounded-2xl bg-sage-100 text-teal dark:bg-sage-900/40">
+                            <span aria-hidden="true" class="inline-block size-10 bg-current" :style="iconMaskStyle(cameraIcon)"></span>
+                        </div>
+                        <span class="text-sm font-medium text-sand-600 dark:text-sand-300">{{ t('Add a photo') }}</span>
                     </button>
-                </div>
-                <div class="flex flex-wrap gap-2.5">
-                    <button
-                        v-for="circle in circles"
-                        :key="circle.id"
-                        class="rounded-full border px-4 py-2 text-sm font-medium transition-colors"
-                        :class="form.circle_ids.includes(circle.id)
-                            ? 'border-sand-500 bg-sand-500 text-white dark:border-sand-600 dark:bg-sand-600'
-                            : 'border-sand-200 text-sand-600 dark:border-sand-700 dark:text-sand-400'"
-                        @click="toggleCircle(circle.id)"
-                    >
-                        {{ circle.name }}
-                    </button>
-                </div>
-                <p v-if="form.errors.circle_ids" class="mt-1 text-xs text-blush-500">{{ form.errors.circle_ids }}</p>
-            </div>
 
-            <!-- Upload Progress -->
-            <div v-if="form.progress" class="bg-white px-4 py-3 dark:bg-sand-900">
-                <div class="h-1.5 overflow-hidden rounded-full bg-sand-200 dark:bg-sand-700">
-                    <div
-                        class="h-full rounded-full bg-sand-500 transition-all duration-300 dark:bg-sand-400"
-                        :style="{ width: `${form.progress.percentage}%` }"
+                    <p v-if="form.errors.media_path" class="px-5 pb-4 text-xs text-blush-500">{{ form.errors.media_path }}</p>
+                </section>
+
+                <!-- Caption -->
+                <section class="rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm dark:bg-sand-800/60">
+                    <label for="post-caption" class="text-xs font-medium uppercase tracking-wider text-sand-500 dark:text-sand-400">
+                        {{ t('Caption') }}
+                    </label>
+                    <textarea
+                        id="post-caption"
+                        v-model="form.caption"
+                        :placeholder="t('Write a caption...')"
+                        rows="3"
+                        maxlength="2200"
+                        class="mt-2 w-full resize-none border-0 bg-transparent p-0 text-base text-sand-800 placeholder-sand-400 focus:outline-none focus:ring-0 dark:text-sand-100 dark:placeholder-sand-500"
                     />
-                </div>
-                <p class="mt-1 text-center text-xs text-sand-500 dark:text-sand-400">
-                    {{ form.progress.percentage }}%
-                </p>
-            </div>
+                    <p v-if="form.errors.caption" class="mt-1 text-xs text-blush-500">{{ form.errors.caption }}</p>
+                </section>
 
-            <!-- Share Button -->
-            <div class="px-4 py-4">
+                <!-- Circle selection -->
+                <section v-if="circles.length > 0" class="rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm dark:bg-sand-800/60">
+                    <div class="mb-3 flex items-center justify-between">
+                        <p class="text-xs font-medium uppercase tracking-wider text-sand-500 dark:text-sand-400">{{ t('Share with circles') }}</p>
+                        <button
+                            class="text-xs font-medium text-teal hover:text-teal-light"
+                            @click="toggleAllCircles"
+                        >
+                            {{ allCirclesSelected ? t('Deselect all') : t('Select all') }}
+                        </button>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button
+                            v-for="circle in circles"
+                            :key="circle.id"
+                            class="rounded-full px-4 py-2 text-sm font-medium transition-colors"
+                            :class="form.circle_ids.includes(circle.id)
+                                ? 'bg-teal text-white shadow-sm'
+                                : 'bg-white/70 text-sand-700 shadow-sm hover:bg-white dark:bg-sand-800/70 dark:text-sand-200'"
+                            @click="toggleCircle(circle.id)"
+                        >
+                            {{ circle.name }}
+                        </button>
+                    </div>
+                    <p v-if="form.errors.circle_ids" class="mt-2 text-xs text-blush-500">{{ form.errors.circle_ids }}</p>
+                </section>
+
+                <!-- Upload progress -->
+                <section v-if="form.progress" class="rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm dark:bg-sand-800/60">
+                    <div class="h-1.5 overflow-hidden rounded-full bg-sand-200 dark:bg-sand-700">
+                        <div
+                            class="h-full rounded-full bg-teal transition-all duration-300"
+                            :style="{ width: `${form.progress.percentage}%` }"
+                        />
+                    </div>
+                    <p class="mt-2 text-center text-xs font-medium text-sand-500 dark:text-sand-400">
+                        {{ form.progress.percentage }}%
+                    </p>
+                </section>
+
+                <!-- Share -->
                 <button
                     :disabled="!isValidForm || form.processing"
-                    class="w-full rounded-xl bg-sage-600 py-3 text-sm font-semibold text-white transition-colors active:bg-sage-700 disabled:opacity-40 dark:bg-sage-500 dark:active:bg-sage-400"
+                    class="w-full rounded-full bg-teal py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-light disabled:opacity-40"
                     @click="submit"
                 >
-                    {{ t('Share') }}
+                    {{ form.processing ? t('Sharing...') : t('Share') }}
                 </button>
             </div>
         </div>
@@ -255,15 +286,12 @@ function submit() {
                         leave-from-class="scale-100 opacity-100"
                         leave-to-class="scale-95 opacity-0"
                     >
-                        <div v-if="showSourcePicker" class="w-full max-w-sm overflow-hidden rounded-2xl bg-white dark:bg-sand-800">
+                        <div v-if="showSourcePicker" class="w-full max-w-sm overflow-hidden rounded-lg bg-white dark:bg-sand-800">
                             <button
                                 class="flex w-full items-center gap-3 px-5 py-4 text-left text-sm font-medium text-sand-700 active:bg-sand-50 dark:text-sand-200 dark:active:bg-sand-700"
                                 @click="openCamera"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 text-sand-500 dark:text-sand-400">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
-                                </svg>
+                                <span aria-hidden="true" class="inline-block size-5 bg-sand-500 dark:bg-sand-400" :style="iconMaskStyle(cameraIcon)"></span>
                                 {{ t('Take a photo') }}
                             </button>
                             <div class="mx-5 border-t border-sand-100 dark:border-sand-700" />
@@ -271,9 +299,7 @@ function submit() {
                                 class="flex w-full items-center gap-3 px-5 py-4 text-left text-sm font-medium text-sand-700 active:bg-sand-50 dark:text-sand-200 dark:active:bg-sand-700"
                                 @click="recordVideo"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 text-sand-500 dark:text-sand-400">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z" />
-                                </svg>
+                                <span aria-hidden="true" class="inline-block size-5 bg-sand-500 dark:bg-sand-400" :style="iconMaskStyle(videoCameraIcon)"></span>
                                 {{ t('Record a video') }}
                             </button>
                             <div class="mx-5 border-t border-sand-100 dark:border-sand-700" />
@@ -281,9 +307,7 @@ function submit() {
                                 class="flex w-full items-center gap-3 px-5 py-4 text-left text-sm font-medium text-sand-700 active:bg-sand-50 dark:text-sand-200 dark:active:bg-sand-700"
                                 @click="selectFromGallery"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 text-sand-500 dark:text-sand-400">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21ZM8.25 8.625a1.125 1.125 0 1 0 0-2.25 1.125 1.125 0 0 0 0 2.25Z" />
-                                </svg>
+                                <span aria-hidden="true" class="inline-block size-5 bg-sand-500 dark:bg-sand-400" :style="iconMaskStyle(photoIcon)"></span>
                                 {{ t('Choose from gallery') }}
                             </button>
                             <div class="border-t border-sand-100 dark:border-sand-700" />

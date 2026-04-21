@@ -12,7 +12,14 @@ class LoginController extends Controller
 {
     public function show(): Response
     {
-        return Inertia::render('Auth/Login');
+        $apiBase = rtrim((string) config('api-client.base_url'), '/');
+
+        return Inertia::render('Auth/Login', [
+            'socialAuthUrls' => [
+                'google' => $apiBase.'/oauth/google/redirect',
+                'apple' => $apiBase.'/oauth/apple/redirect',
+            ],
+        ]);
     }
 
     public function updateLocale(Request $request): RedirectResponse

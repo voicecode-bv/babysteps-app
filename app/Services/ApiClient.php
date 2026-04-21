@@ -2,33 +2,35 @@
 
 namespace App\Services;
 
+use App\Services\TokenStore\TokenStore;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
-use Native\Mobile\Facades\SecureStorage;
 
 class ApiClient
 {
+    public function __construct(protected TokenStore $tokenStore) {}
+
     public function getToken(): ?string
     {
-        return SecureStorage::get(config('api-client.token_key'));
+        return $this->tokenStore->get();
     }
 
     public function storeToken(string $token): bool
     {
-        return SecureStorage::set(config('api-client.token_key'), $token);
+        return $this->tokenStore->set($token);
     }
 
     public function clearToken(): bool
     {
-        return SecureStorage::delete(config('api-client.token_key'));
+        return $this->tokenStore->delete();
     }
 
     public function hasToken(): bool
     {
-        return $this->getToken() !== null;
+        return $this->tokenStore->has();
     }
 
     /**

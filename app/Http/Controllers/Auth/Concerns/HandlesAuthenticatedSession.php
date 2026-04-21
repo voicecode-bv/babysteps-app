@@ -29,6 +29,8 @@ trait HandlesAuthenticatedSession
         );
 
         Auth::login($user);
+
+        session()->regenerate();
     }
 
     protected function primeSettingsCache(ApiClient $apiClient): void

@@ -1,16 +1,31 @@
 <script setup lang="ts">
 import { Link, router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
-import { useTranslations } from '@/composables/useTranslations';
-import Button from '@/components/Button.vue';
 import AppleAuthButton from '@/components/auth/AppleAuthButton.vue';
 import GoogleAuthButton from '@/components/auth/GoogleAuthButton.vue';
-import { start as socialStart } from '@/routes/auth/social';
+import Button from '@/components/Button.vue';
+import { useTranslations } from '@/composables/useTranslations';
+import handIcon from '../../../svg/doodle-icons/hand.svg';
+import starIcon from '../../../svg/doodle-icons/star.svg';
+
+function iconMaskStyle(url: string) {
+    return {
+        maskImage: `url(${url})`,
+        WebkitMaskImage: `url(${url})`,
+        maskSize: 'contain',
+        WebkitMaskSize: 'contain',
+        maskRepeat: 'no-repeat',
+        WebkitMaskRepeat: 'no-repeat',
+        maskPosition: 'center',
+        WebkitMaskPosition: 'center',
+    };
+}
 
 const { t } = useTranslations();
 const page = usePage();
 const currentLocale = computed(() => page.props.locale as string);
 const flashError = computed(() => (page.props.errors as Record<string, string> | undefined)?.email);
+const socialAuthUrls = computed(() => page.props.socialAuthUrls as { google: string; apple: string });
 
 const form = useForm({
     email: '',
@@ -22,6 +37,7 @@ function setLocale(locale: string) {
 }
 
 const showPassword = ref(false);
+const showEmailForm = ref(false);
 
 function submit() {
     form.post('/login', {
@@ -31,90 +47,166 @@ function submit() {
 </script>
 
 <template>
-    <div class="nativephp-safe-area flex h-dvh flex-col px-8">
-        <div class="flex justify-end pt-4">
+    <div class="nativephp-safe-area relative flex h-dvh flex-col overflow-hidden bg-warmwhite px-6 dark:bg-sand-900">
+        <!-- Soft colored blobs -->
+        <div aria-hidden="true" class="pointer-events-none absolute inset-0 overflow-hidden">
+            <div class="absolute -left-24 -top-24 size-72 rounded-full bg-sage-200/60 blur-3xl dark:bg-sage-700/20"></div>
+            <div class="absolute -right-28 top-1/4 size-80 rounded-full bg-accent-soft/40 blur-3xl dark:bg-accent/10"></div>
+            <div class="absolute -bottom-32 left-1/4 size-96 rounded-full bg-sand-200/50 blur-3xl dark:bg-sand-700/30"></div>
+        </div>
+
+        <!-- Floating doodles -->
+        <div aria-hidden="true" class="pointer-events-none absolute inset-0">
+            <svg class="doodle doodle-1 absolute left-8 top-28 size-5 text-accent/70" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2l2.1 6.9L21 11l-6.9 2.1L12 20l-2.1-6.9L3 11l6.9-2.1z" />
+            </svg>
+            <svg class="doodle doodle-2 absolute right-10 top-20 size-4 text-teal/60" viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="12" cy="12" r="6" />
+            </svg>
+            <svg class="doodle doodle-3 absolute right-6 top-1/2 size-6 text-accent/50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M3 12 Q 7 6, 11 12 T 19 12" />
+            </svg>
+            <svg class="doodle doodle-4 absolute bottom-32 left-6 size-5 text-sage-500/70" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z" />
+            </svg>
+        </div>
+
+        <!-- Top bar -->
+        <div class="relative flex justify-end pt-4">
             <button
-                class="p-2 text-2xl"
+                class="rounded-full bg-white/70 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-teal shadow-sm backdrop-blur-sm transition hover:scale-105 dark:bg-sand-800/60 dark:text-sand-200"
                 @click="setLocale(currentLocale === 'nl' ? 'en' : 'nl')"
             >
-                {{ currentLocale === 'nl' ? '🇳🇱' : '🇬🇧' }}
+                {{ currentLocale === 'nl' ? 'NL' : 'EN' }}
             </button>
         </div>
 
-        <div class="flex flex-1 flex-col items-center justify-center">
+        <!-- Main content -->
+        <div class="relative flex flex-1 flex-col items-center justify-center">
             <div class="mb-8 text-center">
-                <h1 class="font-display text-5xl font-semibold tracking-tight text-teal">innerr<span class="text-accent">.</span></h1>
-                <p class="mt-2 text-sm text-sand-500 dark:text-sand-400">{{ t('Safely share with those who matter') }}</p>
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-sage-100 px-3 py-1 text-xs font-medium text-sage-700 shadow-sm dark:bg-sage-900/50 dark:text-sage-300">
+                    {{ t('welcome back') }}
+                    <span aria-hidden="true" class="inline-block size-4 bg-current animate-[wave_2s_ease-in-out_infinite] origin-[70%_70%]" :style="iconMaskStyle(handIcon)"></span>
+                </span>
+                <h1 class="mt-4 font-display text-6xl font-semibold tracking-tight text-teal">
+                    innerr<span class="text-accent">.</span>
+                </h1>
+                <p class="mt-3 text-sm text-sand-600 dark:text-sand-400">
+                    {{ t('Safely share with those who matter') }}
+                </p>
             </div>
 
-            <form class="w-full max-w-sm space-y-3" @submit.prevent="submit">
-                <p v-if="flashError" class="rounded-lg bg-blush-50 px-3 py-2 text-center text-xs text-blush-600 dark:bg-blush-900/20">
-                    {{ flashError }}
-                </p>
+            <div class="w-full max-w-sm">
+                <div class="relative rounded-[2rem] bg-white/50 p-5 shadow-xl shadow-sand-900/5 backdrop-blur-sm dark:border-sand-700/50 dark:bg-sand-800/60">
+                    <span aria-hidden="true" class="absolute -right-3 -top-3 flex size-9 rotate-12 items-center justify-center rounded-full bg-accent shadow-md">
+                        <span class="inline-block size-5 bg-white" :style="iconMaskStyle(starIcon)"></span>
+                    </span>
 
-                <AppleAuthButton
-                    :href="socialStart('apple').url"
-                    :label="t('Continue with Apple')"
-                />
-                <GoogleAuthButton
-                    :href="socialStart('google').url"
-                    :label="t('Continue with Google')"
-                />
+                    <div class="space-y-3">
+                        <p v-if="flashError" class="rounded-xl bg-blush-50 px-3 py-2 text-center text-xs text-blush-600 dark:bg-blush-900/20">
+                            {{ flashError }}
+                        </p>
 
-                <div class="flex items-center gap-3 py-2">
-                    <div class="h-px flex-1 bg-sand-200 dark:bg-sand-700" />
-                    <span class="text-xs uppercase tracking-wider text-sand-400 dark:text-sand-500">{{ t('or') }}</span>
-                    <div class="h-px flex-1 bg-sand-200 dark:bg-sand-700" />
+                        <template v-if="!showEmailForm">
+                            <AppleAuthButton
+                                :url="socialAuthUrls.apple"
+                                :label="t('Continue with Apple')"
+                            />
+                            <GoogleAuthButton
+                                :url="socialAuthUrls.google"
+                                :label="t('Continue with Google')"
+                            />
+
+                            <div class="flex items-center gap-3 pt-1">
+                                <span class="h-px flex-1 bg-sand-200 dark:bg-sand-700"></span>
+                                <span class="text-[11px] uppercase tracking-widest text-sand-400 dark:text-sand-500">{{ t('or') }}</span>
+                                <span class="h-px flex-1 bg-sand-200 dark:bg-sand-700"></span>
+                            </div>
+                        </template>
+
+                        <button
+                            v-if="showEmailForm"
+                            type="button"
+                            class="group -ml-1 inline-flex items-center gap-1 rounded-full py-1 text-sm font-medium text-teal transition hover:text-teal-light"
+                            @click="showEmailForm = false"
+                        >
+                            <span class="transition-transform group-hover:-translate-x-0.5">←</span>
+                            <span>{{ t('Back') }}</span>
+                        </button>
+
+                        <form v-if="showEmailForm" class="space-y-3 pt-1" @submit.prevent="submit">
+                            <div>
+                                <input
+                                    v-model="form.email"
+                                    type="email"
+                                    name="email"
+                                    :placeholder="t('Email address')"
+                                    autocomplete="email"
+                                    class="field"
+                                    :class="form.errors.email ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400' : 'border-sand-200 focus:border-sand-400 focus:ring-1 focus:ring-sand-400 dark:border-sand-700'"
+                                />
+                            </div>
+
+                            <div class="relative">
+                                <input
+                                    v-model="form.password"
+                                    :type="showPassword ? 'text' : 'password'"
+                                    name="password"
+                                    :placeholder="t('Password')"
+                                    autocomplete="current-password"
+                                    class="field pr-16"
+                                    :class="form.errors.password ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400' : 'border-sand-200 focus:border-sand-400 focus:ring-1 focus:ring-sand-400 dark:border-sand-700'"
+                                />
+                                <button
+                                    type="button"
+                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium text-sand-400 dark:text-sand-500"
+                                    @click="showPassword = !showPassword"
+                                >
+                                    {{ showPassword ? t('Hide') : t('Show') }}
+                                </button>
+                            </div>
+
+                            <Button
+                                type="submit"
+                                size="lg"
+                                block
+                                :disabled="form.processing || !form.email || !form.password"
+                            >
+                                {{ form.processing ? '...' : t('Log in') }}
+                            </Button>
+                        </form>
+
+                        <button
+                            v-else
+                            type="button"
+                            class="group flex w-full items-center justify-center gap-1.5 pt-1 text-center text-sm font-medium text-teal transition hover:text-teal-light"
+                            @click="showEmailForm = true"
+                        >
+                            <span>{{ t('Log in with email') }}</span>
+                            <span class="transition-transform group-hover:translate-x-0.5">→</span>
+                        </button>
+                    </div>
                 </div>
+            </div>
+        </div>
 
-                <div>
-                    <input
-                        v-model="form.email"
-                        type="email"
-                        name="email"
-                        :placeholder="t('Email address')"
-                        autocomplete="email"
-                        class="field"
-                        :class="form.errors.email ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400' : 'border-sand-200 focus:border-sand-400 focus:ring-1 focus:ring-sand-400 dark:border-sand-700'"
-                    />
-                    <p v-if="form.errors.email" class="mt-1 text-xs text-blush-500">{{ form.errors.email }}</p>
-                </div>
-
-                <div class="relative">
-                    <input
-                        v-model="form.password"
-                        :type="showPassword ? 'text' : 'password'"
-                        name="password"
-                        :placeholder="t('Password')"
-                        autocomplete="current-password"
-                        class="field pr-16"
-                        :class="form.errors.password ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400' : 'border-sand-200 focus:border-sand-400 focus:ring-1 focus:ring-sand-400 dark:border-sand-700'"
-                    />
-                    <button
-                        type="button"
-                        class="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium text-sand-400 dark:text-sand-500"
-                        @click="showPassword = !showPassword"
-                    >
-                        {{ showPassword ? t('Hide') : t('Show') }}
-                    </button>
-                    <p v-if="form.errors.password" class="mt-1 text-xs text-blush-500">{{ form.errors.password }}</p>
-                </div>
-
-                <Button
-                    type="submit"
-                    size="lg"
-                    block
-                    :disabled="form.processing || !form.email || !form.password"
+        <div class="relative pb-8 pt-4">
+            <p class="text-center text-sm text-sand-500 dark:text-sand-400">
+                {{ t('New to innerr?') }}
+                <Link
+                    href="/register"
+                    class="font-semibold text-teal decoration-accent decoration-wavy decoration-2 underline-offset-4 hover:underline"
                 >
-                    {{ form.processing ? '...' : t('Log in') }}
-                </Button>
-
-                <Link href="/register">
-                    <Button variant="secondary" size="lg" block>
-                        {{ t('Create an account') }}
-                    </Button>
+                    {{ t('Create an account') }}
                 </Link>
-            </form>
+            </p>
         </div>
     </div>
 </template>
+
+<style scoped>
+.doodle-1 { animation-delay: 0s; }
+.doodle-2 { animation-delay: 1.2s; animation-duration: 5s; }
+.doodle-3 { animation-delay: 2.4s; animation-duration: 7s; }
+.doodle-4 { animation-delay: 0.6s; animation-duration: 6.5s; }
+</style>

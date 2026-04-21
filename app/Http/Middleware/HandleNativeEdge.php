@@ -37,6 +37,9 @@ class HandleNativeEdge
     protected function shouldClearEdge(?string $routeName): bool
     {
         return in_array($routeName, [
+            'onboarding.intro',
+            'onboarding.first-circle',
+            'onboarding.invite-members',
             'onboarding.notifications',
         ]);
     }

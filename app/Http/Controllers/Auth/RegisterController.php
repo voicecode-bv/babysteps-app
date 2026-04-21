@@ -10,6 +10,13 @@ class RegisterController extends Controller
 {
     public function show(): Response
     {
-        return Inertia::render('Auth/Register');
+        $apiBase = rtrim((string) config('api-client.base_url'), '/');
+
+        return Inertia::render('Auth/Register', [
+            'socialAuthUrls' => [
+                'google' => $apiBase.'/oauth/google/redirect',
+                'apple' => $apiBase.'/oauth/apple/redirect',
+            ],
+        ]);
     }
 }

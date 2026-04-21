@@ -13,12 +13,16 @@ use App\Http\Controllers\FeedController;
 use App\Http\Controllers\MediaProxyController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\NotificationPreferenceController;
+use App\Http\Controllers\Onboarding\FirstCircleController as OnboardingFirstCircleController;
+use App\Http\Controllers\Onboarding\IntroController as OnboardingIntroController;
+use App\Http\Controllers\Onboarding\InviteMembersController as OnboardingInviteMembersController;
 use App\Http\Controllers\Onboarding\NotificationController as OnboardingNotificationController;
 use App\Http\Controllers\PostActionController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Settings\AccountController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Middleware\EnsureOnboarded;
 use App\Http\Middleware\HandleNativeEdge;
 use Illuminate\Support\Facades\Route;
 
@@ -28,10 +32,6 @@ Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
 Route::post('/register', [AuthController::class, 'register'])->name('register.submit');
 Route::get('/auth/verify', [AuthController::class, 'verify'])->name('auth.verify');
 
-Route::get('/auth/social/{provider}', [SocialAuthController::class, 'start'])
-    ->where('provider', 'google|apple')
-    ->name('auth.social.start');
-
 Route::get('/oauth/callback', [SocialAuthController::class, 'callback'])->name('oauth.callback');
 
 Route::put('/locale', [LoginController::class, 'updateLocale'])->name('locale.update');
@@ -40,8 +40,15 @@ Route::get('/media-proxy', MediaProxyController::class)->name('media-proxy');
 Route::middleware(['auth.token', HandleNativeEdge::class])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::post('/device-token', [DeviceTokenController::class, 'store'])->name('device-token.store');
+    Route::get('/onboarding/intro', OnboardingIntroController::class)->name('onboarding.intro');
+    Route::get('/onboarding/first-circle', [OnboardingFirstCircleController::class, 'show'])->name('onboarding.first-circle');
+    Route::post('/onboarding/first-circle', [OnboardingFirstCircleController::class, 'store'])->name('onboarding.first-circle.store');
+    Route::get('/onboarding/circles/{circle}/invite', [OnboardingInviteMembersController::class, 'show'])->name('onboarding.invite-members')->whereNumber('circle');
+    Route::post('/onboarding/circles/{circle}/invite', [OnboardingInviteMembersController::class, 'store'])->name('onboarding.invite-members.store')->whereNumber('circle');
     Route::get('/onboarding/notifications', OnboardingNotificationController::class)->name('onboarding.notifications');
+});
 
+Route::middleware(['auth.token', HandleNativeEdge::class, EnsureOnboarded::class])->group(function () {
     Route::get('/', FeedController::class)->name('feed');
     Route::get('/posts/create', CreatePostController::class)->name('posts.create');
     Route::get('/posts/{post}', [PostController::class, 'show'])->name('posts.show')->whereNumber('post');
