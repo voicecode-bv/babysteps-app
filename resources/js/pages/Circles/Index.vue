@@ -87,14 +87,6 @@ function createCircle() {
             <PullToRefreshIndicator :pull-distance="pullDistance" :is-refreshing="isRefreshing" />
 
             <div class="relative space-y-4 px-4 pt-4">
-                <!-- Intro -->
-                <div class="px-1">
-                    <h1 class="font-display text-2xl font-semibold text-teal dark:text-sand-100">{{ t('Your circles') }}</h1>
-                    <p class="mt-1 text-sm text-sand-600 dark:text-sand-400">
-                        {{ t('Small groups to share moments with the people who matter.') }}
-                    </p>
-                </div>
-
                 <!-- Create Circle Form -->
                 <Transition
                     enter-active-class="transition duration-200 ease-out"

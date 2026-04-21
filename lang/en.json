@@ -201,5 +201,22 @@
     "All of your comments and likes are permanently deleted.": "All of your comments and likes are permanently deleted.",
     "Circles you created are deleted along with everything in them.": "Circles you created are deleted along with everything in them.",
     "This action cannot be undone.": "This action cannot be undone.",
-    "We could not delete your account. Please try again later.": "We could not delete your account. Please try again later."
+    "We could not delete your account. Please try again later.": "We could not delete your account. Please try again later.",
+    "Today": "Today",
+    "This week": "This week",
+    "Earlier": "Earlier",
+    "Mark all read": "Mark all read",
+    ":count unread": ":count unread",
+    "You're all caught up": "You're all caught up",
+    ":count pending": ":count pending",
+    "invited you to": "invited you to",
+    "Invitation sent!": "Invitation sent!",
+    "Username or email...": "Username or email...",
+    "Remove member": "Remove member",
+    "Pending invitations": "Pending invitations",
+    "Pending": "Pending",
+    "Cancel invitation": "Cancel invitation",
+    "Are you sure you want to cancel this invitation?": "Are you sure you want to cancel this invitation?",
+    "Are you sure you want to remove this member?": "Are you sure you want to remove this member?",
+    "Add people by their username or invite them by email.": "Add people by their username or invite them by email."
 }

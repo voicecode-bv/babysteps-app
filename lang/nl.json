@@ -229,5 +229,13 @@
     "All of your comments and likes are permanently deleted.": "Al je reacties en likes worden definitief verwijderd.",
     "Circles you created are deleted along with everything in them.": "Kringen die je hebt aangemaakt worden verwijderd, inclusief alles daarin.",
     "This action cannot be undone.": "Deze actie kan niet ongedaan worden gemaakt.",
-    "We could not delete your account. Please try again later.": "Je account kon niet worden verwijderd. Probeer het later opnieuw."
+    "We could not delete your account. Please try again later.": "Je account kon niet worden verwijderd. Probeer het later opnieuw.",
+    "Today": "Vandaag",
+    "This week": "Deze week",
+    "Earlier": "Eerder",
+    "Mark all read": "Alles gelezen",
+    ":count unread": ":count ongelezen",
+    "You're all caught up": "Je bent helemaal bij",
+    ":count pending": ":count openstaand",
+    "invited you to": "heeft je uitgenodigd voor"
 }

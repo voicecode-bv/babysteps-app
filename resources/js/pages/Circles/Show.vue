@@ -230,10 +230,6 @@ function goBack() {
                                 </svg>
                             </span>
                         </button>
-                        <h2 class="mt-4 font-display text-2xl font-semibold text-teal dark:text-sand-100">{{ circle.name }}</h2>
-                        <p class="mt-1 text-sm text-sand-600 dark:text-sand-400">
-                            {{ circle.members_count === 1 ? t(':count member', { count: circle.members_count }) : t(':count members', { count: circle.members_count }) }}
-                        </p>
                     </div>
                 </SurfaceCard>
 
