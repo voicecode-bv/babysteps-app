@@ -3,7 +3,9 @@ import { Link, router, useForm, usePage } from '@inertiajs/vue3';
 import { Camera, Dialog, Events, Off, On } from '@nativephp/mobile';
 import { computed, onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
 import Button from '@/components/Button.vue';
+import IconTile from '@/components/IconTile.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
+import SurfaceCard from '@/components/SurfaceCard.vue';
 import { usePullToRefresh } from '@/composables/usePullToRefresh';
 import { useTranslations } from '@/composables/useTranslations';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -11,19 +13,6 @@ import bellIcon from '../../svg/doodle-icons/bell.svg';
 import globeIcon from '../../svg/doodle-icons/globe.svg';
 import lockIcon from '../../svg/doodle-icons/lock.svg';
 import usersIcon from '../../svg/doodle-icons/user.svg';
-
-function iconMaskStyle(url: string) {
-    return {
-        maskImage: `url(${url})`,
-        WebkitMaskImage: `url(${url})`,
-        maskSize: 'contain',
-        WebkitMaskSize: 'contain',
-        maskRepeat: 'no-repeat',
-        WebkitMaskRepeat: 'no-repeat',
-        maskPosition: 'center',
-        WebkitMaskPosition: 'center',
-    };
-}
 
 interface Profile {
     id: number;
@@ -207,9 +196,9 @@ onUnmounted(() => {
 
             <PullToRefreshIndicator :pull-distance="pullDistance" :is-refreshing="isRefreshing" />
 
-            <div class="relative space-y-5 px-4 pt-4 pb-24">
+            <div class="relative space-y-4 px-4 pt-4 pb-24">
                 <!-- Profile card -->
-                <section class="rounded-[2rem] bg-white/90 p-5 shadow-sm backdrop-blur-sm dark:border-sand-700/50 dark:bg-sand-800/70">
+                <SurfaceCard>
                     <div class="flex items-center gap-4">
                         <button
                             class="relative shrink-0"
@@ -219,10 +208,10 @@ onUnmounted(() => {
                             <img
                                 :src="profile.avatar ?? `https://ui-avatars.com/api/?name=${profile.name}&background=f0dcc6&color=5c3f24&size=128`"
                                 :alt="profile.name"
-                                class="size-24 rounded-full object-cover ring-4 ring-white shadow-md dark:ring-sand-800"
+                                class="size-20 rounded-lg object-cover shadow-sm"
                             />
-                            <span class="absolute -bottom-1 -right-1 flex size-9 items-center justify-center rounded-full bg-teal ring-4 ring-white shadow-md dark:ring-sand-800">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5 text-white">
+                            <span class="absolute -bottom-1 -right-1 flex size-8 items-center justify-center rounded-full bg-teal shadow-md ring-4 ring-white/70 dark:ring-sand-800/60">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4 text-white">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
                                 </svg>
@@ -279,12 +268,12 @@ onUnmounted(() => {
                             </button>
                         </template>
                     </div>
-                </section>
+                </SurfaceCard>
 
                 <!-- Language -->
-                <section class="rounded-[2rem] bg-white/90 p-5 shadow-sm dark:border-sand-700/50 dark:bg-sand-800/70">
-                    <h3 class="mb-3 flex items-center gap-2 text-base font-semibold text-sand-900 dark:text-sand-100">
-                        <span aria-hidden="true" class="inline-block size-6 bg-current" :style="iconMaskStyle(globeIcon)"></span>
+                <SurfaceCard>
+                    <h3 class="mb-3 flex items-center gap-3 text-sm font-semibold text-sand-900 dark:text-sand-100">
+                        <IconTile :icon="globeIcon" size="sm" tone="sage" />
                         {{ t('Language') }}
                     </h3>
                     <div class="flex gap-2">
@@ -305,12 +294,12 @@ onUnmounted(() => {
                             English
                         </Button>
                     </div>
-                </section>
+                </SurfaceCard>
 
                 <!-- Default circles -->
-                <section v-if="circles.length > 0" class="rounded-[2rem] bg-white/90 p-5 shadow-sm dark:border-sand-700/50 dark:bg-sand-800/70">
-                    <h3 class="flex items-center gap-2 text-base font-semibold text-sand-900 dark:text-sand-100">
-                        <span aria-hidden="true" class="inline-block size-6 bg-current" :style="iconMaskStyle(usersIcon)"></span>
+                <SurfaceCard v-if="circles.length > 0">
+                    <h3 class="flex items-center gap-3 text-sm font-semibold text-sand-900 dark:text-sand-100">
+                        <IconTile :icon="usersIcon" size="sm" tone="sage" />
                         {{ t('Default circles for new posts') }}
                     </h3>
                     <p class="mt-1 text-sm text-sand-600 dark:text-sand-400">
@@ -336,12 +325,12 @@ onUnmounted(() => {
                             </label>
                         </li>
                     </ul>
-                </section>
+                </SurfaceCard>
 
                 <!-- Notifications -->
-                <section v-if="notificationPreferences" class="rounded-[2rem] bg-white/90 p-5 shadow-sm dark:border-sand-700/50 dark:bg-sand-800/70">
-                    <h3 class="flex items-center gap-2 text-base font-semibold text-sand-900 dark:text-sand-100">
-                        <span aria-hidden="true" class="inline-block size-6 bg-current" :style="iconMaskStyle(bellIcon)"></span>
+                <SurfaceCard v-if="notificationPreferences">
+                    <h3 class="flex items-center gap-3 text-sm font-semibold text-sand-900 dark:text-sand-100">
+                        <IconTile :icon="bellIcon" size="sm" tone="sage" />
                         {{ t('Push notifications') }}
                     </h3>
                     <ul class="mt-3 divide-y divide-sand-100 dark:divide-sand-700/60">
@@ -371,19 +360,21 @@ onUnmounted(() => {
                             </label>
                         </li>
                     </ul>
-                </section>
+                </SurfaceCard>
 
                 <!-- Account link -->
                 <Link :href="'/settings/account'" class="block">
-                    <div class="flex items-center justify-between gap-3 rounded-[2rem] bg-white/90 p-5 shadow-sm transition hover:bg-white dark:border-sand-700/50 dark:bg-sand-800/70">
-                        <span class="flex items-center gap-3 text-base font-semibold text-sand-900 dark:text-sand-100">
-                            <span aria-hidden="true" class="inline-block size-6 bg-current" :style="iconMaskStyle(lockIcon)"></span>
-                            {{ t('Account') }}
-                        </span>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5 text-sand-500 dark:text-sand-400">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                        </svg>
-                    </div>
+                    <SurfaceCard>
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="flex items-center gap-3 text-sm font-semibold text-sand-900 dark:text-sand-100">
+                                <IconTile :icon="lockIcon" size="sm" tone="sage" />
+                                {{ t('Account') }}
+                            </span>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5 text-sand-500 dark:text-sand-400">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                            </svg>
+                        </div>
+                    </SurfaceCard>
                 </Link>
 
                 <!-- Logout -->

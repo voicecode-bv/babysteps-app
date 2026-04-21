@@ -74,25 +74,29 @@ async function loadComments() {
 
 watch(
     () => props.open,
-    async (isOpen) => {
+    (isOpen) => {
         if (!isOpen) return;
+
+        if (props.initialReplyTo) {
+            replyingTo.value = props.initialReplyTo;
+        }
+
+        // Focus synchronously while the user-gesture context is still alive,
+        // otherwise iOS/NativePHP WebKit refuses to raise the keyboard.
+        nextTick(() => {
+            commentInput.value?.focus({ preventScroll: true });
+        });
 
         if (!hasLoaded.value) {
             if (props.initialComments) {
                 comments.value = [...props.initialComments];
                 hasLoaded.value = true;
             } else {
-                await loadComments();
+                void loadComments();
             }
         }
-
-        if (props.initialReplyTo) {
-            replyingTo.value = props.initialReplyTo;
-        }
-
-        await nextTick();
-        commentInput.value?.focus();
     },
+    { flush: 'sync' },
 );
 
 function close() {
@@ -103,7 +107,9 @@ function close() {
 
 function startReply(comment: Comment) {
     replyingTo.value = comment;
-    nextTick(() => commentInput.value?.focus());
+    // Focus in the same tick as the tap so iOS raises the keyboard.
+    commentInput.value?.focus({ preventScroll: true });
+    nextTick(() => commentInput.value?.focus({ preventScroll: true }));
 }
 
 function cancelReply() {
@@ -308,8 +314,12 @@ function onSheetUpdate(value: boolean) {
                         ref="commentInput"
                         v-model="body"
                         type="text"
+                        inputmode="text"
+                        autocapitalize="sentences"
+                        enterkeyhint="send"
                         :placeholder="replyingTo ? t('Write a reply...') : t('Write a comment...')"
                         class="flex-1 bg-transparent text-sm text-sand-800 placeholder-sand-400 focus:outline-none dark:text-sand-100 dark:placeholder-sand-500"
+                        @click.stop
                     />
                     <button
                         type="submit"

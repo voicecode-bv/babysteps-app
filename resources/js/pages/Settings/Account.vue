@@ -1,24 +1,13 @@
 <script setup lang="ts">
 import Button from '@/components/Button.vue';
+import IconTile from '@/components/IconTile.vue';
+import SurfaceCard from '@/components/SurfaceCard.vue';
 import { useTranslations } from '@/composables/useTranslations';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Link, router, usePage } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 import { Dialog, Events, Off, On } from '@nativephp/mobile';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import userDeleteIcon from '../../../svg/doodle-icons/user-delete.svg';
-
-function iconMaskStyle(url: string) {
-    return {
-        maskImage: `url(${url})`,
-        WebkitMaskImage: `url(${url})`,
-        maskSize: 'contain',
-        WebkitMaskSize: 'contain',
-        maskRepeat: 'no-repeat',
-        WebkitMaskRepeat: 'no-repeat',
-        maskPosition: 'center',
-        WebkitMaskPosition: 'center',
-    };
-}
 
 const { t } = useTranslations();
 
@@ -26,6 +15,10 @@ const page = usePage<{ errors: Record<string, string> }>();
 const accountError = computed(() => page.props.errors?.account ?? null);
 
 const isDeleting = ref(false);
+
+function goBack() {
+    router.visit('/settings');
+}
 
 async function confirmDelete() {
     await Dialog.alert()
@@ -57,7 +50,11 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
 <template>
     <AppLayout :title="t('Account')">
         <template #header-left>
-            <Link :href="'/settings'" class="text-sm text-teal">{{ t('Back') }}</Link>
+            <button class="flex items-center text-teal dark:text-sand-300" @click="goBack">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+                </svg>
+            </button>
         </template>
 
         <div class="relative mt-10 min-h-full bg-warmwhite pb-[calc(theme(spacing.40)+env(safe-area-inset-bottom))] dark:bg-sand-900">
@@ -67,10 +64,10 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
                 <div class="absolute -right-16 top-10 size-64 rounded-full bg-accent-soft/30 blur-3xl dark:bg-accent/10"></div>
             </div>
 
-            <div class="relative space-y-5 px-4 pt-4 pb-24">
-                <section class="rounded-[2rem] bg-white/90 p-5 shadow-sm backdrop-blur-sm dark:border-sand-700/50 dark:bg-sand-800/70">
-                    <h3 class="flex items-center gap-2 text-base font-semibold text-sand-900 dark:text-sand-100">
-                        <span aria-hidden="true" class="inline-block size-6 bg-current" :style="iconMaskStyle(userDeleteIcon)"></span>
+            <div class="relative space-y-4 px-4 pt-4 pb-24">
+                <SurfaceCard>
+                    <h3 class="flex items-center gap-3 text-sm font-semibold text-sand-900 dark:text-sand-100">
+                        <IconTile :icon="userDeleteIcon" size="sm" tone="sage" />
                         {{ t('Delete account') }}
                     </h3>
 
@@ -97,10 +94,10 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
                         {{ t('Delete my account') }}
                     </Button>
 
-                    <p v-if="accountError" class="mt-4 rounded-2xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-200">
+                    <p v-if="accountError" class="mt-4 rounded-lg bg-blush-50 p-3 text-sm text-blush-700 dark:bg-blush-900/30 dark:text-blush-200">
                         {{ accountError }}
                     </p>
-                </section>
+                </SurfaceCard>
             </div>
         </div>
     </AppLayout>

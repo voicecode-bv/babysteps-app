@@ -15,10 +15,18 @@ trait HandlesAuthenticatedSession
      */
     protected function syncLocalUser(array $userData): void
     {
+        User::query()
+            ->where('api_user_id', '!=', $userData['id'])
+            ->where(function ($query) use ($userData): void {
+                $query->where('email', $userData['email'])
+                    ->orWhere('username', $userData['username']);
+            })
+            ->delete();
+
         $user = User::updateOrCreate(
-            ['email' => $userData['email']],
+            ['api_user_id' => $userData['id']],
             [
-                'api_user_id' => $userData['id'],
+                'email' => $userData['email'],
                 'name' => $userData['name'],
                 'username' => $userData['username'],
                 'avatar' => $userData['avatar'] ?? null,

@@ -1,6 +1,7 @@
 <?php
 
 use App\Jobs\SyncDeviceInfo;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
@@ -92,6 +93,46 @@ it('surfaces API errors on login without creating a session token', function () 
 
     expect(session('api_token'))->toBeNull();
     $this->assertGuest();
+});
+
+it('removes orphan local users that collide on username or email during login', function () {
+    Queue::fake();
+
+    User::create([
+        'api_user_id' => 99,
+        'name' => 'Stale',
+        'email' => 'stale@example.com',
+        'username' => 'jane',
+        'password' => 'api-managed',
+    ]);
+
+    Http::fake([
+        '*/auth/login' => Http::response([
+            'token' => 'browser-session-token',
+            'user' => [
+                'id' => 7,
+                'name' => 'Jane',
+                'username' => 'jane',
+                'email' => 'jane@example.com',
+                'avatar' => null,
+                'bio' => null,
+                'locale' => 'en',
+            ],
+        ], 200),
+        '*' => Http::response([], 200),
+    ]);
+
+    $this->post('/login', [
+        'email' => 'jane@example.com',
+        'password' => 'correct-horse-battery-staple',
+    ])->assertRedirect();
+
+    $this->assertDatabaseMissing('users', ['api_user_id' => 99]);
+    $this->assertDatabaseHas('users', [
+        'api_user_id' => 7,
+        'email' => 'jane@example.com',
+        'username' => 'jane',
+    ]);
 });
 
 it('clears the session token and deletes the local user on logout', function () {
