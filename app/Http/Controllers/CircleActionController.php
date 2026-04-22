@@ -175,4 +175,45 @@ class CircleActionController extends Controller
 
         return redirect()->route('circles.index');
     }
+
+    public function initiateOwnershipTransfer(Request $request, int $circle): RedirectResponse
+    {
+        $validated = $request->validate([
+            'user_id' => ['required', 'integer'],
+        ]);
+
+        $response = $this->apiClient->post("/circles/{$circle}/ownership-transfer", $validated);
+
+        if ($response->failed()) {
+            return back()->withErrors(['user_id' => $response->json('message', __('Failed to start ownership transfer'))]);
+        }
+
+        Cache::forget(ApiClient::circlesCacheKey());
+
+        return back();
+    }
+
+    public function cancelOwnershipTransfer(int $circle, int $transfer): RedirectResponse
+    {
+        $this->apiClient->delete("/circles/{$circle}/ownership-transfer/{$transfer}");
+        Cache::forget(ApiClient::circlesCacheKey());
+
+        return back();
+    }
+
+    public function acceptOwnershipTransfer(int $transfer): RedirectResponse
+    {
+        $this->apiClient->post("/circle-ownership-transfers/{$transfer}/accept");
+        Cache::forget(ApiClient::circlesCacheKey());
+
+        return back();
+    }
+
+    public function declineOwnershipTransfer(int $transfer): RedirectResponse
+    {
+        $this->apiClient->post("/circle-ownership-transfers/{$transfer}/decline");
+        Cache::forget(ApiClient::circlesCacheKey());
+
+        return back();
+    }
 }

@@ -99,4 +99,10 @@ Route::middleware(['auth.token', HandleNativeEdge::class, EnsureOnboarded::class
     Route::delete('/circles/{circle}/invitations/{invitation}', [CircleActionController::class, 'cancelInvitation'])->name('circles.invitations.destroy')->whereNumber(['circle', 'invitation']);
     Route::delete('/circles/{circle}/members/{user}', [CircleActionController::class, 'removeMember'])->name('circles.members.destroy');
     Route::post('/circles/{circle}/leave', [CircleActionController::class, 'leave'])->name('circles.leave')->whereNumber('circle');
+
+    Route::get('/circles/{circle}/transfer-ownership', [CircleController::class, 'transferOwnership'])->name('circles.transfer-ownership')->whereNumber('circle');
+    Route::post('/circles/{circle}/ownership-transfer', [CircleActionController::class, 'initiateOwnershipTransfer'])->name('circles.ownership-transfer.store')->whereNumber('circle');
+    Route::delete('/circles/{circle}/ownership-transfer/{transfer}', [CircleActionController::class, 'cancelOwnershipTransfer'])->name('circles.ownership-transfer.destroy')->whereNumber(['circle', 'transfer']);
+    Route::post('/circle-ownership-transfers/{transfer}/accept', [CircleActionController::class, 'acceptOwnershipTransfer'])->name('circle-ownership-transfers.accept')->whereNumber('transfer');
+    Route::post('/circle-ownership-transfers/{transfer}/decline', [CircleActionController::class, 'declineOwnershipTransfer'])->name('circle-ownership-transfers.decline')->whereNumber('transfer');
 });

@@ -29,9 +29,11 @@ class HandleNativeEdge
             return $next($request);
         }
 
+        $response = $next($request);
+
         $this->setupBottomNav($request);
 
-        return $next($request);
+        return $response;
     }
 
     protected function shouldClearEdge(?string $routeName): bool

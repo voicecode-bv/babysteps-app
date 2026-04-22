@@ -243,5 +243,25 @@
     "Request download": "Download aanvragen",
     "Preparing your download...": "Download voorbereiden...",
     "Check your inbox, we sent you a download link.": "Kijk in je inbox, we hebben je een downloadlink gestuurd.",
-    "We could not request your data export. Please try again later.": "We konden je gegevensexport niet aanvragen. Probeer het later opnieuw."
+    "We could not request your data export. Please try again later.": "We konden je gegevensexport niet aanvragen. Probeer het later opnieuw.",
+
+    "Transfer ownership": "Eigendom overdragen",
+    "Choose a member to transfer ownership of this circle to. They must accept before the transfer is complete.": "Kies een lid om het eigendom van deze kring aan over te dragen. Zij moeten de overdracht eerst accepteren.",
+    "Select a new owner": "Kies een nieuwe eigenaar",
+    "Are you sure you want to transfer ownership to :name?": "Weet je zeker dat je het eigendom wilt overdragen aan :name?",
+    "Pending transfer": "Openstaande overdracht",
+    "Pending transfers": "Openstaande overdrachten",
+    "Pending recipient": "Ontvanger onbekend",
+    ":name wants to transfer ownership of :circle to you": ":name wil het eigendom van :circle aan jou overdragen",
+    ":name accepted ownership of :circle": ":name heeft het eigendom van :circle geaccepteerd",
+    ":name declined ownership of :circle": ":name heeft het eigendom van :circle geweigerd",
+    "Loading more...": "Meer laden...",
+    "Cancel transfer": "Overdracht annuleren",
+    "Are you sure you want to cancel this ownership transfer?": "Weet je zeker dat je deze eigendomsoverdracht wilt annuleren?",
+    "No members to transfer to": "Geen leden om aan over te dragen",
+    "Invite someone to this circle first, then you can transfer ownership.": "Nodig eerst iemand uit voor deze kring, daarna kun je het eigendom overdragen.",
+    "Failed to start ownership transfer": "Starten van eigendomsoverdracht mislukt",
+    "Ownership transfers": "Eigendomsoverdrachten",
+    "wants to transfer ownership of": "wil het eigendom overdragen van",
+    "to you": "aan jou"
 }

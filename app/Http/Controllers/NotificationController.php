@@ -14,6 +14,7 @@ class NotificationController extends Controller
     {
         return Inertia::render('Notifications', [
             'circleInvitations' => fn () => $apiClient->get('/circle-invitations')->json('data', []),
+            'ownershipTransfers' => fn () => $apiClient->proxyMediaUrls($apiClient->get('/circle-ownership-transfers')->json('data', [])),
             'notifications' => function () use ($apiClient) {
                 $response = $apiClient->get('/notifications');
 

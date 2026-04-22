@@ -8,6 +8,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { router } from '@inertiajs/vue3';
 import { computed, onMounted, ref, useTemplateRef } from 'vue';
 import bellIcon from '../../svg/doodle-icons/bell.svg';
+import crownIcon from '../../svg/doodle-icons/crown.svg';
 import heartFilledIcon from '../../svg/doodle-icons/heart-filled.svg';
 import mailGiftIcon from '../../svg/doodle-icons/mail-gift.svg';
 import mailOpenIcon from '../../svg/doodle-icons/mail-open.svg';
@@ -22,7 +23,10 @@ type NotificationType =
     | 'comment-liked'
     | 'comment-replied'
     | 'new-circle-post'
-    | 'circle-invitation-accepted';
+    | 'circle-invitation-accepted'
+    | 'circle-ownership-transfer-requested'
+    | 'circle-ownership-transfer-accepted'
+    | 'circle-ownership-transfer-declined';
 
 type IconToneName = 'sage' | 'sand' | 'accent' | 'teal';
 
@@ -40,6 +44,11 @@ interface Notification {
         comment_body?: string;
         circle_id?: number;
         circle_name?: string;
+        to_user_name?: string;
+        from_user_name?: string;
+        recipient_name?: string;
+        decliner_name?: string;
+        [key: string]: unknown;
     };
     read_at: string | null;
     created_at: string;
@@ -61,12 +70,36 @@ interface CircleInvitation {
     };
 }
 
+interface OwnershipTransfer {
+    id: number;
+    created_at: string;
+    circle: {
+        id: number;
+        name: string;
+    };
+    from_user: {
+        id: number;
+        name: string;
+        username: string;
+        avatar: string | null;
+    };
+    to_user: {
+        id: number;
+        name: string;
+        username: string;
+        avatar: string | null;
+    };
+}
+
 const props = defineProps<{
     circleInvitations?: CircleInvitation[];
+    ownershipTransfers?: OwnershipTransfer[];
     notifications: Notification[];
 }>();
 
 const optimisticallyRead = ref<Set<string>>(new Set());
+
+const hiddenNotificationTypes = new Set<string>(['circle-ownership-transfer-requested']);
 
 const { t } = useTranslations();
 
@@ -78,7 +111,11 @@ function isRead(notification: Notification): boolean {
     return !!notification.read_at || optimisticallyRead.value.has(notification.id);
 }
 
-const hasUnread = computed(() => props.notifications?.some((n) => !isRead(n)) ?? false);
+const visibleNotifications = computed(() =>
+    (props.notifications ?? []).filter((n) => !hiddenNotificationTypes.has(n.type)),
+);
+
+const hasUnread = computed(() => visibleNotifications.value.some((n) => !isRead(n)));
 
 const layoutRef = useTemplateRef<InstanceType<typeof AppLayout>>('layout');
 const containerRef = computed(() => layoutRef.value?.mainRef ?? null);
@@ -88,8 +125,11 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
     onRefresh: () =>
         new Promise<void>((resolve) => {
             router.reload({
-                only: ['notifications', 'circleInvitations'],
-                onFinish: () => resolve(),
+                only: ['notifications', 'circleInvitations', 'ownershipTransfers', 'translations', 'locale'],
+                onFinish: () => {
+                    if (hasUnread.value) markAllAsRead();
+                    resolve();
+                },
             });
         }),
     containerRef,
@@ -97,7 +137,7 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
 
 onMounted(() => {
     router.reload({
-        only: ['notifications', 'circleInvitations'],
+        only: ['notifications', 'circleInvitations', 'ownershipTransfers', 'translations', 'locale'],
         onFinish: () => {
             isLoading.value = false;
         },
@@ -151,8 +191,22 @@ function declineInvitation(invitationId: number) {
     router.post(`/circle-invitations/${invitationId}/decline`, {}, { preserveScroll: true });
 }
 
+function acceptTransfer(transferId: number) {
+    router.post(`/circle-ownership-transfers/${transferId}/accept`, {}, { preserveScroll: true });
+}
+
+function declineTransfer(transferId: number) {
+    router.post(`/circle-ownership-transfers/${transferId}/decline`, {}, { preserveScroll: true });
+}
+
 function notificationMessage(notification: Notification): string {
-    const name = notification.data.user_name ?? '';
+    const name =
+        notification.data.user_name ??
+        notification.data.to_user_name ??
+        notification.data.from_user_name ??
+        notification.data.recipient_name ??
+        notification.data.decliner_name ??
+        '';
     switch (notification.type) {
         case 'post-liked':
             return t(':name liked your post', { name });
@@ -166,6 +220,12 @@ function notificationMessage(notification: Notification): string {
             return t(':name shared a new moment', { name });
         case 'circle-invitation-accepted':
             return t(':name accepted your invitation to :circle', { name, circle: notification.data.circle_name ?? '' });
+        case 'circle-ownership-transfer-requested':
+            return t(':name wants to transfer ownership of :circle to you', { name, circle: notification.data.circle_name ?? '' });
+        case 'circle-ownership-transfer-accepted':
+            return t(':name accepted ownership of :circle', { name, circle: notification.data.circle_name ?? '' });
+        case 'circle-ownership-transfer-declined':
+            return t(':name declined ownership of :circle', { name, circle: notification.data.circle_name ?? '' });
         default:
             return '';
     }
@@ -194,6 +254,9 @@ const typeIconMap: Record<string, BadgeConfig> = {
     'comment-replied': { icon: message2Icon, tone: 'sage' },
     'new-circle-post': { icon: bellIcon, tone: 'teal' },
     'circle-invitation-accepted': { icon: userAddIcon, tone: 'sage' },
+    'circle-ownership-transfer-requested': { icon: crownIcon, tone: 'accent' },
+    'circle-ownership-transfer-accepted': { icon: crownIcon, tone: 'sage' },
+    'circle-ownership-transfer-declined': { icon: crownIcon, tone: 'sand' },
 };
 
 const bareToneClass: Record<IconToneName, string> = {
@@ -263,6 +326,7 @@ const groupedNotifications = computed<NotificationGroup[]>(() => {
     };
 
     for (const notification of props.notifications) {
+        if (hiddenNotificationTypes.has(notification.type)) continue;
         const age = now - new Date(notification.created_at).getTime();
 
         if (age < dayMs) {
@@ -308,6 +372,61 @@ const groupedNotifications = computed<NotificationGroup[]>(() => {
                         {{ t('Mark all read') }}
                     </button>
                 </div>
+
+                <!-- Ownership transfers -->
+                <SurfaceCard v-if="ownershipTransfers && ownershipTransfers.length > 0" :padded="false">
+                    <div class="flex items-center gap-3 px-5 pt-5">
+                        <IconTile :icon="crownIcon" size="sm" tone="accent" />
+                        <div class="min-w-0">
+                            <h3 class="text-sm font-semibold text-sand-900 dark:text-sand-100">{{ t('Ownership transfers') }}</h3>
+                            <p class="text-xs text-sand-500 dark:text-sand-400">
+                                {{ t(':count pending', { count: ownershipTransfers.length }) }}
+                            </p>
+                        </div>
+                    </div>
+                    <ul class="mt-4 divide-y divide-sand-100/80 dark:divide-sand-700/50">
+                        <li
+                            v-for="transfer in ownershipTransfers"
+                            :key="`transfer-${transfer.id}`"
+                            class="flex items-start gap-3 px-5 py-4"
+                        >
+                            <div class="flex-shrink-0">
+                                <img
+                                    v-if="transfer.from_user.avatar"
+                                    :src="transfer.from_user.avatar"
+                                    :alt="transfer.from_user.name"
+                                    class="size-11 rounded-full object-cover shadow-sm ring-2 ring-white dark:ring-sand-800"
+                                />
+                                <div v-else class="flex size-11 items-center justify-center rounded-full bg-sand-100 ring-2 ring-white dark:bg-sand-700 dark:ring-sand-800">
+                                    <IconTile :icon="userIcon" size="sm" tone="sand" />
+                                </div>
+                            </div>
+
+                            <div class="min-w-0 flex-1">
+                                <p class="text-sm text-sand-900 dark:text-sand-100">
+                                    {{  t(':name wants to transfer ownership of :circle to you', { name: transfer.from_user.name,  circle: transfer.circle.name }) }}
+                                </p>
+                                <p class="mt-0.5 text-xs text-sand-500 dark:text-sand-400">
+                                    {{ timeAgo(transfer.created_at) }}
+                                </p>
+                                <div class="mt-3 flex gap-2">
+                                    <button
+                                        class="rounded-full bg-teal px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-teal/90"
+                                        @click="acceptTransfer(transfer.id)"
+                                    >
+                                        {{ t('Accept') }}
+                                    </button>
+                                    <button
+                                        class="rounded-full bg-sand-100 px-4 py-1.5 text-xs font-semibold text-sand-700 transition hover:bg-sand-200 dark:bg-sand-700/60 dark:text-sand-200 dark:hover:bg-sand-700"
+                                        @click="declineTransfer(transfer.id)"
+                                    >
+                                        {{ t('Decline') }}
+                                    </button>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </SurfaceCard>
 
                 <!-- Circle invitations -->
                 <SurfaceCard v-if="circleInvitations && circleInvitations.length > 0" :padded="false">
@@ -457,7 +576,7 @@ const groupedNotifications = computed<NotificationGroup[]>(() => {
                 </template>
 
                 <!-- Empty state -->
-                <SurfaceCard v-else-if="!isLoading && (!circleInvitations || circleInvitations.length === 0)" class="mt-4">
+                <SurfaceCard v-else-if="!isLoading && (!circleInvitations || circleInvitations.length === 0) && (!ownershipTransfers || ownershipTransfers.length === 0)" class="mt-4">
                     <div class="flex flex-col items-center justify-center py-10 text-center">
                         <IconTile :icon="bellIcon" size="lg" tone="sage" />
                         <h3 class="mt-4 font-display text-lg font-semibold text-teal dark:text-sage-100">

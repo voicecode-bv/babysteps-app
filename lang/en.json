@@ -233,5 +233,25 @@
     "Request download": "Request download",
     "Preparing your download...": "Preparing your download...",
     "Check your inbox, we sent you a download link.": "Check your inbox, we sent you a download link.",
-    "We could not request your data export. Please try again later.": "We could not request your data export. Please try again later."
+    "We could not request your data export. Please try again later.": "We could not request your data export. Please try again later.",
+
+    "Transfer ownership": "Transfer ownership",
+    "Choose a member to transfer ownership of this circle to. They must accept before the transfer is complete.": "Choose a member to transfer ownership of this circle to. They must accept before the transfer is complete.",
+    "Select a new owner": "Select a new owner",
+    "Are you sure you want to transfer ownership to :name?": "Are you sure you want to transfer ownership to :name?",
+    "Pending transfer": "Pending transfer",
+    "Pending transfers": "Pending transfers",
+    "Pending recipient": "Pending recipient",
+    ":name wants to transfer ownership of :circle to you": ":name wants to transfer ownership of :circle to you",
+    ":name accepted ownership of :circle": ":name accepted ownership of :circle",
+    ":name declined ownership of :circle": ":name declined ownership of :circle",
+    "Loading more...": "Loading more...",
+    "Cancel transfer": "Cancel transfer",
+    "Are you sure you want to cancel this ownership transfer?": "Are you sure you want to cancel this ownership transfer?",
+    "No members to transfer to": "No members to transfer to",
+    "Invite someone to this circle first, then you can transfer ownership.": "Invite someone to this circle first, then you can transfer ownership.",
+    "Failed to start ownership transfer": "Failed to start ownership transfer",
+    "Ownership transfers": "Ownership transfers",
+    "wants to transfer ownership of": "wants to transfer ownership of",
+    "to you": "to you"
 }

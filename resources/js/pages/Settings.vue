@@ -208,7 +208,7 @@ onUnmounted(() => {
                             <img
                                 :src="profile.avatar ?? `https://ui-avatars.com/api/?name=${profile.name}&background=f0dcc6&color=5c3f24&size=128`"
                                 :alt="profile.name"
-                                class="size-20 rounded-lg object-cover shadow-sm"
+                                class="size-20 rounded-full object-cover shadow-sm"
                             />
                             <span class="absolute -bottom-1 -right-1 flex size-8 items-center justify-center rounded-full bg-teal shadow-md ring-4 ring-white/70 dark:ring-sand-800/60">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4 text-white">

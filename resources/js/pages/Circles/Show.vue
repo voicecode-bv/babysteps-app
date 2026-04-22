@@ -342,7 +342,7 @@ function goBack() {
                                 <img
                                     :src="member.avatar ?? `https://ui-avatars.com/api/?name=${member.name}&background=f0dcc6&color=5c3f24&size=64`"
                                     :alt="member.name"
-                                    class="size-11 shrink-0 rounded-lg object-cover"
+                                    class="size-11 shrink-0 rounded-full object-cover"
                                 />
                                 <div class="min-w-0 flex-1">
                                     <p class="truncate text-sm font-semibold text-sand-900 dark:text-sand-100">{{ member.name }}</p>
@@ -427,7 +427,14 @@ function goBack() {
                 </SurfaceCard>
 
                 <!-- Danger zone -->
-                <div class="pt-2">
+                <div class="space-y-3 pt-2">
+                    <Link
+                        v-if="circle.is_owner"
+                        :href="`/circles/${circle.id}/transfer-ownership`"
+                        class="inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-full border border-teal/20 bg-cream px-6 py-4 text-sm font-medium text-teal transition-all hover:-translate-y-0.5 hover:bg-warmwhite"
+                    >
+                        {{ t('Transfer ownership') }}
+                    </Link>
                     <Button
                         v-if="!circle.is_owner"
                         variant="danger"
