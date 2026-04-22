@@ -14,6 +14,7 @@ class PostController extends Controller
 
         return Inertia::render('PostDetail', [
             'post' => $apiClient->proxyMediaUrls($response->json('data')),
+            'availableCircles' => fn () => $apiClient->get('/circles')->json('data') ?? [],
         ]);
     }
 }

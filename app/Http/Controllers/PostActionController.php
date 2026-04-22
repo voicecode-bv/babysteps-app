@@ -73,6 +73,30 @@ class PostActionController extends Controller
         return back()->withErrors(['media_path' => $response->json('message', __('Failed to create post'))]);
     }
 
+    public function update(Request $request, int $post): RedirectResponse
+    {
+        $validated = $request->validate([
+            'caption' => ['nullable', 'string', 'max:2200'],
+            'circle_ids' => ['required', 'array', 'min:1'],
+            'circle_ids.*' => ['integer'],
+        ]);
+
+        try {
+            $response = $this->apiClient->put("/posts/{$post}", [
+                'caption' => $validated['caption'] ?? '',
+                'circle_ids' => $validated['circle_ids'],
+            ]);
+        } catch (ConnectionException) {
+            return back()->withErrors(['caption' => __('Could not connect to the server.')]);
+        }
+
+        if ($response->failed()) {
+            return back()->withErrors(['caption' => $response->json('message', __('Failed to update post'))]);
+        }
+
+        return redirect()->route('posts.show', $post);
+    }
+
     public function destroy(int $post): RedirectResponse
     {
         $this->apiClient->delete("/posts/{$post}");

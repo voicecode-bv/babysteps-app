@@ -57,6 +57,7 @@ Route::middleware(['auth.token', HandleNativeEdge::class, EnsureOnboarded::class
 
     Route::get('/native-media', [PostActionController::class, 'serveMedia'])->name('native-media');
     Route::post('/posts', [PostActionController::class, 'store'])->name('posts.store');
+    Route::put('/posts/{post}', [PostActionController::class, 'update'])->name('posts.update')->whereNumber('post');
     Route::delete('/posts/{post}', [PostActionController::class, 'destroy'])->name('posts.destroy')->whereNumber('post');
     Route::post('/posts/{post}/like', [PostActionController::class, 'like'])->name('posts.like')->whereNumber('post');
     Route::delete('/posts/{post}/like', [PostActionController::class, 'unlike'])->name('posts.unlike')->whereNumber('post');
