@@ -50,6 +50,7 @@ class User extends Authenticatable
             'api_user_id' => 'integer',
             'email_verified_at' => 'datetime',
             'notifications_prompted_at' => 'datetime',
+            'onboarded_at' => 'datetime',
             'password' => 'hashed',
         ];
     }

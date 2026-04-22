@@ -69,6 +69,10 @@ class AuthController extends Controller
 
         $this->primeSettingsCache($this->apiClient);
 
+        if (Auth::user()?->onboarded_at !== null) {
+            return redirect()->route('feed');
+        }
+
         return redirect()->route('onboarding.intro');
     }
 

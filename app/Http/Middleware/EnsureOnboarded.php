@@ -14,7 +14,10 @@ class EnsureOnboarded
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (Auth::check() && Auth::user()?->notifications_prompted_at === null) {
+        if (Auth::check()
+            && Auth::user()?->onboarded_at === null
+            && Auth::user()?->notifications_prompted_at === null
+        ) {
             return redirect()->route('onboarding.intro');
         }
 

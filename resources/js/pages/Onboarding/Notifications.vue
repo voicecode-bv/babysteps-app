@@ -53,6 +53,10 @@ On(Events.PushNotification.TokenGenerated, ({ token }: { token: string }) => {
     sendToken(token);
 });
 
+function completeOnboarding() {
+    router.post('/onboarding/complete');
+}
+
 async function enableNotifications() {
     await PushNotifications.enroll();
 
@@ -61,11 +65,11 @@ async function enableNotifications() {
         sendToken(result.token);
     }
 
-    router.visit('/');
+    completeOnboarding();
 }
 
 function skip() {
-    router.visit('/');
+    completeOnboarding();
 }
 </script>
 

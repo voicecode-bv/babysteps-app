@@ -13,6 +13,10 @@ trait HandlesAuthenticatedSession
 {
     protected function postAuthRedirect(ApiClient $apiClient): RedirectResponse
     {
+        if (Auth::user()?->onboarded_at !== null) {
+            return redirect()->route('feed');
+        }
+
         $circles = $apiClient->cachedCircles();
 
         if ($circles === []) {
@@ -47,6 +51,8 @@ trait HandlesAuthenticatedSession
                 'password' => 'api-managed',
             ],
         );
+
+        $user->forceFill(['onboarded_at' => $userData['onboarded_at'] ?? null])->save();
 
         Auth::login($user);
 

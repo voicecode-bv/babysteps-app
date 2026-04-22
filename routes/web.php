@@ -13,6 +13,7 @@ use App\Http\Controllers\FeedController;
 use App\Http\Controllers\MediaProxyController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\NotificationPreferenceController;
+use App\Http\Controllers\Onboarding\CompleteController as OnboardingCompleteController;
 use App\Http\Controllers\Onboarding\FirstCircleController as OnboardingFirstCircleController;
 use App\Http\Controllers\Onboarding\IntroController as OnboardingIntroController;
 use App\Http\Controllers\Onboarding\InviteMembersController as OnboardingInviteMembersController;
@@ -46,6 +47,7 @@ Route::middleware(['auth.token', HandleNativeEdge::class])->group(function () {
     Route::get('/onboarding/circles/{circle}/invite', [OnboardingInviteMembersController::class, 'show'])->name('onboarding.invite-members')->whereNumber('circle');
     Route::post('/onboarding/circles/{circle}/invite', [OnboardingInviteMembersController::class, 'store'])->name('onboarding.invite-members.store')->whereNumber('circle');
     Route::get('/onboarding/notifications', OnboardingNotificationController::class)->name('onboarding.notifications');
+    Route::post('/onboarding/complete', OnboardingCompleteController::class)->name('onboarding.complete');
 });
 
 Route::middleware(['auth.token', HandleNativeEdge::class, EnsureOnboarded::class])->group(function () {
