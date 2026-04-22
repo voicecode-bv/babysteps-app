@@ -6,6 +6,8 @@ import { useTranslations } from '@/composables/useTranslations';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { InfiniteScroll, Link, router } from '@inertiajs/vue3';
 import { computed, onUnmounted, useTemplateRef } from 'vue';
+import cameraIcon from '../../svg/doodle-icons/camera.svg';
+import starIcon from '../../svg/doodle-icons/star.svg';
 import userIcon from '../../svg/doodle-icons/user.svg';
 
 function iconMaskStyle(url: string) {
@@ -169,7 +171,7 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
                 </template>
             </InfiniteScroll>
 
-            <div v-if="posts && posts.data.length === 0" class="relative flex flex-col items-center justify-center overflow-hidden px-8 py-20">
+            <Link v-if="posts && posts.data.length === 0" href="/posts/create" class="relative flex min-h-[calc(100dvh-6rem-var(--inset-top))] flex-col items-center justify-center overflow-hidden px-8 py-20">
                 <!-- Soft blobs -->
                 <div aria-hidden="true" class="pointer-events-none absolute inset-0">
                     <div class="absolute -left-16 top-4 size-56 rounded-full bg-sage-200/50 blur-3xl dark:bg-sage-700/20"></div>
@@ -190,9 +192,9 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
                 </div>
 
                 <div class="relative mb-5 flex size-24 rotate-[-6deg] items-center justify-center rounded-3xl bg-white shadow-lg shadow-sand-900/5 dark:bg-sand-800">
-                    <span class="text-5xl">📸</span>
-                    <span aria-hidden="true" class="absolute -right-2 -top-2 flex size-8 rotate-12 items-center justify-center rounded-full bg-accent text-sm shadow-md">
-                        ✨
+                    <span aria-hidden="true" class="inline-block size-12 bg-teal" :style="iconMaskStyle(cameraIcon)"></span>
+                    <span aria-hidden="true" class="absolute -right-2 -top-2 flex size-8 rotate-12 items-center justify-center rounded-full bg-accent shadow-md">
+                        <span class="inline-block size-4 bg-white" :style="iconMaskStyle(starIcon)"></span>
                     </span>
                 </div>
 
@@ -200,7 +202,7 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
                 <p class="relative mt-2 text-center text-sm text-sand-600 dark:text-sand-400">
                     {{ t('Add a photo and share it with your family and friends.') }}
                 </p>
-            </div>
+            </Link>
         </div>
 
     </AppLayout>

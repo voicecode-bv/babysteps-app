@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useTranslations } from '@/composables/useTranslations';
-import { useForm } from '@inertiajs/vue3';
+import { router, useForm } from '@inertiajs/vue3';
 import userIcon from '../../../svg/doodle-icons/user.svg';
 
 const { t } = useTranslations();
@@ -34,6 +34,10 @@ function pickSuggestion(name: string) {
 
 function submit() {
     form.post('/onboarding/first-circle');
+}
+
+function skip() {
+    router.visit('/onboarding/notifications');
 }
 </script>
 
@@ -108,6 +112,12 @@ function submit() {
                 @click="submit"
             >
                 {{ form.processing ? t('Creating...') : t('Create circle') }}
+            </button>
+            <button
+                class="mt-3 w-full py-2 text-sm text-sand-500 dark:text-sand-400"
+                @click="skip"
+            >
+                {{ t('Skip for now') }}
             </button>
         </div>
     </div>
