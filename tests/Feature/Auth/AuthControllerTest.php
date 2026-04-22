@@ -81,6 +81,33 @@ it('registers a browser user and stores the API token in the session', function 
     $this->assertAuthenticated();
 });
 
+it('persists the pre-auth session locale when syncing the local user on password login', function () {
+    Queue::fake();
+
+    Http::fake([
+        '*/auth/login' => Http::response([
+            'token' => 'browser-session-token',
+            'user' => [
+                'id' => 7,
+                'name' => 'Jane',
+                'username' => 'jane',
+                'email' => 'jane@example.com',
+                'avatar' => null,
+                'bio' => null,
+                'locale' => 'en',
+            ],
+        ], 200),
+        '*' => Http::response([], 200),
+    ]);
+
+    $this->withSession(['locale' => 'nl'])->post('/login', [
+        'email' => 'jane@example.com',
+        'password' => 'correct-horse-battery-staple',
+    ])->assertRedirect();
+
+    expect(User::where('api_user_id', 7)->value('locale'))->toBe('nl');
+});
+
 it('surfaces API errors on login without creating a session token', function () {
     Http::fake([
         '*/auth/login' => Http::response(['message' => 'Invalid credentials'], 401),
@@ -133,6 +160,62 @@ it('removes orphan local users that collide on username or email during login', 
         'email' => 'jane@example.com',
         'username' => 'jane',
     ]);
+});
+
+it('sends a user without circles to the onboarding intro after login', function () {
+    Queue::fake();
+
+    Http::fake([
+        '*/auth/login' => Http::response([
+            'token' => 'browser-session-token',
+            'user' => [
+                'id' => 7,
+                'name' => 'Jane',
+                'username' => 'jane',
+                'email' => 'jane@example.com',
+                'avatar' => null,
+                'bio' => null,
+                'locale' => 'en',
+            ],
+        ], 200),
+        '*/circles' => Http::response(['data' => []], 200),
+        '*' => Http::response([], 200),
+    ]);
+
+    $this->post('/login', [
+        'email' => 'jane@example.com',
+        'password' => 'correct-horse-battery-staple',
+    ])->assertRedirect(route('onboarding.intro'));
+});
+
+it('sends a user with existing circles straight to the feed after login', function () {
+    Queue::fake();
+
+    Http::fake([
+        '*/auth/login' => Http::response([
+            'token' => 'browser-session-token',
+            'user' => [
+                'id' => 7,
+                'name' => 'Jane',
+                'username' => 'jane',
+                'email' => 'jane@example.com',
+                'avatar' => null,
+                'bio' => null,
+                'locale' => 'en',
+            ],
+        ], 200),
+        '*/circles' => Http::response([
+            'data' => [
+                ['id' => 1, 'name' => 'Family'],
+            ],
+        ], 200),
+        '*' => Http::response([], 200),
+    ]);
+
+    $this->post('/login', [
+        'email' => 'jane@example.com',
+        'password' => 'correct-horse-battery-staple',
+    ])->assertRedirect(route('feed'));
 });
 
 it('clears the session token and deletes the local user on logout', function () {

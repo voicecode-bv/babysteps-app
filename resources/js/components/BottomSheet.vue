@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onUnmounted, watch } from 'vue';
+import { computed, onUnmounted, ref, watch } from 'vue';
 
 const props = defineProps<{
     open: boolean;
@@ -8,6 +8,23 @@ const props = defineProps<{
 const emit = defineEmits<{
     (e: 'update:open', value: boolean): void;
 }>();
+
+const keyboardOffset = ref(0);
+
+const sheetStyle = computed(() => ({
+    bottom: `${keyboardOffset.value}px`,
+    maxHeight: `calc(85vh - ${keyboardOffset.value}px)`,
+}));
+
+function updateKeyboardOffset() {
+    const vv = window.visualViewport;
+    if (!vv) {
+        keyboardOffset.value = 0;
+        return;
+    }
+    const offset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+    keyboardOffset.value = offset;
+}
 
 function close() {
     emit('update:open', false);
@@ -29,14 +46,22 @@ watch(
 
         if (isOpen) {
             document.addEventListener('keydown', handleKeydown);
+            updateKeyboardOffset();
+            window.visualViewport?.addEventListener('resize', updateKeyboardOffset);
+            window.visualViewport?.addEventListener('scroll', updateKeyboardOffset);
         } else {
             document.removeEventListener('keydown', handleKeydown);
+            window.visualViewport?.removeEventListener('resize', updateKeyboardOffset);
+            window.visualViewport?.removeEventListener('scroll', updateKeyboardOffset);
+            keyboardOffset.value = 0;
         }
     },
 );
 
 onUnmounted(() => {
     document.removeEventListener('keydown', handleKeydown);
+    window.visualViewport?.removeEventListener('resize', updateKeyboardOffset);
+    window.visualViewport?.removeEventListener('scroll', updateKeyboardOffset);
     const scrollContainer = document.querySelector('main[scroll-region]') as HTMLElement | null;
     if (scrollContainer) {
         scrollContainer.style.overflow = '';
@@ -55,9 +80,10 @@ onUnmounted(() => {
         />
         <div
             :class="[
-                'fixed inset-x-0 bottom-0 z-9999 flex max-h-[85vh] flex-col rounded-t-2xl bg-white shadow-2xl transition-transform duration-300 ease-out dark:bg-sand-900',
+                'fixed inset-x-0 z-9999 flex flex-col rounded-t-2xl bg-white shadow-2xl transition-transform duration-300 ease-out dark:bg-sand-900',
                 open ? 'translate-y-0' : 'translate-y-full',
             ]"
+            :style="sheetStyle"
             role="dialog"
             aria-modal="true"
         >

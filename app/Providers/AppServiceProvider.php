@@ -7,7 +7,6 @@ use App\Services\TokenStore\SessionTokenStore;
 use App\Services\TokenStore\TokenStore;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Foundation\Application;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
@@ -29,7 +28,7 @@ class AppServiceProvider extends ServiceProvider
         $driver = (string) config('api-client.token_driver', 'auto');
 
         if ($driver === 'auto') {
-            $driver = $this->detectDriver($app);
+            $driver = $this->detectDriver();
         }
 
         return match ($driver) {
@@ -38,12 +37,9 @@ class AppServiceProvider extends ServiceProvider
         };
     }
 
-    protected function detectDriver(Application $app): string
+    protected function detectDriver(): string
     {
-        /** @var Request $request */
-        $request = $app['request'];
-
-        return $request->hasHeader('X-NativePHP-Req-Id') ? 'secure_storage' : 'session';
+        return function_exists('nativephp_call') ? 'secure_storage' : 'session';
     }
 
     /**

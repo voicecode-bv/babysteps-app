@@ -242,6 +242,6 @@
     "Request an email with a download link to all your data. The link is valid for 24 hours.": "Vraag een e-mail aan met een downloadlink naar al je gegevens. De link is 24 uur geldig.",
     "Request download": "Download aanvragen",
     "Preparing your download...": "Download voorbereiden...",
-    "Check your inbox — we sent you a download link.": "Kijk in je inbox — we hebben je een downloadlink gestuurd.",
+    "Check your inbox, we sent you a download link.": "Kijk in je inbox, we hebben je een downloadlink gestuurd.",
     "We could not request your data export. Please try again later.": "We konden je gegevensexport niet aanvragen. Probeer het later opnieuw."
 }

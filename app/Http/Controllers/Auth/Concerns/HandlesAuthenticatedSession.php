@@ -4,12 +4,24 @@ namespace App\Http\Controllers\Auth\Concerns;
 
 use App\Models\User;
 use App\Services\ApiClient;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 trait HandlesAuthenticatedSession
 {
+    protected function postAuthRedirect(ApiClient $apiClient): RedirectResponse
+    {
+        $circles = $apiClient->cachedCircles();
+
+        if ($circles === []) {
+            return redirect()->route('onboarding.intro');
+        }
+
+        return redirect()->route('feed');
+    }
+
     /**
      * @param  array<string, mixed>  $userData
      */
@@ -31,7 +43,7 @@ trait HandlesAuthenticatedSession
                 'username' => $userData['username'],
                 'avatar' => $userData['avatar'] ?? null,
                 'bio' => $userData['bio'] ?? null,
-                'locale' => $userData['locale'] ?? config('app.locale'),
+                'locale' => session('locale') ?? $userData['locale'] ?? config('app.locale'),
                 'password' => 'api-managed',
             ],
         );

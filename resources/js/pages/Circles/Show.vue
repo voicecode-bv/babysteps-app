@@ -203,7 +203,7 @@ function goBack() {
 
             <PullToRefreshIndicator :pull-distance="pullDistance" :is-refreshing="isRefreshing" />
 
-            <div class="relative space-y-4 px-4 pt-4">
+            <div class="relative space-y-4 px-4 pt-4 pb-24">
                 <!-- Hero Card -->
                 <SurfaceCard>
                     <div class="text-center">

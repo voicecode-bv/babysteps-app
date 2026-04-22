@@ -37,11 +37,7 @@ class AuthController extends Controller
 
         $this->primeSettingsCache($this->apiClient);
 
-        if (Auth::user()?->notifications_prompted_at === null) {
-            return redirect()->route('onboarding.intro');
-        }
-
-        return redirect()->route('feed');
+        return $this->postAuthRedirect($this->apiClient);
     }
 
     public function register(Request $request): RedirectResponse
@@ -117,10 +113,6 @@ class AuthController extends Controller
 
         $this->primeSettingsCache($this->apiClient);
 
-        if (Auth::user()?->notifications_prompted_at === null) {
-            return redirect()->route('onboarding.intro');
-        }
-
-        return redirect()->route('feed');
+        return $this->postAuthRedirect($this->apiClient);
     }
 }

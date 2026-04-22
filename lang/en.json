@@ -223,6 +223,6 @@
     "Request an email with a download link to all your data. The link is valid for 24 hours.": "Request an email with a download link to all your data. The link is valid for 24 hours.",
     "Request download": "Request download",
     "Preparing your download...": "Preparing your download...",
-    "Check your inbox — we sent you a download link.": "Check your inbox — we sent you a download link.",
+    "Check your inbox, we sent you a download link.": "Check your inbox, we sent you a download link.",
     "We could not request your data export. Please try again later.": "We could not request your data export. Please try again later."
 }

@@ -8,7 +8,6 @@ use App\Jobs\SyncDeviceInfo;
 use App\Services\ApiClient;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class SocialAuthController extends Controller
 {
@@ -50,11 +49,7 @@ class SocialAuthController extends Controller
 
         $this->primeSettingsCache($this->apiClient);
 
-        if (Auth::user()?->notifications_prompted_at === null) {
-            return redirect()->route('onboarding.intro');
-        }
-
-        return redirect()->route('feed');
+        return $this->postAuthRedirect($this->apiClient);
     }
 
     private function errorMessage(string $code): string

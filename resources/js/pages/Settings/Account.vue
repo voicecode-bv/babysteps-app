@@ -97,7 +97,7 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
                             v-if="exportForm.recentlySuccessful"
                             class="mt-4 rounded-lg bg-sage-100/70 px-4 py-3 text-sm font-medium text-sage-700 dark:bg-sage-800/40 dark:text-sage-200"
                         >
-                            {{ t('Check your inbox — we sent you a download link.') }}
+                            {{ t('Check your inbox, we sent you a download link.') }}
                         </div>
                         <Button
                             v-else
