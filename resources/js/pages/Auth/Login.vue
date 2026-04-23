@@ -6,7 +6,6 @@ import GoogleAuthButton from '@/components/auth/GoogleAuthButton.vue';
 import Button from '@/components/Button.vue';
 import { useTranslations } from '@/composables/useTranslations';
 import handIcon from '../../../svg/doodle-icons/hand.svg';
-import starIcon from '../../../svg/doodle-icons/star.svg';
 
 function iconMaskStyle(url: string) {
     return {
@@ -96,96 +95,91 @@ function submit() {
                 </p>
             </div>
 
-            <div class="w-full max-w-sm">
-                <div class="relative rounded-[2rem] bg-white/50 p-5 shadow-xl shadow-sand-900/5 backdrop-blur-sm dark:border-sand-700/50 dark:bg-sand-800/60">
-                    <span aria-hidden="true" class="absolute -right-3 -top-3 flex size-9 rotate-12 items-center justify-center rounded-full bg-accent shadow-md">
-                        <span class="inline-block size-5 bg-white" :style="iconMaskStyle(starIcon)"></span>
-                    </span>
+            <div class="w-full max-w-xs relative">
 
-                    <div class="space-y-3">
-                        <p v-if="flashError" class="rounded-xl bg-blush-50 px-3 py-2 text-center text-xs text-blush-600 dark:bg-blush-900/20">
-                            {{ flashError }}
-                        </p>
+                <div class="space-y-3">
+                    <p v-if="flashError" class="rounded-xl bg-blush-50 px-3 py-2 text-center text-xs text-blush-600 dark:bg-blush-900/20">
+                        {{ flashError }}
+                    </p>
 
-                        <template v-if="!showEmailForm">
-                            <AppleAuthButton
-                                :url="socialAuthUrls.apple"
-                                :label="t('Continue with Apple')"
+                    <template v-if="!showEmailForm">
+                        <AppleAuthButton
+                            :url="socialAuthUrls.apple"
+                            :label="t('Continue with Apple')"
+                        />
+                        <GoogleAuthButton
+                            :url="socialAuthUrls.google"
+                            :label="t('Continue with Google')"
+                        />
+
+                        <div class="flex items-center gap-3 pt-1">
+                            <span class="h-px flex-1 bg-sand-200 dark:bg-sand-700"></span>
+                            <span class="text-[11px] uppercase tracking-widest text-sand-400 dark:text-sand-500">{{ t('or') }}</span>
+                            <span class="h-px flex-1 bg-sand-200 dark:bg-sand-700"></span>
+                        </div>
+                    </template>
+
+                    <button
+                        v-if="showEmailForm"
+                        type="button"
+                        class="group -ml-1 inline-flex items-center gap-1 rounded-full py-1 text-sm font-medium text-teal transition hover:text-teal-light"
+                        @click="showEmailForm = false"
+                    >
+                        <span class="transition-transform group-hover:-translate-x-0.5">←</span>
+                        <span>{{ t('Back') }}</span>
+                    </button>
+
+                    <form v-if="showEmailForm" class="space-y-3 pt-1" @submit.prevent="submit">
+                        <div>
+                            <input
+                                v-model="form.email"
+                                type="email"
+                                name="email"
+                                :placeholder="t('Email address')"
+                                autocomplete="email"
+                                class="field"
+                                :class="form.errors.email ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400' : 'border-sand-200 focus:border-sand-400 focus:ring-1 focus:ring-sand-400 dark:border-sand-700'"
                             />
-                            <GoogleAuthButton
-                                :url="socialAuthUrls.google"
-                                :label="t('Continue with Google')"
+                        </div>
+
+                        <div class="relative">
+                            <input
+                                v-model="form.password"
+                                :type="showPassword ? 'text' : 'password'"
+                                name="password"
+                                :placeholder="t('Password')"
+                                autocomplete="current-password"
+                                class="field pr-16"
+                                :class="form.errors.password ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400' : 'border-sand-200 focus:border-sand-400 focus:ring-1 focus:ring-sand-400 dark:border-sand-700'"
                             />
-
-                            <div class="flex items-center gap-3 pt-1">
-                                <span class="h-px flex-1 bg-sand-200 dark:bg-sand-700"></span>
-                                <span class="text-[11px] uppercase tracking-widest text-sand-400 dark:text-sand-500">{{ t('or') }}</span>
-                                <span class="h-px flex-1 bg-sand-200 dark:bg-sand-700"></span>
-                            </div>
-                        </template>
-
-                        <button
-                            v-if="showEmailForm"
-                            type="button"
-                            class="group -ml-1 inline-flex items-center gap-1 rounded-full py-1 text-sm font-medium text-teal transition hover:text-teal-light"
-                            @click="showEmailForm = false"
-                        >
-                            <span class="transition-transform group-hover:-translate-x-0.5">←</span>
-                            <span>{{ t('Back') }}</span>
-                        </button>
-
-                        <form v-if="showEmailForm" class="space-y-3 pt-1" @submit.prevent="submit">
-                            <div>
-                                <input
-                                    v-model="form.email"
-                                    type="email"
-                                    name="email"
-                                    :placeholder="t('Email address')"
-                                    autocomplete="email"
-                                    class="field"
-                                    :class="form.errors.email ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400' : 'border-sand-200 focus:border-sand-400 focus:ring-1 focus:ring-sand-400 dark:border-sand-700'"
-                                />
-                            </div>
-
-                            <div class="relative">
-                                <input
-                                    v-model="form.password"
-                                    :type="showPassword ? 'text' : 'password'"
-                                    name="password"
-                                    :placeholder="t('Password')"
-                                    autocomplete="current-password"
-                                    class="field pr-16"
-                                    :class="form.errors.password ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400' : 'border-sand-200 focus:border-sand-400 focus:ring-1 focus:ring-sand-400 dark:border-sand-700'"
-                                />
-                                <button
-                                    type="button"
-                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium text-sand-400 dark:text-sand-500"
-                                    @click="showPassword = !showPassword"
-                                >
-                                    {{ showPassword ? t('Hide') : t('Show') }}
-                                </button>
-                            </div>
-
-                            <Button
-                                type="submit"
-                                size="lg"
-                                block
-                                :disabled="form.processing || !form.email || !form.password"
+                            <button
+                                type="button"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium text-sand-400 dark:text-sand-500"
+                                @click="showPassword = !showPassword"
                             >
-                                {{ form.processing ? '...' : t('Log in') }}
-                            </Button>
-                        </form>
+                                {{ showPassword ? t('Hide') : t('Show') }}
+                            </button>
+                        </div>
 
-                        <button
-                            v-else
-                            type="button"
-                            class="group flex w-full items-center justify-center gap-1.5 pt-1 text-center text-sm font-medium text-teal transition hover:text-teal-light"
-                            @click="showEmailForm = true"
+                        <Button
+                            type="submit"
+                            size="lg"
+                            block
+                            :disabled="form.processing || !form.email || !form.password"
                         >
-                            <span>{{ t('Log in with email') }}</span>
-                            <span class="transition-transform group-hover:translate-x-0.5">→</span>
-                        </button>
-                    </div>
+                            {{ form.processing ? '...' : t('Log in') }}
+                        </Button>
+                    </form>
+
+                    <button
+                        v-else
+                        type="button"
+                        class="group flex w-full items-center justify-center gap-1.5 pt-1 text-center text-sm font-medium text-teal transition hover:text-teal-light"
+                        @click="showEmailForm = true"
+                    >
+                        <span>{{ t('Log in with email') }}</span>
+                        <span class="transition-transform group-hover:translate-x-0.5">→</span>
+                    </button>
                 </div>
             </div>
         </div>

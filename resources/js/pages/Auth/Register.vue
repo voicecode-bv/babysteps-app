@@ -5,7 +5,6 @@ import AppleAuthButton from '@/components/auth/AppleAuthButton.vue';
 import GoogleAuthButton from '@/components/auth/GoogleAuthButton.vue';
 import Button from '@/components/Button.vue';
 import { useTranslations } from '@/composables/useTranslations';
-import sunIcon from '../../../svg/doodle-icons/sun-3.svg';
 import thumbsUpIcon from '../../../svg/doodle-icons/thumbs-up.svg';
 
 function iconMaskStyle(url: string) {
@@ -103,139 +102,133 @@ function submit() {
                 </p>
             </div>
 
-            <div class="w-full max-w-sm">
-                <div class="relative rounded-[2rem] bg-white/50 p-5 shadow-xl shadow-sand-900/5 backdrop-blur-sm dark:border-sand-700/50 dark:bg-sand-800/60">
-                    <span aria-hidden="true" class="absolute -left-3 -top-3 flex size-9 -rotate-12 items-center justify-center rounded-full bg-teal shadow-md">
-                        <span class="inline-block size-5 bg-white" :style="iconMaskStyle(sunIcon)"></span>
-                    </span>
+            <div class="w-full max-w-xs relative">
+                <div class="space-y-3">
+                    <p v-if="flashError" class="rounded-xl bg-blush-50 px-3 py-2 text-center text-xs text-blush-600 dark:bg-blush-900/20">
+                        {{ flashError }}
+                    </p>
 
-                    <div class="space-y-3">
-                        <p v-if="flashError" class="rounded-xl bg-blush-50 px-3 py-2 text-center text-xs text-blush-600 dark:bg-blush-900/20">
-                            {{ flashError }}
-                        </p>
+                    <template v-if="!showEmailForm">
+                        <AppleAuthButton
+                            :url="socialAuthUrls.apple"
+                            :label="t('Sign up with Apple')"
+                        />
+                        <GoogleAuthButton
+                            :url="socialAuthUrls.google"
+                            :label="t('Sign up with Google')"
+                        />
 
-                        <template v-if="!showEmailForm">
-                            <AppleAuthButton
-                                :url="socialAuthUrls.apple"
-                                :label="t('Sign up with Apple')"
+                        <div class="flex items-center gap-3 pt-1">
+                            <span class="h-px flex-1 bg-sand-200 dark:bg-sand-700"></span>
+                            <span class="text-[11px] uppercase tracking-widest text-sand-400 dark:text-sand-500">{{ t('or') }}</span>
+                            <span class="h-px flex-1 bg-sand-200 dark:bg-sand-700"></span>
+                        </div>
+                    </template>
+
+                    <button
+                        v-if="showEmailForm"
+                        type="button"
+                        class="group -ml-1 inline-flex items-center gap-1 rounded-full py-1 text-sm font-medium text-teal transition hover:text-teal-light"
+                        @click="showEmailForm = false"
+                    >
+                        <span class="transition-transform group-hover:-translate-x-0.5">←</span>
+                        <span>{{ t('Back') }}</span>
+                    </button>
+
+                    <form v-if="showEmailForm" class="space-y-3 pt-1" @submit.prevent="submit">
+                        <div>
+                            <input
+                                v-model="form.name"
+                                type="text"
+                                name="name"
+                                :placeholder="t('Your name')"
+                                autocomplete="name"
+                                class="field"
+                                :class="form.errors.name ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400' : 'border-sand-200 focus:border-sand-400 focus:ring-1 focus:ring-sand-400 dark:border-sand-700'"
                             />
-                            <GoogleAuthButton
-                                :url="socialAuthUrls.google"
-                                :label="t('Sign up with Google')"
+                            <p v-if="form.errors.name" class="mt-1 text-xs text-blush-500">{{ form.errors.name }}</p>
+                        </div>
+
+                        <div>
+                            <input
+                                v-model="form.email"
+                                type="email"
+                                name="email"
+                                :placeholder="t('Email address')"
+                                autocomplete="email"
+                                class="field"
+                                :class="form.errors.email ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400' : 'border-sand-200 focus:border-sand-400 focus:ring-1 focus:ring-sand-400 dark:border-sand-700'"
                             />
+                            <p v-if="form.errors.email" class="mt-1 text-xs text-blush-500">{{ form.errors.email }}</p>
+                        </div>
 
-                            <div class="flex items-center gap-3 pt-1">
-                                <span class="h-px flex-1 bg-sand-200 dark:bg-sand-700"></span>
-                                <span class="text-[11px] uppercase tracking-widest text-sand-400 dark:text-sand-500">{{ t('or') }}</span>
-                                <span class="h-px flex-1 bg-sand-200 dark:bg-sand-700"></span>
-                            </div>
-                        </template>
+                        <div>
+                            <input
+                                v-model="form.username"
+                                type="text"
+                                name="username"
+                                :placeholder="t('Username')"
+                                autocomplete="username"
+                                class="field"
+                                :class="form.errors.username ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400' : 'border-sand-200 focus:border-sand-400 focus:ring-1 focus:ring-sand-400 dark:border-sand-700'"
+                                @input="form.username = ($event.target as HTMLInputElement).value.toLowerCase()"
+                            />
+                            <p v-if="form.errors.username" class="mt-1 text-xs text-blush-500">{{ form.errors.username }}</p>
+                        </div>
 
-                        <button
-                            v-if="showEmailForm"
-                            type="button"
-                            class="group -ml-1 inline-flex items-center gap-1 rounded-full py-1 text-sm font-medium text-teal transition hover:text-teal-light"
-                            @click="showEmailForm = false"
-                        >
-                            <span class="transition-transform group-hover:-translate-x-0.5">←</span>
-                            <span>{{ t('Back') }}</span>
-                        </button>
-
-                        <form v-if="showEmailForm" class="space-y-3 pt-1" @submit.prevent="submit">
-                            <div>
-                                <input
-                                    v-model="form.name"
-                                    type="text"
-                                    name="name"
-                                    :placeholder="t('Your name')"
-                                    autocomplete="name"
-                                    class="field"
-                                    :class="form.errors.name ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400' : 'border-sand-200 focus:border-sand-400 focus:ring-1 focus:ring-sand-400 dark:border-sand-700'"
-                                />
-                                <p v-if="form.errors.name" class="mt-1 text-xs text-blush-500">{{ form.errors.name }}</p>
-                            </div>
-
-                            <div>
-                                <input
-                                    v-model="form.email"
-                                    type="email"
-                                    name="email"
-                                    :placeholder="t('Email address')"
-                                    autocomplete="email"
-                                    class="field"
-                                    :class="form.errors.email ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400' : 'border-sand-200 focus:border-sand-400 focus:ring-1 focus:ring-sand-400 dark:border-sand-700'"
-                                />
-                                <p v-if="form.errors.email" class="mt-1 text-xs text-blush-500">{{ form.errors.email }}</p>
-                            </div>
-
-                            <div>
-                                <input
-                                    v-model="form.username"
-                                    type="text"
-                                    name="username"
-                                    :placeholder="t('Username')"
-                                    autocomplete="username"
-                                    class="field"
-                                    :class="form.errors.username ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400' : 'border-sand-200 focus:border-sand-400 focus:ring-1 focus:ring-sand-400 dark:border-sand-700'"
-                                    @input="form.username = ($event.target as HTMLInputElement).value.toLowerCase()"
-                                />
-                                <p v-if="form.errors.username" class="mt-1 text-xs text-blush-500">{{ form.errors.username }}</p>
-                            </div>
-
-                            <div class="relative">
-                                <input
-                                    v-model="form.password"
-                                    :type="showPassword ? 'text' : 'password'"
-                                    name="password"
-                                    :placeholder="t('Password')"
-                                    autocomplete="new-password"
-                                    class="field pr-16"
-                                    :class="form.errors.password ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400' : 'border-sand-200 focus:border-sand-400 focus:ring-1 focus:ring-sand-400 dark:border-sand-700'"
-                                />
-                                <button
-                                    type="button"
-                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium text-sand-400 dark:text-sand-500"
-                                    @click="showPassword = !showPassword"
-                                >
-                                    {{ showPassword ? t('Hide') : t('Show') }}
-                                </button>
-                                <p v-if="form.errors.password" class="mt-1 text-xs text-blush-500">{{ form.errors.password }}</p>
-                            </div>
-
-                            <div class="flex items-start gap-3 rounded-lg bg-sand-50 px-3 py-2.5 dark:bg-sand-800/60">
-                                <input
-                                    id="terms"
-                                    v-model="form.terms_accepted"
-                                    type="checkbox"
-                                    class="mt-0.5 size-5 shrink-0 rounded border-sand-300 text-teal accent-teal focus:ring-teal dark:border-sand-600"
-                                />
-                                <label for="terms" class="text-sm leading-relaxed text-sand-600 dark:text-sand-400">
-                                    {{ t('I agree to the') }}
-                                    <a :href="termsUrl" target="_blank" class="font-semibold text-teal decoration-accent decoration-wavy decoration-2 underline-offset-4 hover:underline">{{ t('Terms and Conditions') }}</a>
-                                </label>
-                            </div>
-                            <p v-if="form.errors.terms_accepted" class="mt-1 text-xs text-blush-500">{{ form.errors.terms_accepted }}</p>
-
-                            <Button
-                                type="submit"
-                                size="lg"
-                                block
-                                :disabled="form.processing || !form.email || !form.name || !form.username || !form.password || !form.terms_accepted"
+                        <div class="relative">
+                            <input
+                                v-model="form.password"
+                                :type="showPassword ? 'text' : 'password'"
+                                name="password"
+                                :placeholder="t('Password')"
+                                autocomplete="new-password"
+                                class="field pr-16"
+                                :class="form.errors.password ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400' : 'border-sand-200 focus:border-sand-400 focus:ring-1 focus:ring-sand-400 dark:border-sand-700'"
+                            />
+                            <button
+                                type="button"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium text-sand-400 dark:text-sand-500"
+                                @click="showPassword = !showPassword"
                             >
-                                {{ form.processing ? '...' : t('Create account') }}
-                            </Button>
-                        </form>
+                                {{ showPassword ? t('Hide') : t('Show') }}
+                            </button>
+                            <p v-if="form.errors.password" class="mt-1 text-xs text-blush-500">{{ form.errors.password }}</p>
+                        </div>
 
-                        <button
-                            v-else
-                            type="button"
-                            class="group flex w-full items-center justify-center gap-1.5 pt-1 text-center text-sm font-medium text-teal transition hover:text-teal-light"
-                            @click="showEmailForm = true"
+                        <div class="flex items-start gap-3 rounded-lg bg-sand-50 px-3 py-2.5 dark:bg-sand-800/60">
+                            <input
+                                id="terms"
+                                v-model="form.terms_accepted"
+                                type="checkbox"
+                                class="mt-0.5 size-5 shrink-0 rounded border-sand-300 text-teal accent-teal focus:ring-teal dark:border-sand-600"
+                            />
+                            <label for="terms" class="text-sm leading-relaxed text-sand-600 dark:text-sand-400">
+                                {{ t('I agree to the') }}
+                                <a :href="termsUrl" target="_blank" class="font-semibold text-teal decoration-accent decoration-wavy decoration-2 underline-offset-4 hover:underline">{{ t('Terms and Conditions') }}</a>
+                            </label>
+                        </div>
+                        <p v-if="form.errors.terms_accepted" class="mt-1 text-xs text-blush-500">{{ form.errors.terms_accepted }}</p>
+
+                        <Button
+                            type="submit"
+                            size="lg"
+                            block
+                            :disabled="form.processing || !form.email || !form.name || !form.username || !form.password || !form.terms_accepted"
                         >
-                            <span>{{ t('Sign up with email') }}</span>
-                            <span class="transition-transform group-hover:translate-x-0.5">→</span>
-                        </button>
-                    </div>
+                            {{ form.processing ? '...' : t('Create account') }}
+                        </Button>
+                    </form>
+
+                    <button
+                        v-else
+                        type="button"
+                        class="group flex w-full items-center justify-center gap-1.5 pt-1 text-center text-sm font-medium text-teal transition hover:text-teal-light"
+                        @click="showEmailForm = true"
+                    >
+                        <span>{{ t('Sign up with email') }}</span>
+                        <span class="transition-transform group-hover:translate-x-0.5">→</span>
+                    </button>
                 </div>
             </div>
         </div>

@@ -85,7 +85,7 @@ function skip() {
         <div class="relative flex flex-1 flex-col items-center justify-center py-12">
             <div class="mb-10 text-center">
                 <p class="text-xs font-medium uppercase tracking-widest text-accent">{{ t('Notifications') }}</p>
-                <h1 class="mt-3 font-sans text-4xl font-semibold tracking-tight text-teal">
+                <h1 class="mt-3 font-display text-4xl font-black tracking-tight text-teal">
                     {{ t('Stay in the loop') }}
                 </h1>
                 <p class="mt-3 max-w-xs text-sm text-sand-600 dark:text-sand-400">
@@ -103,7 +103,7 @@ function skip() {
                         <span aria-hidden="true" class="inline-block size-8 bg-current" :style="iconMaskStyle(item.icon)"></span>
                     </div>
                     <div class="flex-1 pt-1">
-                        <h2 class="font-display text-base font-semibold text-sand-800 dark:text-sand-100">{{ item.title }}</h2>
+                        <h2 class="font-sans text-base font-semibold text-sand-800 dark:text-sand-100">{{ item.title }}</h2>
                         <p class="mt-1 text-sm leading-relaxed text-sand-600 dark:text-sand-400">{{ item.description }}</p>
                     </div>
                 </li>
