@@ -85,11 +85,17 @@ const isOwner = computed(() => props.post.user.id === authUserId.value);
 
 const isSheetOpen = ref(false);
 const isEditModalOpen = ref(false);
+const showFullCaption = ref(false);
 
 const isMuted = ref(true);
 const isFullscreen = ref(false);
 const videoRef = ref<HTMLVideoElement>();
 const mediaLoaded = ref(false);
+
+const isCaptionTruncatable = computed(() => {
+    if (!props.post.caption) return false;
+    return props.post.caption.length > 100 || props.post.caption.includes('\n');
+});
 
 function toggleMute() {
     isMuted.value = !isMuted.value;
@@ -189,8 +195,20 @@ function timeAgo(dateString: string): string {
     if (seconds < 60) return t('just now');
     if (seconds < 3600) return t(':count min ago', { count: Math.floor(seconds / 60) });
     if (seconds < 86400) return t(':count hours ago', { count: Math.floor(seconds / 3600) });
-    if (seconds < 604800) return t(':count days ago', { count: Math.floor(seconds / 86400) });
-    return t(':count weeks ago', { count: Math.floor(seconds / 604800) });
+    if (seconds < 604800) {
+        const days = Math.floor(seconds / 86400);
+        return t(days === 1 ? ':count day ago' : ':count days ago', { count: days });
+    }
+    if (seconds < 2592000) {
+        const weeks = Math.floor(seconds / 604800);
+        return t(weeks === 1 ? ':count week ago' : ':count weeks ago', { count: weeks });
+    }
+    if (seconds < 31536000) {
+        const months = Math.floor(seconds / 2592000);
+        return t(months === 1 ? ':count month ago' : ':count months ago', { count: months });
+    }
+    const years = Math.floor(seconds / 31536000);
+    return t(years === 1 ? ':count year ago' : ':count years ago', { count: years });
 }
 </script>
 
@@ -228,6 +246,23 @@ function timeAgo(dateString: string): string {
                         <Link :href="`/profiles/${post.user.username}`" class="text-sm font-semibold text-sand-800 dark:text-sand-100">{{ post.user.name }}</Link>
                         <p v-if="post.location" class="text-xs text-sand-500 dark:text-sand-400">{{ post.location }}</p>
                     </div>
+                </div>
+
+                <!-- Caption -->
+                <div v-if="post.caption" class="bg-white px-4 pb-3 dark:bg-sand-900">
+                    <p
+                        class="whitespace-pre-line text-sm leading-relaxed text-sand-800 dark:text-sand-200"
+                        :class="{ 'line-clamp-2': !showFullCaption }"
+                    >
+                        {{ post.caption }}
+                    </p>
+                    <button
+                        v-if="isCaptionTruncatable"
+                        class="mt-1 text-sm font-medium text-sand-500 dark:text-sand-400"
+                        @click="showFullCaption = !showFullCaption"
+                    >
+                        {{ showFullCaption ? t('less') : t('more') }}
+                    </button>
                 </div>
 
                 <!-- Post Media -->
@@ -269,8 +304,8 @@ function timeAgo(dateString: string): string {
                         <div
                             v-if="post.media_status === 'ready'"
                             :class="[
-                                'absolute z-10 flex gap-2',
-                                isFullscreen ? 'right-3' : 'bottom-3 right-3',
+                                'absolute z-20 flex gap-2',
+                                isFullscreen ? 'right-3' : 'left-3 top-3',
                                 isFullscreen ? 'top-[calc(env(safe-area-inset-top)+1.5rem)]' : '',
                             ]"
                         >
@@ -321,88 +356,66 @@ function timeAgo(dateString: string): string {
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15.91 11.672a.375.375 0 0 1 0 .656l-5.603 3.113a.375.375 0 0 1-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112Z" />
                         </svg>
                     </div>
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="flex items-center gap-4 bg-white px-4 py-3 dark:bg-sand-900">
-                    <div class="flex items-center gap-1">
-                        <button v-if="post.user.id !== authUserId" @click="toggleLike">
-                            <span
-                                aria-hidden="true"
-                                class="inline-block size-6"
-                                :class="isLiked ? 'bg-blush-400' : 'bg-sand-600 dark:bg-sand-300'"
-                                :style="iconMaskStyle(isLiked ? heartFilledIcon : heartIcon)"
-                            ></span>
-                        </button>
-                        <span
-                            v-else
-                            aria-hidden="true"
-                            class="inline-block size-6 bg-sand-600 dark:bg-sand-300"
-                            :style="iconMaskStyle(heartIcon)"
-                        ></span>
-                        <span v-if="likesCount > 0" class="text-sm font-medium text-sand-700 dark:text-sand-200">{{ likesCount }}</span>
-                    </div>
-                    <button class="flex items-center gap-1 text-sand-600 dark:text-sand-300" @click="openComments">
-                        <span aria-hidden="true" class="inline-block size-6 bg-current" :style="iconMaskStyle(messageIcon)"></span>
-                        <span v-if="commentsCount > 0" class="text-sm font-medium text-sand-700 dark:text-sand-200">{{ commentsCount }}</span>
-                    </button>
-                    <button
-                        v-if="isOwner"
-                        class="ml-auto text-sand-600 dark:text-sand-300"
-                        :aria-label="t('Edit post')"
-                        @click="openEditModal"
+                    <div
+                        v-if="!isFullscreen && isOwner && post.circles && post.circles.length > 0"
+                        class="absolute right-3 top-3 z-10 flex max-w-[70%] flex-wrap justify-end gap-1.5"
                     >
-                        <span aria-hidden="true" class="inline-block size-6 bg-current" :style="iconMaskStyle(pencilIcon)"></span>
-                    </button>
-                </div>
-
-                <!-- Caption -->
-                <div v-if="post.caption" class="bg-white px-4 pb-3 dark:bg-sand-900">
-                    <p class="text-sm text-sand-800 dark:text-sand-200">
-                        <span class="font-semibold">{{ post.user.name }}</span>
-                        {{ ' ' + post.caption }}
-                    </p>
-                    <p class="mt-1 text-xs text-sand-400 dark:text-sand-500">{{ timeAgo(post.created_at) }}</p>
-                </div>
-
-                <!-- Shared in circles (owner only) -->
-                <div v-if="isOwner && post.circles && post.circles.length > 0" class="bg-white px-4 pb-3 dark:bg-sand-900">
-                    <div class="flex flex-wrap gap-2">
                         <Link
                             v-for="circle in post.circles"
                             :key="circle.id"
                             :href="`/circles/${circle.id}`"
-                            class="flex items-center gap-2 rounded-full bg-sand-100 py-1 pl-1 pr-3 dark:bg-sand-800"
+                            class="flex items-center gap-1.5 rounded-full bg-black/50 py-0.5 pl-0.5 pr-2.5 backdrop-blur-sm"
                         >
                             <img
                                 v-if="circle.photo"
                                 :src="circle.photo"
                                 :alt="circle.name"
-                                class="size-6 rounded-full object-cover"
+                                class="size-5 rounded-full object-cover"
                             />
-                            <div v-else class="flex size-6 items-center justify-center rounded-full bg-sand-200 dark:bg-sand-700">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-3.5 text-sand-500 dark:text-sand-400">
+                            <div v-else class="flex size-5 items-center justify-center rounded-full bg-white/20">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-3 text-white">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
                                 </svg>
                             </div>
-                            <span class="text-xs font-medium text-sand-700 dark:text-sand-200">{{ circle.name }}</span>
+                            <span class="text-xs font-medium text-white">{{ circle.name }}</span>
                         </Link>
                     </div>
+                    <div
+                        v-if="!isFullscreen"
+                        class="absolute inset-x-0 bottom-0 z-10 flex items-center gap-4 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-4 pb-3 pt-12"
+                    >
+                        <div class="flex items-center gap-1">
+                            <button v-if="post.user.id !== authUserId" @click="toggleLike">
+                                <span
+                                    aria-hidden="true"
+                                    class="inline-block size-6 drop-shadow"
+                                    :class="isLiked ? 'bg-blush-400' : 'bg-white'"
+                                    :style="iconMaskStyle(isLiked ? heartFilledIcon : heartIcon)"
+                                ></span>
+                            </button>
+                            <span
+                                v-else
+                                aria-hidden="true"
+                                class="inline-block size-6 bg-white drop-shadow"
+                                :style="iconMaskStyle(heartIcon)"
+                            ></span>
+                            <span v-if="likesCount > 0" class="text-sm font-medium text-white drop-shadow">{{ likesCount }}</span>
+                        </div>
+                        <button class="flex items-center gap-1 text-white drop-shadow" @click="openComments">
+                            <span aria-hidden="true" class="inline-block size-6 bg-current" :style="iconMaskStyle(messageIcon)"></span>
+                            <span v-if="commentsCount > 0" class="text-sm font-medium">{{ commentsCount }}</span>
+                        </button>
+                        <button
+                            v-if="isOwner"
+                            class="text-white drop-shadow"
+                            :aria-label="t('Edit post')"
+                            @click="openEditModal"
+                        >
+                            <span aria-hidden="true" class="inline-block size-6 bg-current" :style="iconMaskStyle(pencilIcon)"></span>
+                        </button>
+                        <span class="ml-auto text-xs text-white/80 drop-shadow">{{ timeAgo(post.created_at) }}</span>
+                    </div>
                 </div>
-
-                <!-- Comments preview -->
-                <button
-                    class="mt-2 flex w-full items-center justify-between bg-white px-4 py-3 text-left dark:bg-sand-900"
-                    @click="openComments"
-                >
-                    <span class="text-sm font-semibold text-sand-700 dark:text-sand-300">
-                        {{ t('Comments') }}
-                        <span v-if="commentsCount > 0" class="font-normal text-sand-400 dark:text-sand-500">({{ commentsCount }})</span>
-                    </span>
-                    <span class="text-xs font-medium text-sand-500 dark:text-sand-400">
-                        {{ commentsCount > 0 ? t('View all') : t('Add one') }}
-                    </span>
-                </button>
             </div>
         </div>
 

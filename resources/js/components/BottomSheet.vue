@@ -21,6 +21,7 @@ let savedHtmlOverflow = '';
 const keyboardOpen = ref(false);
 const dragOffset = ref(0);
 const isDragging = ref(false);
+const mounted = ref(false);
 
 let dragStartY = 0;
 let dragPointerId: number | null = null;
@@ -169,6 +170,7 @@ watch(
 );
 
 onMounted(() => {
+    mounted.value = true;
     setKeyboardInset(0);
     window.visualViewport?.addEventListener('resize', updateKeyboardOffset);
     window.visualViewport?.addEventListener('scroll', updateKeyboardOffset);
@@ -198,7 +200,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <teleport to="body">
+    <teleport v-if="mounted" to="body">
         <div
             :class="[
                 'fixed inset-0 z-9999 bg-black/50 transition-opacity duration-300',
