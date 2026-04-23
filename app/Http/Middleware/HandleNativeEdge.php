@@ -31,6 +31,10 @@ class HandleNativeEdge
 
         $response = $next($request);
 
+        if (! auth()->check()) {
+            return $response;
+        }
+
         $this->setupBottomNav($request);
 
         return $response;
