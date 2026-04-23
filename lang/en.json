@@ -264,5 +264,9 @@
     "Failed to start ownership transfer": "Failed to start ownership transfer",
     "Ownership transfers": "Ownership transfers",
     "wants to transfer ownership of": "wants to transfer ownership of",
-    "to you": "to you"
+    "to you": "to you",
+    "Crop photo": "Crop photo",
+    "Crop": "Crop",
+    "Cropping...": "Cropping...",
+    "Invalid cropped image": "Invalid cropped image"
 }

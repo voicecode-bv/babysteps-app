@@ -56,6 +56,7 @@ Route::middleware(['auth.token', HandleNativeEdge::class, EnsureOnboarded::class
     Route::get('/posts/{post}', [PostController::class, 'show'])->name('posts.show')->whereNumber('post');
 
     Route::get('/native-media', [PostActionController::class, 'serveMedia'])->name('native-media');
+    Route::post('/posts/cropped-media', [PostActionController::class, 'storeCroppedMedia'])->name('posts.cropped-media');
     Route::post('/posts', [PostActionController::class, 'store'])->name('posts.store');
     Route::put('/posts/{post}', [PostActionController::class, 'update'])->name('posts.update')->whereNumber('post');
     Route::delete('/posts/{post}', [PostActionController::class, 'destroy'])->name('posts.destroy')->whereNumber('post');

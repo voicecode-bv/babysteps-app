@@ -66,11 +66,60 @@ class PostActionController extends Controller
             ->attach('media', file_get_contents($path), $filename, ['Content-Type' => $mimeType])
             ->post('/posts', $data);
 
+        if (str_starts_with($path, $this->croppedMediaDirectory())) {
+            @unlink($path);
+        }
+
         if ($response->successful()) {
             return redirect()->route('feed');
         }
 
+        $apiErrors = $response->json('errors');
+
+        if (is_array($apiErrors) && $apiErrors !== []) {
+            $flattened = [];
+
+            foreach ($apiErrors as $field => $messages) {
+                $key = $field === 'media' ? 'media_path' : $field;
+                $flattened[$key] = is_array($messages) ? (string) ($messages[0] ?? '') : (string) $messages;
+            }
+
+            return back()->withErrors($flattened);
+        }
+
         return back()->withErrors(['media_path' => $response->json('message', __('Failed to create post'))]);
+    }
+
+    public function storeCroppedMedia(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'data' => ['required', 'string'],
+        ]);
+
+        $contents = base64_decode($validated['data'], true);
+
+        if ($contents === false) {
+            return response()->json(['message' => __('Invalid cropped image')], 422);
+        }
+
+        $size = strlen($contents);
+
+        if ($size === 0 || $size > 20 * 1024 * 1024) {
+            return response()->json(['message' => __('Invalid cropped image')], 422);
+        }
+
+        $directory = $this->croppedMediaDirectory();
+        File::ensureDirectoryExists($directory);
+
+        $path = $directory.'/'.uniqid('crop_', true).'.jpg';
+        file_put_contents($path, $contents);
+
+        return response()->json(['path' => $path]);
+    }
+
+    protected function croppedMediaDirectory(): string
+    {
+        return storage_path('app/private/cropped');
     }
 
     public function update(Request $request, int $post): RedirectResponse

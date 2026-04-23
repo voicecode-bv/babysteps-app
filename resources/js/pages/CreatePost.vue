@@ -1,11 +1,13 @@
 <script setup lang="ts">
+import { Link, useForm } from '@inertiajs/vue3';
+import { Camera, On, Off, Events } from '@nativephp/mobile';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { store } from '@/actions/App/Http/Controllers/PostActionController';
+import ImageCropModal from '@/components/ImageCropModal.vue';
 import { useTranslations } from '@/composables/useTranslations';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { store } from '@/actions/App/Http/Controllers/PostActionController';
-import { Link, useForm } from '@inertiajs/vue3';
-import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { Camera, On, Off, Events } from '@nativephp/mobile';
 import cameraIcon from '../../svg/doodle-icons/camera.svg';
+import cropIcon from '../../svg/doodle-icons/crop.svg';
 import photoIcon from '../../svg/doodle-icons/photo.svg';
 import videoCameraIcon from '../../svg/doodle-icons/video-camera.svg';
 
@@ -57,6 +59,7 @@ const form = useForm({
 const mediaPreview = ref<string | null>(null);
 const mediaIsVideo = ref(false);
 const showSourcePicker = ref(false);
+const showCropModal = ref(false);
 
 const isValidForm = computed(() => form.media_path !== null && form.circle_ids.length > 0);
 
@@ -82,8 +85,13 @@ async function recordVideo() {
 async function loadPreview(path: string): Promise<string | null> {
     try {
         const response = await fetch(`/native-media?path=${encodeURIComponent(path)}`);
-        if (!response.ok) return null;
+
+        if (!response.ok) {
+            return null;
+        }
+
         const { data_url } = await response.json();
+
         return data_url;
     } catch {
         return null;
@@ -103,7 +111,9 @@ async function handleVideoRecorded(payload: { path: string; mimeType: string }) 
 }
 
 async function handleMediaSelected(payload: { success: boolean; files: { path: string; mimeType: string }[]; cancelled: boolean }) {
-    if (!payload.success || payload.cancelled || !payload.files.length) return;
+    if (!payload.success || payload.cancelled || !payload.files.length) {
+        return;
+    }
 
     const file = payload.files[0];
     form.media_path = file.path;
@@ -115,6 +125,59 @@ function removeMedia() {
     form.media_path = null;
     mediaPreview.value = null;
     mediaIsVideo.value = false;
+}
+
+function openCropModal() {
+    if (!mediaPreview.value || mediaIsVideo.value) {
+        return;
+    }
+
+    showCropModal.value = true;
+}
+
+function getCookie(name: string): string | null {
+    const match = document.cookie.match(new RegExp('(^|;\\s*)(' + name + ')=([^;]*)'));
+
+    return match ? decodeURIComponent(match[3]) : null;
+}
+
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    const chunkSize = 0x8000;
+
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+        binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + chunkSize)));
+    }
+
+    return btoa(binary);
+}
+
+async function handleCropped(blob: Blob, dataUrl: string) {
+    const buffer = await blob.arrayBuffer();
+    const base64 = arrayBufferToBase64(buffer);
+    const xsrf = getCookie('XSRF-TOKEN');
+
+    const response = await fetch('/posts/cropped-media', {
+        method: 'POST',
+        body: JSON.stringify({ data: base64 }),
+        credentials: 'same-origin',
+        headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            ...(xsrf ? { 'X-XSRF-TOKEN': xsrf } : {}),
+        },
+    });
+
+    if (!response.ok) {
+        return;
+    }
+
+    const { path } = (await response.json()) as { path: string };
+    form.media_path = path;
+    mediaPreview.value = dataUrl;
+    showCropModal.value = false;
 }
 
 onMounted(() => {
@@ -141,6 +204,7 @@ function toggleAllCircles() {
 
 function toggleCircle(circleId: number) {
     const index = form.circle_ids.indexOf(circleId);
+
     if (index === -1) {
         form.circle_ids.push(circleId);
     } else {
@@ -173,6 +237,14 @@ function submit() {
                     <div v-if="mediaPreview" class="relative">
                         <video v-if="mediaIsVideo" :src="mediaPreview" class="w-full object-cover" controls />
                         <img v-else :src="mediaPreview" class="w-full object-cover" :alt="t('Selected photo')" />
+                        <button
+                            v-if="!mediaIsVideo"
+                            class="absolute left-3 top-3 flex size-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm"
+                            :aria-label="t('Crop photo')"
+                            @click="openCropModal"
+                        >
+                            <span aria-hidden="true" class="inline-block size-4 bg-current" :style="iconMaskStyle(cropIcon)"></span>
+                        </button>
                         <button
                             class="absolute right-3 top-3 flex size-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm"
                             :aria-label="t('Cancel')"
@@ -316,5 +388,12 @@ function submit() {
                 </div>
             </Transition>
         </Teleport>
+
+        <ImageCropModal
+            :open="showCropModal"
+            :src="mediaPreview"
+            @update:open="showCropModal = $event"
+            @cropped="handleCropped"
+        />
     </AppLayout>
 </template>

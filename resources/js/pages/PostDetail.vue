@@ -385,7 +385,7 @@ function timeAgo(dateString: string): string {
                         class="absolute inset-x-0 bottom-0 z-10 flex items-center gap-4 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-4 pb-3 pt-12"
                     >
                         <div class="flex items-center gap-1">
-                            <button v-if="post.user.id !== authUserId" @click="toggleLike">
+                            <button v-if="post.user.id !== authUserId" class="flex" @click="toggleLike">
                                 <span
                                     aria-hidden="true"
                                     class="inline-block size-6 drop-shadow"

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import CommentsSheet from '@/components/CommentsSheet.vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
-import { computed, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useTranslations } from '@/composables/useTranslations';
 import { likePost, unlikePost } from '@/http/likes';
 import heartIcon from '../../svg/doodle-icons/heart.svg';
@@ -65,10 +65,6 @@ const videoRef = ref<HTMLVideoElement>();
 const isFullscreen = ref(false);
 const mediaLoaded = ref(false);
 
-const articleRef = useTemplateRef<HTMLElement>('articleRef');
-const inView = ref(false);
-let ioObserver: IntersectionObserver | null = null;
-
 const isCaptionTruncatable = computed(() => {
     if (!props.post.caption) return false;
     return props.post.caption.length > 100 || props.post.caption.includes('\n');
@@ -113,25 +109,6 @@ onMounted(() => {
     if (props.post.media_type === 'video') {
         document.addEventListener('keydown', handleKeydown);
     }
-
-    if (typeof IntersectionObserver !== 'undefined' && articleRef.value) {
-        ioObserver = new IntersectionObserver(
-            (entries) => {
-                for (const entry of entries) {
-                    if (entry.isIntersecting) {
-                        inView.value = true;
-                        ioObserver?.disconnect();
-                        ioObserver = null;
-                        break;
-                    }
-                }
-            },
-            { rootMargin: '0px 0px -10% 0px', threshold: 0.05 },
-        );
-        ioObserver.observe(articleRef.value);
-    } else {
-        inView.value = true;
-    }
 });
 onUnmounted(() => {
     if (props.post.media_type === 'video') {
@@ -143,9 +120,6 @@ onUnmounted(() => {
             }
         }
     }
-
-    ioObserver?.disconnect();
-    ioObserver = null;
 });
 
 function toggleLike() {
@@ -187,11 +161,7 @@ function timeAgo(dateString: string): string {
 </script>
 
 <template>
-    <article
-        ref="articleRef"
-        class="bg-white transition-all duration-700 ease-out dark:bg-sand-900"
-        :class="inView ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'"
-    >
+    <article class="bg-white dark:bg-sand-900">
         <!-- Post Header -->
         <div class="flex items-center gap-3 px-4 py-3">
             <Link :href="`/profiles/${post.user.username}`">
@@ -260,7 +230,7 @@ function timeAgo(dateString: string): string {
             </div>
             <div class="absolute inset-x-0 bottom-0 z-10 flex items-center gap-4 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-4 pb-3 pt-12">
                 <div class="flex items-center gap-1">
-                    <button v-if="post.user.id !== authUserId" @click="toggleLike">
+                    <button v-if="post.user.id !== authUserId" class="flex" @click="toggleLike">
                         <span
                             aria-hidden="true"
                             class="inline-block size-6 drop-shadow"
@@ -392,7 +362,7 @@ function timeAgo(dateString: string): string {
                     @click.stop
                 >
                     <div class="flex items-center gap-1">
-                        <button v-if="post.user.id !== authUserId" @click.stop="toggleLike">
+                        <button v-if="post.user.id !== authUserId" class="flex" @click.stop="toggleLike">
                             <span
                                 aria-hidden="true"
                                 class="inline-block size-6 drop-shadow"
@@ -448,7 +418,7 @@ function timeAgo(dateString: string): string {
             </div>
             <div class="absolute inset-x-0 bottom-0 z-10 flex items-center gap-4 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-4 pb-3 pt-12">
                 <div class="flex items-center gap-1">
-                    <button v-if="post.user.id !== authUserId" @click="toggleLike">
+                    <button v-if="post.user.id !== authUserId" class="flex" @click="toggleLike">
                         <span
                             aria-hidden="true"
                             class="inline-block size-6 drop-shadow"

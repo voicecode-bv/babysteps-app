@@ -274,5 +274,9 @@
     "Failed to start ownership transfer": "Starten van eigendomsoverdracht mislukt",
     "Ownership transfers": "Eigendomsoverdrachten",
     "wants to transfer ownership of": "wil het eigendom overdragen van",
-    "to you": "aan jou"
+    "to you": "aan jou",
+    "Crop photo": "Foto bijsnijden",
+    "Crop": "Bijsnijden",
+    "Cropping...": "Bijsnijden...",
+    "Invalid cropped image": "Ongeldige bijgesneden afbeelding"
 }
