@@ -85,7 +85,7 @@ function skip() {
         <div class="relative flex flex-1 flex-col items-center justify-center py-12">
             <div class="mb-10 text-center">
                 <p class="text-xs font-medium uppercase tracking-widest text-accent">{{ t('Notifications') }}</p>
-                <h1 class="mt-3 font-display text-4xl font-semibold tracking-tight text-teal">
+                <h1 class="mt-3 font-sans text-4xl font-semibold tracking-tight text-teal">
                     {{ t('Stay in the loop') }}
                 </h1>
                 <p class="mt-3 max-w-xs text-sm text-sand-600 dark:text-sand-400">

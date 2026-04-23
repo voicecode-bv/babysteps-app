@@ -56,7 +56,7 @@ function continueOnboarding() {
             <div class="mb-10 text-center">
                 <p class="text-xs font-medium uppercase tracking-widest text-accent">{{ t('How it works') }}</p>
                 <h1 class="mt-3 font-display text-4xl font-semibold tracking-tight text-teal">
-                    {{ t('Welcome to innerr.') }}
+                    {{ t('Welcome to innerr') }}
                 </h1>
                 <p class="mt-3 text-sm text-sand-600 dark:text-sand-400">
                     {{ t('Three simple steps and you are ready to share.') }}
@@ -78,7 +78,7 @@ function continueOnboarding() {
                         </span>
                     </div>
                     <div class="flex-1 pt-1">
-                        <h2 class="font-display text-base font-semibold text-sand-800 dark:text-sand-100">{{ step.title }}</h2>
+                        <h2 class="font-sans text-base font-semibold text-sand-800 dark:text-sand-100">{{ step.title }}</h2>
                         <p class="mt-1 text-sm leading-relaxed text-sand-600 dark:text-sand-400">{{ step.description }}</p>
                     </div>
                 </li>

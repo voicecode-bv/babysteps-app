@@ -53,7 +53,7 @@ function skip() {
         <div class="relative flex flex-1 flex-col items-center justify-center py-12">
             <div class="mb-10 text-center">
                 <p class="text-xs font-medium uppercase tracking-widest text-accent">{{ t('Your first circle') }}</p>
-                <h1 class="mt-3 font-display text-4xl font-semibold tracking-tight text-teal">
+                <h1 class="mt-3 font-display text-4xl font-black tracking-tight text-teal">
                     {{ t('Who matters most?') }}
                 </h1>
                 <p class="mt-3 text-sm text-sand-600 dark:text-sand-400">
@@ -78,7 +78,7 @@ function skip() {
                                 :placeholder="t('Circle name...')"
                                 maxlength="255"
                                 autofocus
-                                class="mt-1 w-full border-0 bg-transparent p-0 font-display text-xl font-semibold text-sand-900 placeholder-sand-400 focus:outline-none focus:ring-0 dark:text-sand-100 dark:placeholder-sand-500"
+                                class="mt-1 w-full border-0 bg-transparent p-0 font-sans text-xl font-semibold text-sand-900 placeholder-sand-400 focus:outline-none focus:ring-0 dark:text-sand-100 dark:placeholder-sand-500"
                             />
                         </div>
                     </div>

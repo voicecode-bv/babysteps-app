@@ -78,13 +78,7 @@ function createCircle() {
             </button>
         </template>
 
-        <div class="relative mt-10 min-h-full bg-warmwhite pb-[calc(theme(spacing.24)+env(safe-area-inset-bottom))] dark:bg-sand-900">
-            <!-- Soft blobs -->
-            <div aria-hidden="true" class="pointer-events-none absolute inset-x-0 top-0 h-72 overflow-hidden">
-                <div class="absolute -left-16 top-0 size-64 rounded-full bg-sage-200/40 blur-3xl dark:bg-sage-700/20"></div>
-                <div class="absolute -right-16 top-10 size-64 rounded-full bg-accent-soft/30 blur-3xl dark:bg-accent/10"></div>
-            </div>
-
+        <div class="relative mt-10 min-h-full pb-[calc(theme(spacing.24)+env(safe-area-inset-bottom))]">
             <PullToRefreshIndicator :pull-distance="pullDistance" :is-refreshing="isRefreshing" />
 
             <div class="relative space-y-4 px-4 pt-4">
@@ -151,7 +145,7 @@ function createCircle() {
                                 />
                                 <IconTile v-else :icon="usersIcon" size="md" tone="sage" />
                                 <div class="min-w-0 flex-1">
-                                    <p class="truncate font-display text-base font-semibold text-teal dark:text-sand-100">{{ circle.name }}</p>
+                                    <p class="truncate font-sans text-base font-semibold text-teal dark:text-sand-100">{{ circle.name }}</p>
                                     <p class="text-sm text-sand-600 dark:text-sand-400">
                                         {{ circle.members_count === 1 ? t(':count member', { count: circle.members_count }) : t(':count members', { count: circle.members_count }) }}
                                     </p>
@@ -167,7 +161,7 @@ function createCircle() {
                     <SurfaceCard v-else-if="circles && circles.length === 0">
                         <div class="flex flex-col items-center px-2 py-4 text-center">
                             <IconTile :icon="usersIcon" size="lg" tone="sage" class="mb-4" />
-                            <h3 class="font-display text-lg font-semibold text-teal dark:text-sand-100">{{ t('No circles yet') }}</h3>
+                            <h3 class="font-sans text-lg font-semibold text-teal dark:text-sand-100">{{ t('No circles yet') }}</h3>
                             <p class="mt-1 text-sm text-sand-600 dark:text-sand-400">
                                 {{ t('Create a circle to share moments with specific people.') }}
                             </p>

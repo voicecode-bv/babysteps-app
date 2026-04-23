@@ -52,7 +52,7 @@ function markLoaded(postId: number) {
 </script>
 
 <template>
-    <AppLayout ref="layout" :title="profile.name">
+    <AppLayout ref="layout" :title="t('Profile')">
         <template #header-left>
             <button class="flex items-center text-sand-700 dark:text-sand-300" @click="goBack">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
@@ -74,7 +74,7 @@ function markLoaded(postId: number) {
                             class="size-20 rounded-full object-cover ring-2 ring-sand-200 dark:ring-sand-700"
                         />
                         <div class="flex-1">
-                            <h2 class="font-display text-lg font-semibold text-sand-800 dark:text-sand-100">{{ profile.name }}</h2>
+                            <h2 class="truncate font-sans text-xl font-bold text-teal">{{ profile.name }}</h2>
                             <p class="text-sm text-sand-500 dark:text-sand-400">@{{ profile.username }}</p>
                             <div class="mt-2">
                                 <span class="text-sm font-medium text-sand-700 dark:text-sand-200">{{ profile.posts_count }}</span>

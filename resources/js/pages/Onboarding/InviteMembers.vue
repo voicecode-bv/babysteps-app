@@ -67,7 +67,7 @@ function continueOnboarding() {
         <div class="relative flex flex-1 flex-col items-center justify-center py-12">
             <div class="mb-10 text-center">
                 <p class="text-xs font-medium uppercase tracking-widest text-accent">{{ circle.name }}</p>
-                <h1 class="mt-3 font-display text-4xl font-semibold tracking-tight text-teal">
+                <h1 class="mt-3 font-display text-4xl font-black tracking-tight text-teal">
                     {{ t('Invite your people') }}
                 </h1>
                 <p class="mt-3 text-sm text-sand-600 dark:text-sand-400">
