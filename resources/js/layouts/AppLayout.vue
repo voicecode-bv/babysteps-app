@@ -29,7 +29,7 @@ defineExpose({ mainRef });
 
     <header
         v-if="props.showHeader"
-        class="pt-[var(--inset-top)] left-[var(--inset-left)] right-[var(--inset-right)] fixed z-100 flex items-center justify-between border-b border-sand-200 bg-white px-4 py-3 dark:border-sand-800 dark:bg-sand-900"
+        class="pt-[var(--inset-top,0)] left-[var(--inset-left,0)] right-[var(--inset-right,0)] fixed z-100 flex items-center justify-between border-b border-sand-200 bg-white px-4 py-3 dark:border-sand-800 dark:bg-sand-900"
     >
         <div class="flex w-16 items-center">
             <slot name="header-left">
