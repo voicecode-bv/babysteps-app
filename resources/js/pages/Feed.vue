@@ -85,7 +85,7 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
     <AppLayout ref="layout" :show-header="false">
         <template #above>
             <!-- Family Circles -->
-            <div class="pt-[var(--inset-top)] left-[var(--inset-left)] right-[var(--inset-right)] fixed z-100 flex gap-3 overflow-x-auto no-scrollbar border-b border-sand-200 bg-white px-4 py-3 dark:border-sand-800 dark:bg-sand-900">
+            <div class="pt-[var(--inset-top, 0)] left-[var(--inset-left, 0)] right-[var(--inset-right, 0)] fixed z-100 flex gap-3 overflow-x-auto no-scrollbar border-b border-sand-200 bg-white px-4 py-3 dark:border-sand-800 dark:bg-sand-900">
                 <Link href="/circles" class="group flex shrink-0 flex-col items-center gap-1.5">
                     <div class="rounded-full p-0.5">
                         <div class="flex size-14 items-center justify-center rounded-full border-2 border-dashed border-sand-300 transition-transform duration-500 group-hover:rotate-90 dark:border-sand-600">
