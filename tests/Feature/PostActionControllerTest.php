@@ -67,3 +67,37 @@ it('validates that at least one circle is selected on update', function () {
         ])
         ->assertSessionHasErrors(['circle_ids']);
 });
+
+it('returns the paginated likes list from the API', function () {
+    Http::fake([
+        '*/posts/5/likes*' => Http::response([
+            'data' => [
+                ['id' => 1, 'name' => 'Alice', 'username' => 'alice', 'avatar' => null],
+                ['id' => 2, 'name' => 'Bob', 'username' => 'bob', 'avatar' => null],
+            ],
+            'meta' => ['current_page' => 1, 'last_page' => 1, 'per_page' => 50, 'total' => 2],
+        ], 200),
+    ]);
+
+    $this->actingAs($this->user)
+        ->getJson('/posts/5/likes')
+        ->assertOk()
+        ->assertJsonPath('meta.total', 2)
+        ->assertJsonPath('data.0.username', 'alice')
+        ->assertJsonPath('data.1.username', 'bob');
+
+    Http::assertSent(fn ($request) => str_contains($request->url(), '/posts/5/likes')
+        && $request->method() === 'GET'
+    );
+});
+
+it('surfaces an error when the likes API request fails', function () {
+    Http::fake([
+        '*/posts/5/likes*' => Http::response(['message' => 'Boom'], 500),
+    ]);
+
+    $this->actingAs($this->user)
+        ->getJson('/posts/5/likes')
+        ->assertStatus(500)
+        ->assertJsonPath('message', 'Boom');
+});

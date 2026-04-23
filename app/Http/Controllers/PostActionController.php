@@ -48,6 +48,21 @@ class PostActionController extends Controller
             'circle_ids' => $validated['circle_ids'],
         ];
 
+        // The cropped flow drops a sidecar with EXIF the client read off the
+        // original (browser canvas re-encode strips EXIF before the bytes get
+        // here). Forward it as multipart form fields alongside the file.
+        $sidecarPath = $path.'.exif.json';
+
+        if (file_exists($sidecarPath)) {
+            $exif = json_decode((string) file_get_contents($sidecarPath), true) ?? [];
+
+            foreach (['taken_at', 'latitude', 'longitude'] as $key) {
+                if (isset($exif[$key]) && $exif[$key] !== null) {
+                    $data[$key] = $exif[$key];
+                }
+            }
+        }
+
         $mimeType = File::mimeType($path);
         $extension = match ($mimeType) {
             'image/jpeg' => 'jpg',
@@ -68,6 +83,7 @@ class PostActionController extends Controller
 
         if (str_starts_with($path, $this->croppedMediaDirectory())) {
             @unlink($path);
+            @unlink($sidecarPath);
         }
 
         if ($response->successful()) {
@@ -94,6 +110,9 @@ class PostActionController extends Controller
     {
         $validated = $request->validate([
             'data' => ['required', 'string'],
+            'taken_at' => ['nullable', 'string'],
+            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'longitude' => ['nullable', 'numeric', 'between:-180,180'],
         ]);
 
         $contents = base64_decode($validated['data'], true);
@@ -113,6 +132,19 @@ class PostActionController extends Controller
 
         $path = $directory.'/'.uniqid('crop_', true).'.jpg';
         file_put_contents($path, $contents);
+
+        // Browser cropping re-encodes the JPEG and strips EXIF, so the client
+        // reads it from the original first and forwards it here. Persist as a
+        // sidecar that the upload step will pick up alongside the JPEG.
+        $exif = array_filter([
+            'taken_at' => $validated['taken_at'] ?? null,
+            'latitude' => $validated['latitude'] ?? null,
+            'longitude' => $validated['longitude'] ?? null,
+        ], fn ($value) => $value !== null);
+
+        if ($exif !== []) {
+            file_put_contents($path.'.exif.json', json_encode($exif));
+        }
 
         return response()->json(['path' => $path]);
     }
@@ -181,6 +213,21 @@ class PostActionController extends Controller
         }
 
         return response()->noContent();
+    }
+
+    public function indexLikes(int $post): JsonResponse
+    {
+        try {
+            $response = $this->apiClient->get("/posts/{$post}/likes");
+        } catch (ConnectionException) {
+            return response()->json(['message' => __('Could not connect to the server.')], 503);
+        }
+
+        if ($response->failed()) {
+            return response()->json(['message' => $response->json('message', __('Failed to load likes'))], $response->status());
+        }
+
+        return response()->json($this->apiClient->proxyMediaUrls($response->json()) ?? []);
     }
 
     public function indexComments(int $post): JsonResponse

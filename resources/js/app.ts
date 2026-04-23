@@ -3,6 +3,7 @@ import { flare } from '@flareapp/js';
 import { flareVue } from '@flareapp/vue';
 import { createApp, h } from 'vue';
 import { FetchHttpClient } from '@/http/FetchHttpClient';
+import { useNetworkStatus } from '@/composables/useNetworkStatus';
 
 declare global {
     interface Window {
@@ -27,7 +28,12 @@ createInertiaApp({
     },
     http: new FetchHttpClient(),
     setup({ el, App, props, plugin }) {
-        createApp({ render: () => h(App, props) })
+        createApp({
+            setup() {
+                useNetworkStatus();
+                return () => h(App, props);
+            },
+        })
             .use(plugin)
             .use(flareVue)
             .mount(el);

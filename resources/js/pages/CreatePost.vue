@@ -4,6 +4,7 @@ import { Camera, On, Off, Events } from '@nativephp/mobile';
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { store } from '@/actions/App/Http/Controllers/PostActionController';
 import ImageCropModal from '@/components/ImageCropModal.vue';
+import { type ExifData } from '@/composables/useExif';
 import { useTranslations } from '@/composables/useTranslations';
 import AppLayout from '@/layouts/AppLayout.vue';
 import cameraIcon from '../../svg/doodle-icons/camera.svg';
@@ -153,14 +154,19 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
     return btoa(binary);
 }
 
-async function handleCropped(blob: Blob, dataUrl: string) {
+async function handleCropped(blob: Blob, dataUrl: string, exif: ExifData) {
     const buffer = await blob.arrayBuffer();
     const base64 = arrayBufferToBase64(buffer);
     const xsrf = getCookie('XSRF-TOKEN');
 
     const response = await fetch('/posts/cropped-media', {
         method: 'POST',
-        body: JSON.stringify({ data: base64 }),
+        body: JSON.stringify({
+            data: base64,
+            taken_at: exif.taken_at,
+            latitude: exif.latitude,
+            longitude: exif.longitude,
+        }),
         credentials: 'same-origin',
         headers: {
             'Content-Type': 'application/json',

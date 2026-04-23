@@ -60,6 +60,7 @@ Route::middleware(['auth.token', HandleNativeEdge::class, EnsureOnboarded::class
     Route::post('/posts', [PostActionController::class, 'store'])->name('posts.store');
     Route::put('/posts/{post}', [PostActionController::class, 'update'])->name('posts.update')->whereNumber('post');
     Route::delete('/posts/{post}', [PostActionController::class, 'destroy'])->name('posts.destroy')->whereNumber('post');
+    Route::get('/posts/{post}/likes', [PostActionController::class, 'indexLikes'])->name('posts.likes.index')->whereNumber('post');
     Route::post('/posts/{post}/like', [PostActionController::class, 'like'])->name('posts.like')->whereNumber('post');
     Route::delete('/posts/{post}/like', [PostActionController::class, 'unlike'])->name('posts.unlike')->whereNumber('post');
     Route::get('/posts/{post}/comments', [PostActionController::class, 'indexComments'])->name('posts.comments.index')->whereNumber('post');

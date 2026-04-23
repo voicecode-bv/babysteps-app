@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "873ade8cedc8fb937e45bb751a7f74b8",
+    "content-hash": "4d44f177a558a099566ecc6bdcadb6de",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -2901,6 +2901,57 @@
                 "issues": "https://github.com/NativePHP/mobile-firebase/issues"
             },
             "time": "2026-04-04T00:38:56+00:00"
+        },
+        {
+            "name": "nativephp/mobile-network",
+            "version": "1.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/NativePHP/mobile-network.git",
+                "reference": "3a544d6e177c52cd5e2a1bf2becb18ff2c9e8c5c"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/NativePHP/mobile-network/zipball/3a544d6e177c52cd5e2a1bf2becb18ff2c9e8c5c",
+                "reference": "3a544d6e177c52cd5e2a1bf2becb18ff2c9e8c5c",
+                "shasum": ""
+            },
+            "require": {
+                "nativephp/mobile": "^3.0",
+                "php": "^8.2"
+            },
+            "type": "nativephp-plugin",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Native\\Mobile\\Providers\\NetworkServiceProvider"
+                    ]
+                },
+                "nativephp": {
+                    "manifest": "nativephp.json"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Native\\Mobile\\Providers\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "NativePHP",
+                    "email": "support@nativephp.com"
+                }
+            ],
+            "description": "Network connectivity status plugin for NativePHP Mobile",
+            "support": {
+                "issues": "https://github.com/NativePHP/mobile-network/issues",
+                "source": "https://github.com/NativePHP/mobile-network/tree/1.0.1"
+            },
+            "time": "2026-03-20T22:08:33+00:00"
         },
         {
             "name": "nativephp/mobile-secure-storage",

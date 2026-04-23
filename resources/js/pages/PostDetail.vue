@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import CommentsSheet from '@/components/CommentsSheet.vue';
 import EditPostModal from '@/components/EditPostModal.vue';
+import LikesSheet from '@/components/LikesSheet.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import { usePullToRefresh } from '@/composables/usePullToRefresh';
 import { useTranslations } from '@/composables/useTranslations';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { likePost, unlikePost } from '@/http/likes';
 import type { Comment } from '@/types/comment';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { Dialog, Events, Off, On } from '@nativephp/mobile';
@@ -35,11 +35,6 @@ interface User {
     avatar: string | null;
 }
 
-interface Like {
-    id: number;
-    user_id: number;
-}
-
 interface Circle {
     id: number;
     name: string;
@@ -57,7 +52,6 @@ interface Post {
     created_at: string;
     user: User;
     comments: Comment[];
-    likes: Like[];
     is_liked: boolean;
     likes_count: number;
     comments_count: number;
@@ -78,12 +72,13 @@ const { t } = useTranslations();
 
 const page = usePage();
 const authUserId = computed(() => (page.props.auth as { user?: { id: number } })?.user?.id ?? null);
-const isLiked = ref(props.post.is_liked ?? false);
 const likesCount = ref(props.post.likes_count);
 const commentsCount = ref(props.post.comments_count);
 const isOwner = computed(() => props.post.user.id === authUserId.value);
+const isLikedByUser = computed(() => props.post.is_liked ?? false);
 
 const isSheetOpen = ref(false);
+const isLikesSheetOpen = ref(false);
 const isEditModalOpen = ref(false);
 const showFullCaption = ref(false);
 
@@ -133,21 +128,12 @@ function openComments() {
     isSheetOpen.value = true;
 }
 
-function openEditModal() {
-    isEditModalOpen.value = true;
+function openLikes() {
+    isLikesSheetOpen.value = true;
 }
 
-function toggleLike() {
-    const wasLiked = isLiked.value;
-    isLiked.value = !wasLiked;
-    likesCount.value += wasLiked ? -1 : 1;
-
-    const request = wasLiked ? unlikePost(props.post.id) : likePost(props.post.id);
-
-    request.catch(() => {
-        isLiked.value = wasLiked;
-        likesCount.value += wasLiked ? 1 : -1;
-    });
+function openEditModal() {
+    isEditModalOpen.value = true;
 }
 
 function goBack() {
@@ -384,23 +370,15 @@ function timeAgo(dateString: string): string {
                         v-if="!isFullscreen"
                         class="absolute inset-x-0 bottom-0 z-10 flex items-center gap-4 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-4 pb-3 pt-12"
                     >
-                        <div class="flex items-center gap-1">
-                            <button v-if="post.user.id !== authUserId" class="flex" @click="toggleLike">
-                                <span
-                                    aria-hidden="true"
-                                    class="inline-block size-6 drop-shadow"
-                                    :class="isLiked ? 'bg-blush-400' : 'bg-white'"
-                                    :style="iconMaskStyle(isLiked ? heartFilledIcon : heartIcon)"
-                                ></span>
-                            </button>
+                        <button class="flex items-center gap-1" :aria-label="t('Show likes')" @click="openLikes">
                             <span
-                                v-else
                                 aria-hidden="true"
-                                class="inline-block size-6 bg-white drop-shadow"
-                                :style="iconMaskStyle(heartIcon)"
+                                class="inline-block size-6 drop-shadow"
+                                :class="isLikedByUser ? 'bg-blush-400' : 'bg-white'"
+                                :style="iconMaskStyle(isLikedByUser ? heartFilledIcon : heartIcon)"
                             ></span>
                             <span v-if="likesCount > 0" class="text-sm font-medium text-white drop-shadow">{{ likesCount }}</span>
-                        </div>
+                        </button>
                         <button class="flex items-center gap-1 text-white drop-shadow" @click="openComments">
                             <span aria-hidden="true" class="inline-block size-6 bg-current" :style="iconMaskStyle(messageIcon)"></span>
                             <span v-if="commentsCount > 0" class="text-sm font-medium">{{ commentsCount }}</span>
@@ -425,6 +403,13 @@ function timeAgo(dateString: string): string {
             :initial-comments="post.comments"
             @update:open="isSheetOpen = $event"
             @comment-added="commentsCount++"
+        />
+
+        <LikesSheet
+            :open="isLikesSheetOpen"
+            :post-id="post.id"
+            :initial-count="likesCount"
+            @update:open="isLikesSheetOpen = $event"
         />
 
         <EditPostModal

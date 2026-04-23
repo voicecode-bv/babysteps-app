@@ -3,6 +3,7 @@ import { computed, ref, useTemplateRef, watch } from 'vue';
 import { Cropper } from 'vue-advanced-cropper';
 import BottomSheet from '@/components/BottomSheet.vue';
 import { useTranslations } from '@/composables/useTranslations';
+import { readExif, type ExifData } from '@/composables/useExif';
 import 'vue-advanced-cropper/dist/style.css';
 
 type Ratio = '1:1' | '5:4';
@@ -14,7 +15,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     (e: 'update:open', value: boolean): void;
-    (e: 'cropped', blob: Blob, dataUrl: string): void;
+    (e: 'cropped', blob: Blob, dataUrl: string, exif: ExifData): void;
 }>();
 
 const { t } = useTranslations();
@@ -59,7 +60,7 @@ function onSheetUpdate(value: boolean) {
 
 const MAX_OUTPUT_DIMENSION = 2048;
 
-function confirm() {
+async function confirm() {
     const instance = cropperRef.value;
 
     if (!instance || processing.value) {
@@ -94,6 +95,11 @@ function confirm() {
     }
 
     processing.value = true;
+
+    // Read EXIF from the ORIGINAL source before encoding the cropped canvas —
+    // canvas.toBlob() re-encodes JPEG and strips EXIF.
+    const exif = props.src ? await readExif(props.src) : { taken_at: null, latitude: null, longitude: null };
+
     canvas.toBlob(
         (blob) => {
             if (!blob) {
@@ -103,7 +109,7 @@ function confirm() {
             }
 
             const dataUrl = URL.createObjectURL(blob);
-            emit('cropped', blob, dataUrl);
+            emit('cropped', blob, dataUrl, exif);
         },
         'image/jpeg',
         0.85,
