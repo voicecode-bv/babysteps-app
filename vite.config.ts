@@ -1,3 +1,4 @@
+import flareSourcemapUploader from '@flareapp/vite';
 import inertia from '@inertiajs/vite';
 import { wayfinder } from '@laravel/vite-plugin-wayfinder';
 import tailwindcss from '@tailwindcss/vite';
@@ -33,5 +34,8 @@ export default defineConfig({
             formVariants: true,
         }),
         nativephpMobile(),
+        flareSourcemapUploader({
+            key: 'oMOs3SauYfrkKxMcjjBJim2LHp7rfnnt',
+        }),
     ],
 });
