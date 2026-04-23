@@ -138,7 +138,7 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
             </div>
         </template>
 
-        <div class="pb-24 mt-23.75">
+        <div class="pb-24 mt-27.5">
             <PullToRefreshIndicator :pull-distance="pullDistance" :is-refreshing="isRefreshing" />
 
             <template v-if="!posts">
