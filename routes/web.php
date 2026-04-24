@@ -10,6 +10,7 @@ use App\Http\Controllers\CreatePostController;
 use App\Http\Controllers\DefaultCircleController;
 use App\Http\Controllers\DeviceTokenController;
 use App\Http\Controllers\FeedController;
+use App\Http\Controllers\MapController;
 use App\Http\Controllers\MediaProxyController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\NotificationPreferenceController;
@@ -68,6 +69,9 @@ Route::middleware(['auth.token', HandleNativeEdge::class, EnsureOnboarded::class
     Route::delete('/comments/{comment}', [PostActionController::class, 'destroyComment'])->name('comments.destroy')->whereNumber('comment');
     Route::post('/comments/{comment}/like', [PostActionController::class, 'likeComment'])->name('comments.like')->whereNumber('comment');
     Route::delete('/comments/{comment}/like', [PostActionController::class, 'unlikeComment'])->name('comments.unlike')->whereNumber('comment');
+
+    Route::get('/map', [MapController::class, 'show'])->name('map');
+    Route::get('/photos/map', [MapController::class, 'photos'])->name('photos.map');
 
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications');
     Route::post('/notifications/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');

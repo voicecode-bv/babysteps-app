@@ -13,6 +13,12 @@
     "Notifications": "Notifications",
     "Profile": "Profile",
     "Settings": "Settings",
+    "Map": "Map",
+    "Open map": "Open map",
+    "Mapbox token is not configured. Set MAPBOX_TOKEN in your environment.": "Mapbox token is not configured. Set MAPBOX_TOKEN in your environment.",
+    "Loading photos...": "Loading photos...",
+    "Zoom in for more photos": "Zoom in for more photos",
+    "Could not load photos": "Could not load photos",
 
     "Invite": "Invite",
     "Family": "Family",

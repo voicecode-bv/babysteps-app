@@ -13,6 +13,12 @@
     "Notifications": "Meldingen",
     "Profile": "Profiel",
     "Settings": "Instellingen",
+    "Map": "Kaart",
+    "Open map": "Kaart openen",
+    "Mapbox token is not configured. Set MAPBOX_TOKEN in your environment.": "Mapbox-token is niet geconfigureerd. Stel MAPBOX_TOKEN in je omgeving in.",
+    "Loading photos...": "Foto's laden...",
+    "Zoom in for more photos": "Zoom in voor meer foto's",
+    "Could not load photos": "Kon foto's niet laden",
 
     "Invite": "Uitnodigen",
     "Family": "Familie",
