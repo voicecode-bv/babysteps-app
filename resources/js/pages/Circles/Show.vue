@@ -211,9 +211,9 @@ function goBack() {
                                 v-if="circle.photo"
                                 :src="circle.photo"
                                 :alt="circle.name"
-                                class="size-20 rounded-lg object-cover shadow-sm"
+                                class="size-20 rounded-full object-cover shadow-sm"
                             />
-                            <IconTile v-else :icon="userIcon" size="lg" tone="sage" class="!size-20" />
+                            <IconTile v-else :icon="userIcon" size="lg" tone="sage" class="!size-20 !rounded-full" />
                             <span
                                 v-if="circle.is_owner"
                                 class="absolute -bottom-1 -right-1 flex size-8 items-center justify-center rounded-full bg-teal shadow-md ring-4 ring-white/70 dark:ring-sand-800/60"

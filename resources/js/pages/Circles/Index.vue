@@ -141,9 +141,9 @@ function createCircle() {
                                     v-if="circle.photo"
                                     :src="circle.photo"
                                     :alt="circle.name"
-                                    class="size-12 shrink-0 rounded-lg object-cover"
+                                    class="size-12 shrink-0 rounded-full object-cover"
                                 />
-                                <IconTile v-else :icon="usersIcon" size="md" tone="sage" />
+                                <IconTile v-else :icon="usersIcon" size="md" tone="sage" class="!rounded-full" />
                                 <div class="min-w-0 flex-1">
                                     <p class="truncate font-sans text-base font-semibold text-teal dark:text-sand-100">{{ circle.name }}</p>
                                     <p class="text-sm text-sand-600 dark:text-sand-400">
