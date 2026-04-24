@@ -65,7 +65,7 @@ function goBack() {
 </script>
 
 <template>
-    <AppLayout ref="layout" :title="circle.name">
+    <AppLayout ref="layout" :title="circle?.name ?? ''">
         <template #header-left>
             <button class="flex items-center text-sand-700 dark:text-sand-300" @click="goBack">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
@@ -76,6 +76,7 @@ function goBack() {
 
         <template #header-right>
             <Link
+                v-if="props.circle"
                 :href="`/circles/${props.circle.id}`"
                 class="flex size-9 items-center justify-center rounded-full bg-white/80 shadow-sm transition hover:bg-white dark:bg-sand-800/70"
                 :aria-label="t('Circle details')"

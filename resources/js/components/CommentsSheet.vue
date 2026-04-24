@@ -56,7 +56,7 @@ const commentInput = useTemplateRef<HTMLInputElement>('commentInput');
 const listEnd = useTemplateRef<HTMLDivElement>('listEnd');
 
 const totalCount = computed(() =>
-    comments.value.reduce((total, comment) => total + 1 + comment.replies.length, 0),
+    comments.value.reduce((total, comment) => total + 1 + (comment.replies?.length ?? 0), 0),
 );
 
 async function loadComments() {

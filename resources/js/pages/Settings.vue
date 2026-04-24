@@ -291,7 +291,7 @@ onUnmounted(() => {
                 </SurfaceCard>
 
                 <!-- Default circles -->
-                <SurfaceCard v-if="circles.length > 0">
+                <SurfaceCard v-if="circles && circles.length > 0">
                     <h3 class="flex items-center gap-3 text-sm font-semibold text-sand-900 dark:text-sand-100">
                         <IconTile :icon="usersIcon" size="sm" tone="sage" />
                         {{ t('Default circles for new posts') }}
