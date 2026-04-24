@@ -39,9 +39,12 @@ export async function readExif(source: string | Blob | File | ArrayBuffer): Prom
     const empty: ExifData = { taken_at: null, latitude: null, longitude: null };
 
     try {
+        // `pick` filters the GPS IFD out, so `result.latitude`/`longitude` come
+        // back undefined. Keep the request scoped via explicit blocks instead.
         const result = await exifr.parse(source, {
+            tiff: true,
+            exif: true,
             gps: true,
-            pick: ['DateTimeOriginal', 'DateTime', 'latitude', 'longitude'],
         });
 
         if (!result) {
