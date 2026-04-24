@@ -109,7 +109,7 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
                     v-else
                     v-for="circle in circles"
                     :key="circle.id"
-                    :href="`/circles/${circle.id}`"
+                    :href="`/circles/${circle.id}/feed`"
                     class="flex shrink-0 flex-col items-center gap-1.5"
                 >
                     <div class="circle-ring relative rounded-full p-[2px]">

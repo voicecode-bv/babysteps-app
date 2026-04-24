@@ -53,6 +53,7 @@ Route::middleware(['auth.token', HandleNativeEdge::class])->group(function () {
 
 Route::middleware(['auth.token', HandleNativeEdge::class, EnsureOnboarded::class])->group(function () {
     Route::get('/', FeedController::class)->name('feed');
+    Route::get('/circles/{circle}/feed', [FeedController::class, 'circle'])->name('circles.feed')->whereNumber('circle');
     Route::get('/posts/create', CreatePostController::class)->name('posts.create');
     Route::get('/posts/{post}', [PostController::class, 'show'])->name('posts.show')->whereNumber('post');
 
