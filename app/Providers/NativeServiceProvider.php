@@ -7,6 +7,7 @@ use Illuminate\Support\ServiceProvider;
 use Native\Mobile\Providers\BrowserServiceProvider;
 use Native\Mobile\Providers\CameraServiceProvider;
 use Native\Mobile\Providers\DialogServiceProvider;
+use Native\Mobile\Providers\NetworkServiceProvider;
 use Native\Mobile\Providers\PushNotificationsServiceProvider;
 use Native\Mobile\Providers\SecureStorageServiceProvider;
 
@@ -47,6 +48,8 @@ class NativeServiceProvider extends ServiceProvider
             // \NativePHP\BackgroundTasks\BackgroundTasksServiceProvider::class,
             PackageInfoServiceProvider::class,
             BrowserServiceProvider::class,
+            NetworkServiceProvider::class,
+
         ];
     }
 }

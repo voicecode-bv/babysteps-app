@@ -1,9 +1,9 @@
-import { createInertiaApp, router } from '@inertiajs/vue3';
 import { flare } from '@flareapp/js';
 import { flareVue } from '@flareapp/vue';
-import { createApp, h } from 'vue';
-import { FetchHttpClient } from '@/http/FetchHttpClient';
+import { createInertiaApp, router } from '@inertiajs/vue3';
+import { createSSRApp, h } from 'vue';
 import { useNetworkStatus } from '@/composables/useNetworkStatus';
+import { FetchHttpClient } from '@/http/FetchHttpClient';
 
 declare global {
     interface Window {
@@ -13,10 +13,10 @@ declare global {
 
 if (typeof window !== 'undefined') {
     window.router = router;
-}
 
-if (import.meta.env.PROD) {
-    flare.light();
+    if (import.meta.env.PROD) {
+        flare.light();
+    }
 }
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
@@ -28,14 +28,19 @@ createInertiaApp({
     },
     http: new FetchHttpClient(),
     setup({ el, App, props, plugin }) {
-        createApp({
+        const app = createSSRApp({
             setup() {
                 useNetworkStatus();
                 return () => h(App, props);
             },
         })
             .use(plugin)
-            .use(flareVue)
-            .mount(el);
+            .use(flareVue);
+
+        if (typeof window !== 'undefined') {
+            app.mount(el);
+        }
+
+        return app;
     },
 });

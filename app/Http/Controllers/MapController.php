@@ -11,10 +11,12 @@ use Inertia\Response;
 
 class MapController extends Controller
 {
-    public function show(): Response
+    public function show(ApiClient $apiClient): Response
     {
+        $serviceKeys = $apiClient->cachedServiceKeys();
+
         return Inertia::render('Map', [
-            'mapboxToken' => config('services.mapbox.token'),
+            'mapboxToken' => $serviceKeys['mapbox']['public_token'] ?? null,
         ]);
     }
 

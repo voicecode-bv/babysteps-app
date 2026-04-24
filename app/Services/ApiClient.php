@@ -191,6 +191,11 @@ class ApiClient
         return 'circles';
     }
 
+    public static function serviceKeysCacheKey(): string
+    {
+        return 'service_keys';
+    }
+
     /**
      * Fetch and cache the profile for a given username. Returns null on failure.
      *
@@ -239,6 +244,38 @@ class ApiClient
                     : [];
             },
         );
+    }
+
+    /**
+     * Fetch and cache public service keys (Mapbox, Flare, etc.) from the API.
+     *
+     * @return array<string, array<string, string|null>>
+     */
+    public function cachedServiceKeys(): array
+    {
+        $cached = Cache::get(self::serviceKeysCacheKey());
+
+        if (is_array($cached) && $cached !== []) {
+            return $cached;
+        }
+
+        try {
+            $response = $this->get('/service-keys');
+        } catch (ConnectionException) {
+            return [];
+        }
+
+        if (! $response->successful()) {
+            return [];
+        }
+
+        $data = $response->json() ?? [];
+
+        if ($data !== []) {
+            Cache::put(self::serviceKeysCacheKey(), $data, self::SETTINGS_CACHE_TTL);
+        }
+
+        return $data;
     }
 
     /**

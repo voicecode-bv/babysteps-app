@@ -38,10 +38,13 @@ let didInitialFit = false;
 const SOURCE_ID = 'photos';
 const CLUSTER_LAYER = 'photos-clusters';
 const CLUSTER_COUNT_LAYER = 'photos-cluster-count';
-const UNCLUSTERED_LAYER = 'photos-unclustered';
+
+const photoMarkers: Record<string, mapboxgl.Marker> = {};
 
 const NETHERLANDS_CENTER: [number, number] = [5.2913, 52.1326];
 const FALLBACK_ZOOM = 6.8;
+
+const BBOX_PADDING_RATIO = 0.35;
 
 function currentBboxString(): string | null {
     if (!map) {
@@ -54,7 +57,15 @@ function currentBboxString(): string | null {
         return null;
     }
 
-    return `${b.getWest()},${b.getSouth()},${b.getEast()},${b.getNorth()}`;
+    const west = b.getWest();
+    const east = b.getEast();
+    const south = b.getSouth();
+    const north = b.getNorth();
+
+    const lngPad = (east - west) * BBOX_PADDING_RATIO;
+    const latPad = (north - south) * BBOX_PADDING_RATIO;
+
+    return `${west - lngPad},${south - latPad},${east + lngPad},${north + latPad}`;
 }
 
 async function fetchPhotos(bbox: string): Promise<PhotoResponse | null> {
@@ -181,17 +192,71 @@ function handleClusterClick(event: MapMouseEvent): void {
     });
 }
 
-function handleFeatureClick(event: MapMouseEvent): void {
+function createPhotoMarkerElement(properties: PhotoProperties): HTMLElement {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'photo-marker';
+    button.setAttribute('aria-label', 'Open photo');
+
+    if (properties.thumbnail_url) {
+        button.style.backgroundImage = `url("${properties.thumbnail_url}")`;
+    }
+
+    if (properties.media_type === 'video') {
+        const badge = document.createElement('span');
+        badge.className = 'photo-marker__video-badge';
+        badge.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653Z" /></svg>';
+        button.appendChild(badge);
+    }
+
+    button.addEventListener('click', (event) => {
+        event.stopPropagation();
+        router.visit(`/posts/${properties.post_id}`);
+    });
+
+    return button;
+}
+
+function syncPhotoMarkers(): void {
     if (!map) {
         return;
     }
 
-    const features = map.queryRenderedFeatures(event.point, { layers: [UNCLUSTERED_LAYER] });
-    const feature = features[0];
-    const postId = feature?.properties?.post_id as number | undefined;
+    const features = map.querySourceFeatures(SOURCE_ID);
+    const seen = new Set<string>();
 
-    if (postId != null) {
-        router.visit(`/posts/${postId}`);
+    for (const feature of features) {
+        const properties = feature.properties as (PhotoProperties & { cluster?: boolean }) | null;
+
+        if (!properties || properties.cluster || properties.post_id == null || feature.geometry.type !== 'Point') {
+            continue;
+        }
+
+        const id = String(properties.post_id);
+        seen.add(id);
+
+        if (photoMarkers[id]) {
+            continue;
+        }
+
+        const element = createPhotoMarkerElement(properties);
+        photoMarkers[id] = new mapboxgl.Marker({ element })
+            .setLngLat((feature.geometry as Point).coordinates as [number, number])
+            .addTo(map);
+    }
+
+    for (const id of Object.keys(photoMarkers)) {
+        if (!seen.has(id)) {
+            photoMarkers[id].remove();
+            delete photoMarkers[id];
+        }
+    }
+}
+
+function clearPhotoMarkers(): void {
+    for (const id of Object.keys(photoMarkers)) {
+        photoMarkers[id].remove();
+        delete photoMarkers[id];
     }
 }
 
@@ -260,28 +325,18 @@ function initLayers(): void {
         },
     });
 
-    map.addLayer({
-        id: UNCLUSTERED_LAYER,
-        type: 'circle',
-        source: SOURCE_ID,
-        filter: ['!', ['has', 'point_count']],
-        paint: {
-            'circle-color': '#f97316',
-            'circle-radius': 8,
-            'circle-stroke-width': 2,
-            'circle-stroke-color': '#ffffff',
-        },
-    });
-
     map.on('click', CLUSTER_LAYER, handleClusterClick);
-    map.on('click', UNCLUSTERED_LAYER, handleFeatureClick);
     map.on('mouseenter', CLUSTER_LAYER, setPointerCursor);
     map.on('mouseleave', CLUSTER_LAYER, clearPointerCursor);
-    map.on('mouseenter', UNCLUSTERED_LAYER, setPointerCursor);
-    map.on('mouseleave', UNCLUSTERED_LAYER, clearPointerCursor);
+
+    map.on('render', () => {
+        if (map?.isSourceLoaded(SOURCE_ID)) {
+            syncPhotoMarkers();
+        }
+    });
 }
 
-onMounted(async () => {
+onMounted(() => {
     if (!props.mapboxToken || !mapContainer.value) {
         return;
     }
@@ -317,6 +372,7 @@ onBeforeUnmount(() => {
     }
 
     abortController?.abort();
+    clearPhotoMarkers();
     map?.remove();
     map = null;
 });
@@ -345,7 +401,7 @@ function goBack() {
                 {{ t('Mapbox token is not configured. Set MAPBOX_TOKEN in your environment.') }}
             </div>
             <template v-else>
-                <div ref="mapContainer" class="absolute inset-0" />
+                <div ref="mapContainer" class="absolute! inset-0" />
 
                 <div
                     v-if="isLoading"
@@ -372,3 +428,39 @@ function goBack() {
         </div>
     </AppLayout>
 </template>
+
+<style>
+.photo-marker {
+    width: 44px;
+    height: 44px;
+    border-radius: 9999px;
+    border: 3px solid #ffffff;
+    background-color: #e5e7eb;
+    background-size: cover;
+    background-position: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+    padding: 0;
+    position: relative;
+    transition: transform 120ms ease;
+}
+
+.photo-marker:hover {
+    transform: scale(1.08);
+}
+
+.photo-marker__video-badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 16px;
+    height: 16px;
+    color: #ffffff;
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5));
+}
+
+.photo-marker__video-badge svg {
+    width: 100%;
+    height: 100%;
+}
+</style>
