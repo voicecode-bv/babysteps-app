@@ -209,6 +209,10 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
 </template>
 
 <style scoped>
+:deep(main) {
+    overscroll-behavior: none;
+}
+
 .circle-ring {
     background: conic-gradient(
         from 0deg,

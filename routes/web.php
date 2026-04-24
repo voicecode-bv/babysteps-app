@@ -72,6 +72,10 @@ Route::middleware(['auth.token', HandleNativeEdge::class, EnsureOnboarded::class
 
     Route::get('/map', [MapController::class, 'show'])->name('map');
     Route::get('/photos/map', [MapController::class, 'photos'])->name('photos.map');
+    Route::get('/profiles/{username}/map', [MapController::class, 'profile'])->name('profiles.map');
+    Route::get('/profiles/{username}/photos/map', [MapController::class, 'profilePhotos'])->name('profiles.photos.map');
+    Route::get('/circles/{circle}/map', [MapController::class, 'circle'])->name('circles.map')->whereNumber('circle');
+    Route::get('/circles/{circle}/photos/map', [MapController::class, 'circlePhotos'])->name('circles.photos.map')->whereNumber('circle');
 
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications');
     Route::post('/notifications/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
