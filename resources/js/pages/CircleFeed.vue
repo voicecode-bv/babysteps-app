@@ -37,6 +37,9 @@ const props = defineProps<{
     };
 }>();
 
+const infiniteScrollBuffer = 300;
+console.log('[Feed] InfiniteScroll buffer:', infiniteScrollBuffer);
+
 const { t } = useTranslations();
 
 const layoutRef = useTemplateRef<InstanceType<typeof AppLayout>>('layout');
@@ -113,7 +116,7 @@ function goBack() {
                 </div>
             </template>
 
-            <InfiniteScroll v-else data="posts" only-next :buffer="0" preserve-url class="no-scrollbar">
+            <InfiniteScroll v-else data="posts" only-next :buffer="infiniteScrollBuffer" preserve-url class="no-scrollbar">
                 <template #default>
                     <PostCard v-for="post in posts.data" :key="post.id" :post="post" />
                 </template>

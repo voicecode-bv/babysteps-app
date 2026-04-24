@@ -143,7 +143,7 @@ async function submitComment() {
         if (parentId) {
             const parent = comments.value.find((comment) => comment.id === parentId);
             if (parent) {
-                parent.replies = [...parent.replies, created];
+                parent.replies = [...(parent.replies ?? []), created];
             } else {
                 comments.value = [...comments.value, created];
             }
@@ -262,7 +262,7 @@ function onSheetUpdate(value: boolean) {
                     </div>
                 </div>
 
-                <div v-for="reply in comment.replies" :key="reply.id" class="flex gap-3 border-b border-sand-50 py-3 pl-14 pr-4 dark:border-sand-800">
+                <div v-for="reply in (comment.replies ?? [])" :key="reply.id" class="flex gap-3 border-b border-sand-50 py-3 pl-14 pr-4 dark:border-sand-800">
                     <Link :href="`/profiles/${reply.user.username}`" class="mt-0.5 flex-shrink-0">
                         <img
                             :src="reply.user.avatar ?? `https://ui-avatars.com/api/?name=${reply.user.name}&background=f0dcc6&color=5c3f24&size=64`"

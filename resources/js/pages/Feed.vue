@@ -41,7 +41,7 @@ defineProps<{
 
 const { t } = useTranslations();
 
-const infiniteScrollBuffer = 0;
+const infiniteScrollBuffer = 300;
 console.log('[Feed] InfiniteScroll buffer:', infiniteScrollBuffer);
 
 const layoutRef = useTemplateRef<InstanceType<typeof AppLayout>>('layout');
