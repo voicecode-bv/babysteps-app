@@ -61,6 +61,14 @@ function markLoaded(postId: number) {
             </button>
         </template>
 
+        <template #header-right>
+            <Link href="/map" class="flex items-center text-sand-700 dark:text-sand-300" :aria-label="t('Open map')">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m0-8.25L3.32 4.507a.75.75 0 0 0-1.07.68v11.124c0 .285.165.544.421.666L9 19.5m0-12.75 6 3m-6 9 6-3m0 0V15m0-8.25 5.68-2.243a.75.75 0 0 1 1.07.68v11.124a.75.75 0 0 1-.421.666L15 19.5M15 6.75V15" />
+                </svg>
+            </Link>
+        </template>
+
         <div class="mt-10 pb-24">
             <PullToRefreshIndicator :pull-distance="pullDistance" :is-refreshing="isRefreshing" />
 
