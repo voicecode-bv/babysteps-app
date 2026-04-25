@@ -12,6 +12,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import bellIcon from '../../svg/doodle-icons/bell.svg';
 import globeIcon from '../../svg/doodle-icons/globe.svg';
 import lockIcon from '../../svg/doodle-icons/lock.svg';
+import tagIcon from '../../svg/doodle-icons/tag.svg';
 import usersIcon from '../../svg/doodle-icons/user.svg';
 
 interface Profile {
@@ -355,6 +356,21 @@ onUnmounted(() => {
                         </li>
                     </ul>
                 </SurfaceCard>
+
+                <!-- Tags link -->
+                <Link :href="'/settings/tags'" class="block">
+                    <SurfaceCard>
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="flex items-center gap-3 text-sm font-semibold text-sand-900 dark:text-sand-100">
+                                <IconTile :icon="tagIcon" size="sm" tone="sage" />
+                                {{ t('Tags') }}
+                            </span>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5 text-sand-500 dark:text-sand-400">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                            </svg>
+                        </div>
+                    </SurfaceCard>
+                </Link>
 
                 <!-- Account link -->
                 <Link :href="'/settings/account'" class="block">

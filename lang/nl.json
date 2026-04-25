@@ -284,5 +284,21 @@
     "Crop photo": "Foto bijsnijden",
     "Crop": "Bijsnijden",
     "Cropping...": "Bijsnijden...",
-    "Invalid cropped image": "Ongeldige bijgesneden afbeelding"
+    "Invalid cropped image": "Ongeldige bijgesneden afbeelding",
+
+    "Tags": "Labels",
+    "Tag name...": "Labelnaam...",
+    "New tag": "Nieuw label",
+    "Add tag": "Label toevoegen",
+    "Edit tag": "Label bewerken",
+    "Delete tag": "Label verwijderen",
+    "No tags yet": "Nog geen labels",
+    "Create tags to organize and filter your posts.": "Maak labels aan om je berichten te ordenen en te filteren.",
+    "Create your first tag": "Maak je eerste label",
+    "Failed to create tag": "Label aanmaken mislukt",
+    "Failed to update tag": "Label bijwerken mislukt",
+    "Are you sure you want to delete \":name\"?": "Weet je zeker dat je \":name\" wilt verwijderen?",
+    "\":name\" is used on :count posts. Deleting it will remove the tag from those posts.": "\":name\" wordt gebruikt op :count berichten. Door het te verwijderen wordt het label van die berichten gehaald.",
+    ":count post": ":count bericht",
+    ":count posts": ":count berichten"
 }
