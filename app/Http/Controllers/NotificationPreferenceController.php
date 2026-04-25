@@ -25,6 +25,9 @@ class NotificationPreferenceController extends Controller
             'comment_replied' => ['required', 'boolean'],
             'new_circle_post' => ['required', 'boolean'],
             'circle_invitation_accepted' => ['required', 'boolean'],
+            'circle_ownership_transfer_requested' => ['required', 'boolean'],
+            'circle_ownership_transfer_accepted' => ['required', 'boolean'],
+            'circle_ownership_transfer_declined' => ['required', 'boolean'],
         ]);
 
         $apiClient->put('/notification-preferences', $validated);

@@ -233,6 +233,9 @@
     "Comment replied": "Reactie op jouw reactie",
     "New circle post": "Nieuw bericht in kring",
     "Circle invitation accepted": "Uitnodiging geaccepteerd",
+    "Circle ownership transfer requested": "Eigendomsoverdracht aangevraagd",
+    "Circle ownership transfer accepted": "Eigendomsoverdracht geaccepteerd",
+    "Circle ownership transfer declined": "Eigendomsoverdracht geweigerd",
 
     "Processing video...": "Video wordt verwerkt...",
 

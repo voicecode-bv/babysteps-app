@@ -50,6 +50,9 @@ interface NotificationPreferences {
     comment_replied: boolean;
     new_circle_post: boolean;
     circle_invitation_accepted: boolean;
+    circle_ownership_transfer_requested: boolean;
+    circle_ownership_transfer_accepted: boolean;
+    circle_ownership_transfer_declined: boolean;
 }
 
 const notificationPreferences = ref<NotificationPreferences | null>(null);
@@ -335,6 +338,9 @@ onUnmounted(() => {
                             comment_replied: t('Comment replied'),
                             new_circle_post: t('New circle post'),
                             circle_invitation_accepted: t('Circle invitation accepted'),
+                            circle_ownership_transfer_requested: t('Circle ownership transfer requested'),
+                            circle_ownership_transfer_accepted: t('Circle ownership transfer accepted'),
+                            circle_ownership_transfer_declined: t('Circle ownership transfer declined'),
                         } as Record<string, string>)" :key="key">
                             <label class="flex cursor-pointer items-center justify-between gap-3 py-3">
                                 <span class="text-base text-sand-800 dark:text-sand-100">{{ label }}</span>
