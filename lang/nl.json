@@ -303,5 +303,26 @@
     "Are you sure you want to delete \":name\"?": "Weet je zeker dat je \":name\" wilt verwijderen?",
     "\":name\" is used on :count posts. Deleting it will remove the tag from those posts.": "\":name\" wordt gebruikt op :count berichten. Door het te verwijderen wordt het label van die berichten gehaald.",
     ":count post": ":count bericht",
-    ":count posts": ":count berichten"
+    ":count posts": ":count berichten",
+    "Add a tag": "Voeg een label toe",
+    "Adding...": "Toevoegen...",
+
+    "moment": "moment",
+    "moments": "momenten",
+
+    "Cancel reply": "Reactie annuleren",
+    "Circle details": "Kringdetails",
+    "Close": "Sluiten",
+    "Load more": "Meer laden",
+    "Try again": "Opnieuw proberen",
+    "No internet connection": "Geen internetverbinding",
+    "It looks like you're offline. Check your connection and try again.": "Het lijkt erop dat je offline bent. Controleer je verbinding en probeer het opnieuw.",
+    "Failed to load comments": "Reacties laden mislukt",
+    "Failed to load likes": "Likes laden mislukt",
+    "Failed to post comment": "Reactie plaatsen mislukt",
+    "Show likes": "Likes tonen",
+    "No likes yet": "Nog geen likes",
+    "No moments in this circle yet": "Nog geen momenten in deze kring",
+    "Share a photo to get things started.": "Deel een foto om te beginnen.",
+    "No tags yet. Create your first one below.": "Nog geen labels. Maak hieronder je eerste aan."
 }
