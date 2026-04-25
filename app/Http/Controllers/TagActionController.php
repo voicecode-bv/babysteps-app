@@ -7,6 +7,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class TagActionController extends Controller
 {
@@ -32,6 +33,8 @@ class TagActionController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:50'],
         ]);
+
+        $validated['name'] = Str::lower($validated['name']);
 
         try {
             $response = $this->apiClient->post('/tags', $validated);

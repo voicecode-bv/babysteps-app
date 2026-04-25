@@ -46,14 +46,12 @@ const tags = computed<Tag[]>(() => {
     return merged.sort((a, b) => (b.usage_count ?? 0) - (a.usage_count ?? 0) || a.name.localeCompare(b.name));
 });
 
-const trimmedNewTag = computed(() => newTagName.value.trim());
+const trimmedNewTag = computed(() => newTagName.value.trim().toLowerCase());
 
 const canCreate = computed(() => {
     if (trimmedNewTag.value === '' || isCreating.value) return false;
 
-    const lower = trimmedNewTag.value.toLowerCase();
-
-    return !tags.value.some((tag) => tag.name.toLowerCase() === lower);
+    return !tags.value.some((tag) => tag.name.toLowerCase() === trimmedNewTag.value);
 });
 
 function toggleTag(tagId: number) {
@@ -133,7 +131,7 @@ async function createTag() {
                     : 'bg-sand-100 text-sand-700 dark:bg-sand-800 dark:text-sand-200'"
                 @click="toggleTag(tag.id)"
             >
-                #{{ tag.name }}
+                {{ tag.name }}
             </button>
         </div>
 
@@ -143,11 +141,12 @@ async function createTag() {
 
         <div class="flex items-center gap-2">
             <input
-                v-model="newTagName"
+                :value="newTagName"
                 type="text"
                 maxlength="50"
                 :placeholder="t('Add a tag')"
                 class="flex-1 rounded-full border-0 bg-sand-100 px-4 py-2 text-sm text-sand-800 placeholder-sand-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-teal dark:bg-sand-800 dark:text-sand-100 dark:placeholder-sand-500"
+                @input="newTagName = ($event.target as HTMLInputElement).value.toLowerCase()"
                 @keydown.enter.prevent="createTag"
             />
             <button

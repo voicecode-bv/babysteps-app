@@ -7,6 +7,7 @@ use App\Services\ApiClient;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -26,6 +27,8 @@ class TagController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:50'],
         ]);
+
+        $validated['name'] = Str::lower($validated['name']);
 
         try {
             $response = $this->apiClient->put("/tags/{$tag}", $validated);
