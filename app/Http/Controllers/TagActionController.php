@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Services\ApiClient;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class TagActionController extends Controller
@@ -26,7 +27,7 @@ class TagActionController extends Controller
         return response()->json($response->json('data') ?? []);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(Request $request): JsonResponse|RedirectResponse
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:50'],
@@ -35,16 +36,31 @@ class TagActionController extends Controller
         try {
             $response = $this->apiClient->post('/tags', $validated);
         } catch (ConnectionException) {
-            return response()->json(['message' => __('Could not connect to the server.')], 503);
+            if ($request->expectsJson()) {
+                return response()->json(['message' => __('Could not connect to the server.')], 503);
+            }
+
+            return back()->withErrors(['name' => __('Could not connect to the server')]);
         }
 
         if ($response->failed()) {
-            return response()->json(
-                $response->json() ?? ['message' => __('Failed to create tag')],
-                $response->status(),
-            );
+            if ($request->expectsJson()) {
+                return response()->json(
+                    $response->json() ?? ['message' => __('Failed to create tag')],
+                    $response->status(),
+                );
+            }
+
+            return back()->withErrors([
+                'name' => $response->json('errors.name.0')
+                    ?? $response->json('message', __('Failed to create tag')),
+            ]);
         }
 
-        return response()->json($response->json('data'), 201);
+        if ($request->expectsJson()) {
+            return response()->json($response->json('data'), 201);
+        }
+
+        return back();
     }
 }

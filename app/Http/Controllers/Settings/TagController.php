@@ -21,28 +21,6 @@ class TagController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
-    {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:50'],
-        ]);
-
-        try {
-            $response = $this->apiClient->post('/tags', $validated);
-        } catch (ConnectionException) {
-            return back()->withErrors(['name' => __('Could not connect to the server')]);
-        }
-
-        if ($response->failed()) {
-            return back()->withErrors([
-                'name' => $response->json('errors.name.0')
-                    ?? $response->json('message', __('Failed to create tag')),
-            ]);
-        }
-
-        return back();
-    }
-
     public function update(Request $request, int $tag): RedirectResponse
     {
         $validated = $request->validate([

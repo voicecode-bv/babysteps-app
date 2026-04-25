@@ -92,7 +92,6 @@ Route::middleware(['auth.token', HandleNativeEdge::class, EnsureOnboarded::class
     Route::delete('/account', [AccountController::class, 'destroy'])->name('account.destroy');
 
     Route::get('/settings/tags', [TagController::class, 'show'])->name('settings.tags');
-    Route::post('/tags', [TagController::class, 'store'])->name('tags.store');
     Route::put('/tags/{tag}', [TagController::class, 'update'])->name('tags.update')->whereNumber('tag');
     Route::delete('/tags/{tag}', [TagController::class, 'destroy'])->name('tags.destroy')->whereNumber('tag');
     Route::get('/profiles/{username}', [ProfileController::class, 'show'])->name('profiles.show');
