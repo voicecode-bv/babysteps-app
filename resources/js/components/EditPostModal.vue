@@ -143,7 +143,7 @@ function submit() {
                 />
             </section>
 
-            <section>
+            <section class="relative z-20">
                 <TagSelector
                     :available-tags="availableTags"
                     :selected-ids="form.tag_ids"

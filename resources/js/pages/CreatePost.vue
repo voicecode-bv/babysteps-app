@@ -285,7 +285,7 @@ function submit() {
                 </section>
 
                 <!-- Tags -->
-                <section class="rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm dark:bg-sand-800/60">
+                <section class="relative z-20 rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm dark:bg-sand-800/60">
                     <TagSelector
                         :available-tags="availableTags"
                         :selected-ids="form.tag_ids"
