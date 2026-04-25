@@ -1,9 +1,9 @@
 {
   "scripts": {
+    "setup": ["herd link", "herd secure"],
+    "archive": ["herd unsecure", "herd unlink"],
     "run": [
-      "setup", { "label": "Link herd", "command": "herd link" },
-      "archive", { "label": "Link unlink", "command": "herd unlink" },
-      "npm run dev", { "label": "npm run dev", "command": "npm run dev" }
+      { "label": "npm run dev", "command": "npm run dev", "autostart": true }
     ]
   },
   "preview": {
