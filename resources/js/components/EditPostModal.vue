@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import BottomSheet from '@/components/BottomSheet.vue';
+import CirclePicker from '@/components/CirclePicker.vue';
 import TagSelector from '@/components/TagSelector.vue';
 import { update } from '@/actions/App/Http/Controllers/PostActionController';
 import { useTranslations } from '@/composables/useTranslations';
@@ -9,6 +10,10 @@ import { computed, watch } from 'vue';
 interface Circle {
     id: number;
     name: string;
+    photo?: string | null;
+    members_count?: number;
+    members_can_invite?: boolean;
+    is_owner?: boolean;
 }
 
 interface Tag {
@@ -48,10 +53,6 @@ const form = useForm({
 
 const availableCircles = computed<Circle[]>(() => props.availableCircles ?? []);
 const availableTags = computed<Tag[]>(() => props.availableTags ?? []);
-
-const allCirclesSelected = computed(
-    () => availableCircles.value.length > 0 && form.circle_ids.length === availableCircles.value.length,
-);
 
 function sameIds(a: number[], b: number[]): boolean {
     if (a.length !== b.length) return false;
@@ -96,23 +97,6 @@ function onSheetUpdate(value: boolean) {
     }
 }
 
-function toggleCircle(circleId: number) {
-    const index = form.circle_ids.indexOf(circleId);
-    if (index === -1) {
-        form.circle_ids.push(circleId);
-    } else {
-        form.circle_ids.splice(index, 1);
-    }
-}
-
-function toggleAllCircles() {
-    if (allCirclesSelected.value) {
-        form.circle_ids = [];
-    } else {
-        form.circle_ids = availableCircles.value.map((c) => c.id);
-    }
-}
-
 function submit() {
     form.put(update.url(props.postId), {
         preserveScroll: true,
@@ -150,34 +134,13 @@ function submit() {
                 <p v-if="form.errors.caption" class="mt-1 text-xs text-blush-500">{{ form.errors.caption }}</p>
             </section>
 
-            <section>
-                <div class="mb-3 flex items-center justify-between">
-                    <p class="text-xs font-medium uppercase tracking-wider text-sand-500 dark:text-sand-400">
-                        {{ t('Share with circles') }}
-                    </p>
-                    <button
-                        v-if="availableCircles.length > 0"
-                        class="text-xs font-medium text-teal hover:text-teal-light"
-                        @click="toggleAllCircles"
-                    >
-                        {{ allCirclesSelected ? t('Deselect all') : t('Select all') }}
-                    </button>
-                </div>
-
-                <div class="flex flex-wrap gap-2">
-                    <button
-                        v-for="circle in availableCircles"
-                        :key="circle.id"
-                        class="rounded-full px-4 py-2 text-sm font-medium transition-colors"
-                        :class="form.circle_ids.includes(circle.id)
-                            ? 'bg-teal text-white shadow-sm'
-                            : 'bg-sand-100 text-sand-700 dark:bg-sand-800 dark:text-sand-200'"
-                        @click="toggleCircle(circle.id)"
-                    >
-                        {{ circle.name }}
-                    </button>
-                </div>
-                <p v-if="form.errors.circle_ids" class="mt-2 text-xs text-blush-500">{{ form.errors.circle_ids }}</p>
+            <section v-if="availableCircles.length > 0">
+                <CirclePicker
+                    :circles="availableCircles"
+                    :selected-ids="form.circle_ids"
+                    :error="form.errors.circle_ids"
+                    @update:selected-ids="form.circle_ids = $event"
+                />
             </section>
 
             <section>

@@ -251,15 +251,12 @@ async function createTag() {
                 <li
                     v-for="(tag, index) in filteredTags"
                     :key="tag.id"
-                    class="flex cursor-pointer items-center justify-between px-4 py-2 text-sm text-sand-800 dark:text-sand-100"
+                    class="cursor-pointer px-4 py-2 text-sm text-sand-800 dark:text-sand-100"
                     :class="index === activeIndex ? 'bg-sand-100 dark:bg-sand-800' : ''"
                     @mouseenter="activeIndex = index"
                     @click="selectTag(tag.id)"
                 >
-                    <span>{{ tag.name }}</span>
-                    <span v-if="tag.usage_count" class="text-xs text-sand-400 dark:text-sand-500">
-                        {{ tag.usage_count }}
-                    </span>
+                    {{ tag.name }}
                 </li>
 
                 <li

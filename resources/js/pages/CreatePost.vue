@@ -3,6 +3,7 @@ import { Link, useForm } from '@inertiajs/vue3';
 import { Camera, On, Off, Events } from '@nativephp/mobile';
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { store } from '@/actions/App/Http/Controllers/PostActionController';
+import CirclePicker from '@/components/CirclePicker.vue';
 import ImageCropModal from '@/components/ImageCropModal.vue';
 import TagSelector from '@/components/TagSelector.vue';
 import { type ExifData } from '@/composables/useExif';
@@ -29,7 +30,10 @@ function iconMaskStyle(url: string) {
 interface Circle {
     id: number;
     name: string;
-    members_count: number;
+    photo?: string | null;
+    members_count?: number;
+    members_can_invite?: boolean;
+    is_owner?: boolean;
 }
 
 interface Tag {
@@ -210,26 +214,6 @@ onUnmounted(() => {
     Off(Events.Gallery.MediaSelected, handleMediaSelected);
 });
 
-const allCirclesSelected = computed(() => circles.value.length > 0 && form.circle_ids.length === circles.value.length);
-
-function toggleAllCircles() {
-    if (allCirclesSelected.value) {
-        form.circle_ids = [];
-    } else {
-        form.circle_ids = circles.value.map((c) => c.id);
-    }
-}
-
-function toggleCircle(circleId: number) {
-    const index = form.circle_ids.indexOf(circleId);
-
-    if (index === -1) {
-        form.circle_ids.push(circleId);
-    } else {
-        form.circle_ids.splice(index, 1);
-    }
-}
-
 function submit() {
     form.post(store.url());
 }
@@ -312,29 +296,12 @@ function submit() {
 
                 <!-- Circle selection -->
                 <section v-if="circles.length > 0" class="rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm dark:bg-sand-800/60">
-                    <div class="mb-3 flex items-center justify-between">
-                        <p class="text-xs font-medium uppercase tracking-wider text-sand-500 dark:text-sand-400">{{ t('Share with circles') }}</p>
-                        <button
-                            class="text-xs font-medium text-teal hover:text-teal-light"
-                            @click="toggleAllCircles"
-                        >
-                            {{ allCirclesSelected ? t('Deselect all') : t('Select all') }}
-                        </button>
-                    </div>
-                    <div class="flex flex-wrap gap-2">
-                        <button
-                            v-for="circle in circles"
-                            :key="circle.id"
-                            class="rounded-full px-4 py-2 text-sm font-medium transition-colors"
-                            :class="form.circle_ids.includes(circle.id)
-                                ? 'bg-teal text-white shadow-sm'
-                                : 'bg-white/70 text-sand-700 shadow-sm hover:bg-white dark:bg-sand-800/70 dark:text-sand-200'"
-                            @click="toggleCircle(circle.id)"
-                        >
-                            {{ circle.name }}
-                        </button>
-                    </div>
-                    <p v-if="form.errors.circle_ids" class="mt-2 text-xs text-blush-500">{{ form.errors.circle_ids }}</p>
+                    <CirclePicker
+                        :circles="circles"
+                        :selected-ids="form.circle_ids"
+                        :error="form.errors.circle_ids"
+                        @update:selected-ids="form.circle_ids = $event"
+                    />
                 </section>
 
                 <!-- Upload progress -->
