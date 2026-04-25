@@ -120,7 +120,7 @@ function markLoaded(postId: number) {
                         <div v-if="!loadedMedia[post.id] && post.media_type !== 'unknown'" class="absolute inset-0 animate-pulse bg-sand-200 dark:bg-sand-700" />
                         <img
                             v-if="post.media_type === 'image'"
-                            :src="post.media_url"
+                            :src="post.thumbnail_small_url ?? post.media_url"
                             :alt="post.caption ?? t('Photo')"
                             class="relative size-full object-cover transition-opacity duration-300"
                             :class="loadedMedia[post.id] ? 'opacity-100' : 'opacity-0'"
@@ -128,8 +128,8 @@ function markLoaded(postId: number) {
                             @load="markLoaded(post.id)"
                         />
                         <img
-                            v-else-if="post.media_type === 'video' && post.thumbnail_url"
-                            :src="post.thumbnail_url"
+                            v-else-if="post.media_type === 'video' && (post.thumbnail_small_url ?? post.thumbnail_url)"
+                            :src="post.thumbnail_small_url ?? post.thumbnail_url ?? ''"
                             :alt="post.caption ?? t('Moment')"
                             class="relative size-full object-cover transition-opacity duration-300"
                             :class="loadedMedia[post.id] ? 'opacity-100' : 'opacity-0'"

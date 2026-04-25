@@ -26,6 +26,7 @@ export interface PostData {
     media_url: string;
     media_type: string;
     thumbnail_url: string | null;
+    thumbnail_small_url: string | null;
     media_status: 'processing' | 'ready' | 'failed';
     caption: string | null;
     location: string | null;
