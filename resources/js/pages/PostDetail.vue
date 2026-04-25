@@ -9,7 +9,9 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import type { Comment } from '@/types/comment';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { Dialog, Events, Off, On } from '@nativephp/mobile';
-import { computed, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
+import { computed, onBeforeUnmount, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 import heartIcon from '../../svg/doodle-icons/heart.svg';
 import heartFilledIcon from '../../svg/doodle-icons/heart-filled.svg';
 import messageIcon from '../../svg/doodle-icons/message.svg';
@@ -55,6 +57,8 @@ interface Post {
     media_status: 'processing' | 'ready' | 'failed';
     caption: string | null;
     location: string | null;
+    latitude: number | null;
+    longitude: number | null;
     created_at: string;
     user: User;
     comments: Comment[];
@@ -68,10 +72,12 @@ interface Post {
 const props = withDefaults(
     defineProps<{
         post: Post;
+        mapboxToken?: string | null;
         availableCircles?: Circle[] | null;
         availableTags?: Tag[] | null;
     }>(),
     {
+        mapboxToken: null,
         availableCircles: () => [],
         availableTags: () => [],
     },
@@ -117,6 +123,39 @@ watch(isFullscreen, (val) => {
     if (scrollContainer) {
         scrollContainer.style.overflow = val ? 'hidden' : '';
     }
+});
+
+const hasLocation = computed(
+    () => props.post.latitude != null && props.post.longitude != null && !!props.mapboxToken,
+);
+
+const mapContainer = useTemplateRef<HTMLDivElement>('mapContainer');
+let map: mapboxgl.Map | null = null;
+
+function initLocationMap() {
+    if (!hasLocation.value || !mapContainer.value || map) {
+        return;
+    }
+
+    mapboxgl.accessToken = props.mapboxToken as string;
+
+    const center: [number, number] = [props.post.longitude as number, props.post.latitude as number];
+
+    map = new mapboxgl.Map({
+        container: mapContainer.value,
+        style: 'mapbox://styles/mapbox/streets-v12',
+        center,
+        zoom: 13,
+        interactive: false,
+        attributionControl: false,
+    });
+
+    new mapboxgl.Marker({ color: '#14b8a6' }).setLngLat(center).addTo(map);
+}
+
+onBeforeUnmount(() => {
+    map?.remove();
+    map = null;
 });
 
 const layoutRef = useTemplateRef<InstanceType<typeof AppLayout>>('layout');
@@ -170,6 +209,7 @@ function handleKeydown(e: KeyboardEvent) {
 onMounted(() => {
     On(Events.Alert.ButtonPressed, handleButtonPressed);
     document.addEventListener('keydown', handleKeydown);
+    initLocationMap();
 });
 onUnmounted(() => {
     Off(Events.Alert.ButtonPressed, handleButtonPressed);
@@ -352,7 +392,7 @@ function timeAgo(dateString: string): string {
                         </svg>
                     </div>
                     <div
-                        v-if="!isFullscreen && isOwner && post.circles && post.circles.length > 0"
+                        v-if="!isFullscreen && post.circles && post.circles.length > 0"
                         class="absolute right-3 top-3 z-10 flex max-w-[70%] flex-wrap justify-end gap-1.5"
                     >
                         <Link
@@ -401,6 +441,33 @@ function timeAgo(dateString: string): string {
                             <span aria-hidden="true" class="inline-block size-6 bg-current" :style="iconMaskStyle(pencilIcon)"></span>
                         </button>
                         <span class="ml-auto text-xs text-white/80 drop-shadow">{{ timeAgo(post.created_at) }}</span>
+                    </div>
+                </div>
+
+                <!-- Location map -->
+                <div v-if="hasLocation" class="bg-white px-4 pt-3 dark:bg-sand-900">
+                    <div class="overflow-hidden rounded-2xl ring-1 ring-sand-200 dark:ring-sand-800">
+                        <div ref="mapContainer" class="h-44 w-full" />
+                        <div v-if="post.location" class="flex items-center gap-1.5 bg-white px-3 py-2 dark:bg-sand-900">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4 text-sand-500 dark:text-sand-400">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                            </svg>
+                            <span class="text-xs text-sand-700 dark:text-sand-300">{{ post.location }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tags -->
+                <div v-if="post.tags && post.tags.length > 0" class="bg-white px-4 pt-3 dark:bg-sand-900">
+                    <div class="flex flex-wrap gap-2">
+                        <span
+                            v-for="tag in post.tags"
+                            :key="tag.id"
+                            class="rounded-full bg-sand-100 px-3 py-1 text-xs font-medium text-sand-700 dark:bg-sand-800 dark:text-sand-200"
+                        >
+                            #{{ tag.name }}
+                        </span>
                     </div>
                 </div>
             </div>
