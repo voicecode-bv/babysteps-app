@@ -1,7 +1,7 @@
 import { flare } from '@flareapp/js';
 import { flareVue } from '@flareapp/vue';
 import { createInertiaApp, router } from '@inertiajs/vue3';
-import { createSSRApp, h } from 'vue';
+import { createApp, h } from 'vue';
 import { useNetworkStatus } from '@/composables/useNetworkStatus';
 import { FetchHttpClient } from '@/http/FetchHttpClient';
 
@@ -28,7 +28,7 @@ createInertiaApp({
     },
     http: new FetchHttpClient(),
     setup({ el, App, props, plugin }) {
-        const app = createSSRApp({
+        const app = createApp({
             setup() {
                 useNetworkStatus();
                 return () => h(App, props);

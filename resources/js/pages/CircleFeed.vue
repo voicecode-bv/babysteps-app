@@ -31,7 +31,7 @@ interface Circle {
 
 const props = defineProps<{
     circle: Circle;
-    posts: {
+    posts?: {
         data: PostData[];
     };
 }>();
