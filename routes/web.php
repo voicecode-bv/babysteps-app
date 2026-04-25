@@ -25,6 +25,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Settings\AccountController;
 use App\Http\Controllers\Settings\TagController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\TagActionController;
 use App\Http\Middleware\EnsureOnboarded;
 use App\Http\Middleware\HandleNativeEdge;
 use Illuminate\Support\Facades\Route;
@@ -71,6 +72,9 @@ Route::middleware(['auth.token', HandleNativeEdge::class, EnsureOnboarded::class
     Route::delete('/comments/{comment}', [PostActionController::class, 'destroyComment'])->name('comments.destroy')->whereNumber('comment');
     Route::post('/comments/{comment}/like', [PostActionController::class, 'likeComment'])->name('comments.like')->whereNumber('comment');
     Route::delete('/comments/{comment}/like', [PostActionController::class, 'unlikeComment'])->name('comments.unlike')->whereNumber('comment');
+
+    Route::get('/tags', [TagActionController::class, 'index'])->name('tags.index');
+    Route::post('/tags', [TagActionController::class, 'store'])->name('tags.store');
 
     Route::get('/map', [MapController::class, 'show'])->name('map');
     Route::get('/photos/map', [MapController::class, 'photos'])->name('photos.map');

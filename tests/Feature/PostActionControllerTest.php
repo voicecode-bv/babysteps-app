@@ -42,6 +42,26 @@ it('forwards caption and circle ids to the API when updating a post', function (
         && $request->method() === 'PUT'
         && $request['caption'] === 'Updated caption'
         && $request['circle_ids'] === [1, 2]
+        && $request['tag_ids'] === []
+    );
+});
+
+it('forwards tag ids to the API when updating a post', function () {
+    Http::fake([
+        '*/posts/5' => Http::response(['data' => ['id' => 5]], 200),
+    ]);
+
+    $this->actingAs($this->user)
+        ->put('/posts/5', [
+            'caption' => 'Tagged caption',
+            'circle_ids' => [1],
+            'tag_ids' => [11, 22],
+        ])
+        ->assertRedirect()
+        ->assertSessionHasNoErrors();
+
+    Http::assertSent(fn ($request) => $request->method() === 'PUT'
+        && $request['tag_ids'] === [11, 22]
     );
 });
 
