@@ -456,7 +456,7 @@ function timeAgo(dateString: string): string {
                         <span
                             v-for="tag in post.tags"
                             :key="tag.id"
-                            class="rounded-full bg-gradient-to-r from-sage-100 to-teal-muted/30 px-3 py-1 text-xs font-semibold text-teal ring-1 ring-inset ring-teal/15 dark:from-sage-900/40 dark:to-teal-muted/15 dark:text-sage-200 dark:ring-sage-700/40"
+                            class="rounded-full bg-linear-to-r from-sage-100 to-teal-muted/30 px-3 py-1 text-xs font-semibold text-teal ring-1 ring-inset ring-teal/15 dark:from-sage-900/40 dark:to-teal-muted/15 dark:text-sage-200 dark:ring-sage-700/40"
                         >
                             {{ tag.name }}
                         </span>
