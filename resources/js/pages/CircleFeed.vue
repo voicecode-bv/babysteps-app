@@ -173,6 +173,3 @@ function markLoaded(postId: number) {
     </AppLayout>
 </template>
 
-<style scoped>
-* { overscroll-behavior: none; }
-</style>

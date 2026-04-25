@@ -16,16 +16,20 @@ export function usePullToRefresh({
     const pullDistance = ref(0);
     const isRefreshing = ref(false);
 
+    let startX = 0;
     let startY = 0;
     let tracking = false;
     let activated = false;
     let boundTarget: HTMLElement | null = null;
+
+    const ACTIVATION_THRESHOLD = 10;
 
     function onTouchStart(e: TouchEvent) {
         if (isRefreshing.value) return;
 
         // Reset any stale state from a previously interrupted gesture
         pullDistance.value = 0;
+        startX = e.touches[0].clientX;
         startY = e.touches[0].clientY;
         tracking = true;
         activated = false;
@@ -35,16 +39,26 @@ export function usePullToRefresh({
         if (!tracking || isRefreshing.value) return;
 
         const currentY = e.touches[0].clientY;
-        const diff = currentY - startY;
+        const currentX = e.touches[0].clientX;
+        const diffY = currentY - startY;
+        const diffX = currentX - startX;
         const scrollTop = containerRef.value?.scrollTop ?? 0;
 
         if (!activated) {
-            if (scrollTop > 0 || diff <= 0) {
+            if (scrollTop > 0) {
                 startY = currentY;
+                startX = currentX;
+                return;
+            }
+
+            // Require a clear vertical-down gesture before activating, so
+            // ordinary scroll / horizontal swipes are not hijacked.
+            if (diffY <= ACTIVATION_THRESHOLD || Math.abs(diffY) <= Math.abs(diffX)) {
                 return;
             }
 
             activated = true;
+            startY = currentY - ACTIVATION_THRESHOLD;
         }
 
         const distance = (currentY - startY) * 0.5;
