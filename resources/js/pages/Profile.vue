@@ -103,6 +103,7 @@ function markLoaded(postId: number) {
 
                 <!-- Posts Grid -->
                 <InfiniteScroll v-else data="posts" only-next :buffer="0" preserve-url items-element="#profile-posts-grid" class="no-scrollbar">
+                    <template #default>
                     <div id="profile-posts-grid" class="grid grid-cols-3 gap-0.5 bg-sand-100 dark:bg-sand-800">
                     <Link
                         v-for="post in posts.data"
@@ -142,6 +143,17 @@ function markLoaded(postId: number) {
                         </div>
                     </Link>
                     </div>
+                    </template>
+                    <template #loading>
+                        <div class="flex items-center justify-center gap-2 py-6 text-sm text-sand-500 dark:text-sand-400">
+                            <span class="flex items-center gap-1">
+                                <span class="dot dot-1 size-1.5 rounded-full bg-teal"></span>
+                                <span class="dot dot-2 size-1.5 rounded-full bg-accent"></span>
+                                <span class="dot dot-3 size-1.5 rounded-full bg-sage-500"></span>
+                            </span>
+                            {{ t('Loading more...') }}
+                        </div>
+                    </template>
                 </InfiniteScroll>
 
                 <div v-if="posts && posts.data.length === 0" class="flex flex-col items-center justify-center px-8 py-20">
@@ -156,3 +168,9 @@ function markLoaded(postId: number) {
         </div>
     </AppLayout>
 </template>
+
+<style scoped>
+.dot-1 { animation-delay: 0s; }
+.dot-2 { animation-delay: 0.15s; }
+.dot-3 { animation-delay: 0.3s; }
+</style>
