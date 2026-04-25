@@ -16,6 +16,7 @@ import heartIcon from '../../svg/doodle-icons/heart.svg';
 import heartFilledIcon from '../../svg/doodle-icons/heart-filled.svg';
 import messageIcon from '../../svg/doodle-icons/message.svg';
 import pencilIcon from '../../svg/doodle-icons/pencil-3.svg';
+import tagIcon from '../../svg/doodle-icons/tag.svg';
 
 function iconMaskStyle(url: string) {
     return {
@@ -444,6 +445,24 @@ function timeAgo(dateString: string): string {
                     </div>
                 </div>
 
+                <!-- Tags -->
+                <div v-if="post.tags && post.tags.length > 0" class="bg-white px-4 pt-4 dark:bg-sand-900">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span
+                            aria-hidden="true"
+                            class="inline-block size-4 bg-teal/70"
+                            :style="iconMaskStyle(tagIcon)"
+                        ></span>
+                        <span
+                            v-for="tag in post.tags"
+                            :key="tag.id"
+                            class="rounded-full bg-gradient-to-r from-sage-100 to-teal-muted/30 px-3 py-1 text-xs font-semibold text-teal ring-1 ring-inset ring-teal/15 dark:from-sage-900/40 dark:to-teal-muted/15 dark:text-sage-200 dark:ring-sage-700/40"
+                        >
+                            {{ tag.name }}
+                        </span>
+                    </div>
+                </div>
+
                 <!-- Location map -->
                 <div v-if="hasLocation" class="bg-white px-4 pt-3 dark:bg-sand-900">
                     <div class="overflow-hidden rounded-2xl ring-1 ring-sand-200 dark:ring-sand-800">
@@ -455,19 +474,6 @@ function timeAgo(dateString: string): string {
                             </svg>
                             <span class="text-xs text-sand-700 dark:text-sand-300">{{ post.location }}</span>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Tags -->
-                <div v-if="post.tags && post.tags.length > 0" class="bg-white px-4 pt-3 dark:bg-sand-900">
-                    <div class="flex flex-wrap gap-2">
-                        <span
-                            v-for="tag in post.tags"
-                            :key="tag.id"
-                            class="rounded-full bg-sand-100 px-3 py-1 text-xs font-medium text-sand-700 dark:bg-sand-800 dark:text-sand-200"
-                        >
-                            {{ tag.name }}
-                        </span>
                     </div>
                 </div>
             </div>
