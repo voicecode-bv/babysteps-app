@@ -41,7 +41,7 @@ defineProps<{
 
 const { t } = useTranslations();
 
-const infiniteScrollBuffer = 300;
+const infiniteScrollBuffer = 500;
 console.log('[Feed] InfiniteScroll buffer:', infiniteScrollBuffer);
 
 const layoutRef = useTemplateRef<InstanceType<typeof AppLayout>>('layout');
@@ -209,9 +209,7 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
 </template>
 
 <style scoped>
-:deep(main) {
-    overscroll-behavior: none;
-}
+* { overscroll-behavior: none; }
 
 .circle-ring {
     background: conic-gradient(

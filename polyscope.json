@@ -1,7 +1,10 @@
 {
   "scripts": {
-    "setup": "herd link",
-    "archive": "herd unlink"
+    "run": [
+      "setup", { "label": "Link herd", "command": "herd link" },
+      "archive", { "label": "Link unlink", "command": "herd unlink" },
+      "npm run dev", { "label": "npm run dev", "command": "npm run dev" }
+    ]
   },
   "preview": {
     "url": "http://{{folder}}.test"

@@ -37,7 +37,7 @@ const props = defineProps<{
     };
 }>();
 
-const infiniteScrollBuffer = 300;
+const infiniteScrollBuffer = 500;
 console.log('[Feed] InfiniteScroll buffer:', infiniteScrollBuffer);
 
 const { t } = useTranslations();
@@ -155,6 +155,7 @@ function goBack() {
 </template>
 
 <style scoped>
+* { overscroll-behavior: none; }
 .dot-1 { animation-delay: 0s; }
 .dot-2 { animation-delay: 0.15s; }
 .dot-3 { animation-delay: 0.3s; }
