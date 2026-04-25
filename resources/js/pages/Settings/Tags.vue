@@ -60,7 +60,7 @@ const editForm = useForm({ name: '' });
 
 function startEdit(tag: Tag) {
     editingTagId.value = tag.id;
-    editForm.name = tag.name;
+    editForm.name = tag.name.toLowerCase();
     editForm.clearErrors();
 }
 
@@ -157,12 +157,13 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
                                 {{ t('New tag') }}
                             </label>
                             <input
-                                v-model="createForm.name"
+                                :value="createForm.name"
                                 type="text"
                                 :placeholder="t('Tag name...')"
                                 class="field"
                                 maxlength="50"
                                 autofocus
+                                @input="createForm.name = ($event.target as HTMLInputElement).value.toLowerCase()"
                             />
                             <p v-if="createForm.errors.name" class="text-xs text-accent">{{ createForm.errors.name }}</p>
                             <div class="flex justify-end gap-2">
@@ -197,11 +198,12 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
                                 <template v-if="editingTagId === tag.id">
                                     <form class="space-y-3" @submit.prevent="saveEdit(tag)">
                                         <input
-                                            v-model="editForm.name"
+                                            :value="editForm.name"
                                             type="text"
                                             class="field"
                                             maxlength="50"
                                             autofocus
+                                            @input="editForm.name = ($event.target as HTMLInputElement).value.toLowerCase()"
                                         />
                                         <p v-if="editForm.errors.name" class="text-xs text-accent">{{ editForm.errors.name }}</p>
                                         <div class="flex justify-end gap-2">

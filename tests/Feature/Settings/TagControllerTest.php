@@ -79,6 +79,21 @@ it('updates a tag through the API', function () {
         && $request['name'] === 'food');
 });
 
+it('lowercases the tag name when updating', function () {
+    Http::fake([
+        '*/tags/5' => Http::response(['data' => ['id' => 5, 'name' => 'food', 'usage_count' => 2]], 200),
+    ]);
+
+    $this->actingAs($this->user)
+        ->put('/tags/5', ['name' => 'Food'])
+        ->assertRedirect()
+        ->assertSessionHasNoErrors();
+
+    Http::assertSent(fn ($request) => str_ends_with($request->url(), '/tags/5')
+        && $request->method() === 'PUT'
+        && $request['name'] === 'food');
+});
+
 it('deletes a tag through the API', function () {
     Http::fake([
         '*/tags/5' => Http::response('', 204),

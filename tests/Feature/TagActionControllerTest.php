@@ -75,6 +75,23 @@ it('forwards API validation errors when creating a tag fails', function () {
         ->assertJsonPath('errors.name.0', 'The name has already been taken.');
 });
 
+it('lowercases the tag name before sending it to the API', function () {
+    Http::fake([
+        '*/tags' => Http::response([
+            'data' => ['id' => 8, 'name' => 'travel', 'usage_count' => 0],
+        ], 201),
+    ]);
+
+    $this->actingAs($this->user)
+        ->postJson('/tags', ['name' => 'TRAVEL'])
+        ->assertCreated();
+
+    Http::assertSent(fn ($request) => str_ends_with($request->url(), '/tags')
+        && $request->method() === 'POST'
+        && $request['name'] === 'travel'
+    );
+});
+
 it('rejects empty tag names locally', function () {
     $this->actingAs($this->user)
         ->postJson('/tags', ['name' => ''])
