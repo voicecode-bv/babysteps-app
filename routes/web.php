@@ -7,13 +7,11 @@ use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\CircleActionController;
 use App\Http\Controllers\CircleController;
 use App\Http\Controllers\CreatePostController;
-use App\Http\Controllers\DefaultCircleController;
 use App\Http\Controllers\DeviceTokenController;
 use App\Http\Controllers\FeedController;
 use App\Http\Controllers\MapController;
 use App\Http\Controllers\MediaProxyController;
 use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\NotificationPreferenceController;
 use App\Http\Controllers\Onboarding\CompleteController as OnboardingCompleteController;
 use App\Http\Controllers\Onboarding\FirstCircleController as OnboardingFirstCircleController;
 use App\Http\Controllers\Onboarding\IntroController as OnboardingIntroController;
@@ -23,6 +21,8 @@ use App\Http\Controllers\PostActionController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Settings\AccountController;
+use App\Http\Controllers\Settings\DefaultCircleController;
+use App\Http\Controllers\Settings\NotificationPreferenceController;
 use App\Http\Controllers\Settings\TagController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\TagActionController;
@@ -94,17 +94,18 @@ Route::middleware(['auth.token', HandleNativeEdge::class, EnsureOnboarded::class
     Route::get('/settings/tags', [TagController::class, 'show'])->name('settings.tags');
     Route::put('/tags/{tag}', [TagController::class, 'update'])->name('tags.update')->whereNumber('tag');
     Route::delete('/tags/{tag}', [TagController::class, 'destroy'])->name('tags.destroy')->whereNumber('tag');
+
+    Route::get('/settings/notifications', [NotificationPreferenceController::class, 'show'])->name('settings.notifications');
+    Route::put('/settings/notifications', [NotificationPreferenceController::class, 'update'])->name('settings.notifications.update');
+
+    Route::get('/settings/default-circles', [DefaultCircleController::class, 'show'])->name('settings.default-circles');
+    Route::put('/settings/default-circles', [DefaultCircleController::class, 'update'])->name('settings.default-circles.update');
+
     Route::get('/profiles/{username}', [ProfileController::class, 'show'])->name('profiles.show');
     Route::put('/profile/bio', [ProfileController::class, 'updateBio'])->name('profile.update-bio');
     Route::post('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.update-avatar');
     Route::delete('/profile/avatar', [ProfileController::class, 'deleteAvatar'])->name('profile.delete-avatar');
     Route::put('/profile/locale', [ProfileController::class, 'updateLocale'])->name('profile.update-locale');
-
-    Route::get('/profile/notification-preferences', [NotificationPreferenceController::class, 'index'])->name('profile.notification-preferences');
-    Route::put('/profile/notification-preferences', [NotificationPreferenceController::class, 'update'])->name('profile.notification-preferences.update');
-
-    Route::get('/profile/default-circles', [DefaultCircleController::class, 'index'])->name('profile.default-circles');
-    Route::put('/profile/default-circles', [DefaultCircleController::class, 'update'])->name('profile.default-circles.update');
 
     Route::get('/circles', [CircleController::class, 'index'])->name('circles.index');
     Route::get('/circles/{circle}', [CircleController::class, 'show'])->name('circles.show')->whereNumber('circle');
