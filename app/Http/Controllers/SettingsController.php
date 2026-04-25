@@ -20,7 +20,6 @@ class SettingsController extends Controller
 
         return Inertia::render('Settings', [
             'profile' => $profile,
-            'circles' => $apiClient->cachedCircles(),
         ]);
     }
 }
