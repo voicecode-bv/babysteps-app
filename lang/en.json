@@ -213,6 +213,9 @@
     "Comment replied": "Reply to your comment",
     "New circle post": "New circle post",
     "Circle invitation accepted": "Circle invitation accepted",
+    "Circle ownership transfer requested": "Circle ownership transfer requested",
+    "Circle ownership transfer accepted": "Circle ownership transfer accepted",
+    "Circle ownership transfer declined": "Circle ownership transfer declined",
 
     "Processing video...": "Processing video...",
 
