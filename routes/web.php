@@ -23,6 +23,7 @@ use App\Http\Controllers\PostActionController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Settings\AccountController;
+use App\Http\Controllers\Settings\TagController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Middleware\EnsureOnboarded;
 use App\Http\Middleware\HandleNativeEdge;
@@ -85,6 +86,11 @@ Route::middleware(['auth.token', HandleNativeEdge::class, EnsureOnboarded::class
     Route::get('/settings/account', [AccountController::class, 'show'])->name('settings.account');
     Route::post('/account/export', [AccountController::class, 'export'])->name('account.export');
     Route::delete('/account', [AccountController::class, 'destroy'])->name('account.destroy');
+
+    Route::get('/settings/tags', [TagController::class, 'show'])->name('settings.tags');
+    Route::post('/tags', [TagController::class, 'store'])->name('tags.store');
+    Route::put('/tags/{tag}', [TagController::class, 'update'])->name('tags.update')->whereNumber('tag');
+    Route::delete('/tags/{tag}', [TagController::class, 'destroy'])->name('tags.destroy')->whereNumber('tag');
     Route::get('/profiles/{username}', [ProfileController::class, 'show'])->name('profiles.show');
     Route::put('/profile/bio', [ProfileController::class, 'updateBio'])->name('profile.update-bio');
     Route::post('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.update-avatar');
