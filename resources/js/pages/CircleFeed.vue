@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { InfiniteScroll, Link, router } from '@inertiajs/vue3';
-import { computed, useTemplateRef } from 'vue';
-import PostCard from '@/components/PostCard.vue';
+import { computed, reactive, useTemplateRef } from 'vue';
 import type { PostData } from '@/components/PostCard.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import { usePullToRefresh } from '@/composables/usePullToRefresh';
@@ -37,9 +36,6 @@ const props = defineProps<{
     };
 }>();
 
-const infiniteScrollBuffer = 500;
-console.log('[Feed] InfiniteScroll buffer:', infiniteScrollBuffer);
-
 const { t } = useTranslations();
 
 const layoutRef = useTemplateRef<InstanceType<typeof AppLayout>>('layout');
@@ -64,6 +60,11 @@ function goBack() {
     } else {
         router.visit('/');
     }
+}
+
+const loadedMedia = reactive<Record<number, boolean>>({});
+function markLoaded(postId: number) {
+    loadedMedia[postId] = true;
 }
 </script>
 
@@ -102,34 +103,52 @@ function goBack() {
         <div class="mt-10 pb-24">
             <PullToRefreshIndicator :pull-distance="pullDistance" :is-refreshing="isRefreshing" />
 
-            <template v-if="!posts">
-                <div v-for="n in 3" :key="n" class="animate-pulse">
-                    <div class="flex items-center gap-3 px-4 py-3">
-                        <div class="size-10 rounded-full bg-sand-200 dark:bg-sand-700" />
-                        <div class="h-3 w-32 rounded bg-sand-200 dark:bg-sand-700" />
-                    </div>
-                    <div class="aspect-square w-full bg-sand-200 dark:bg-sand-700" />
-                    <div class="space-y-2 px-4 py-3">
-                        <div class="h-3 w-24 rounded bg-sand-200 dark:bg-sand-700" />
-                        <div class="h-3 w-48 rounded bg-sand-200 dark:bg-sand-700" />
-                    </div>
-                </div>
-            </template>
+            <!-- Skeleton grid while loading -->
+            <div v-if="!posts" class="grid grid-cols-3 gap-0.5 bg-sand-100 dark:bg-sand-800">
+                <div v-for="n in 30" :key="n" class="aspect-square animate-pulse bg-sand-200 dark:bg-sand-700" />
+            </div>
 
-            <InfiniteScroll v-else data="posts" only-next :buffer="infiniteScrollBuffer" preserve-url class="no-scrollbar">
-                <template #default>
-                    <PostCard v-for="post in posts.data" :key="post.id" :post="post" />
-                </template>
-                <template #loading>
-                    <div class="flex items-center justify-center gap-2 py-6 text-sm text-sand-500 dark:text-sand-400">
-                        <span class="flex items-center gap-1">
-                            <span class="dot dot-1 size-1.5 rounded-full bg-teal"></span>
-                            <span class="dot dot-2 size-1.5 rounded-full bg-accent"></span>
-                            <span class="dot dot-3 size-1.5 rounded-full bg-sage-500"></span>
-                        </span>
-                        {{ t('Loading more...') }}
-                    </div>
-                </template>
+            <!-- Posts Grid -->
+            <InfiniteScroll v-else data="posts" only-next :buffer="0" preserve-url items-element="#circle-posts-grid" class="no-scrollbar">
+                <div id="circle-posts-grid" class="grid grid-cols-3 gap-0.5 bg-sand-100 dark:bg-sand-800">
+                    <Link
+                        v-for="post in posts.data"
+                        :key="post.id"
+                        :href="`/posts/${post.id}`"
+                        class="relative block aspect-square overflow-hidden bg-sand-100 dark:bg-sand-800"
+                    >
+                        <div v-if="!loadedMedia[post.id] && post.media_type !== 'unknown'" class="absolute inset-0 animate-pulse bg-sand-200 dark:bg-sand-700" />
+                        <img
+                            v-if="post.media_type === 'image'"
+                            :src="post.media_url"
+                            :alt="post.caption ?? t('Photo')"
+                            class="relative size-full object-cover transition-opacity duration-300"
+                            :class="loadedMedia[post.id] ? 'opacity-100' : 'opacity-0'"
+                            loading="lazy"
+                            @load="markLoaded(post.id)"
+                        />
+                        <img
+                            v-else-if="post.media_type === 'video' && post.thumbnail_url"
+                            :src="post.thumbnail_url"
+                            :alt="post.caption ?? t('Moment')"
+                            class="relative size-full object-cover transition-opacity duration-300"
+                            :class="loadedMedia[post.id] ? 'opacity-100' : 'opacity-0'"
+                            loading="lazy"
+                            @load="markLoaded(post.id)"
+                        />
+                        <div v-else class="flex size-full items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8 text-sand-300 dark:text-sand-600">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.91 11.672a.375.375 0 0 1 0 .656l-5.603 3.113a.375.375 0 0 1-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112Z" />
+                            </svg>
+                        </div>
+                        <div v-if="post.media_type === 'video'" class="absolute right-1.5 top-1.5 z-10">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-4 text-white drop-shadow">
+                                <path d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653Z" />
+                            </svg>
+                        </div>
+                    </Link>
+                </div>
             </InfiniteScroll>
 
             <Link v-if="posts && posts.data.length === 0" href="/posts/create" class="relative flex min-h-[calc(100dvh-6rem-var(--inset-top))] flex-col items-center justify-center overflow-hidden px-8 py-20">
@@ -156,7 +175,4 @@ function goBack() {
 
 <style scoped>
 * { overscroll-behavior: none; }
-.dot-1 { animation-delay: 0s; }
-.dot-2 { animation-delay: 0.15s; }
-.dot-3 { animation-delay: 0.3s; }
 </style>
