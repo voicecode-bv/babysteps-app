@@ -466,7 +466,7 @@ function timeAgo(dateString: string): string {
                             :key="tag.id"
                             class="rounded-full bg-sand-100 px-3 py-1 text-xs font-medium text-sand-700 dark:bg-sand-800 dark:text-sand-200"
                         >
-                            #{{ tag.name }}
+                            {{ tag.name }}
                         </span>
                     </div>
                 </div>
