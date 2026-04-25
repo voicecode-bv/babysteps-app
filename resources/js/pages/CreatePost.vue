@@ -4,6 +4,7 @@ import { Camera, On, Off, Events } from '@nativephp/mobile';
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { store } from '@/actions/App/Http/Controllers/PostActionController';
 import ImageCropModal from '@/components/ImageCropModal.vue';
+import TagSelector from '@/components/TagSelector.vue';
 import { type ExifData } from '@/composables/useExif';
 import { useTranslations } from '@/composables/useTranslations';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -31,14 +32,22 @@ interface Circle {
     members_count: number;
 }
 
+interface Tag {
+    id: number;
+    name: string;
+    usage_count?: number;
+}
+
 const props = withDefaults(
     defineProps<{
         circles?: Circle[] | null;
         defaultCircleIds?: number[] | null;
+        tags?: Tag[] | null;
     }>(),
     {
         circles: () => [],
         defaultCircleIds: () => [],
+        tags: () => [],
     },
 );
 
@@ -51,10 +60,13 @@ const defaultCircleIds = computed<number[]>(() => props.defaultCircleIds ?? []);
 const availableCircleIds = circles.value.map((c) => c.id);
 const initialCircleIds = defaultCircleIds.value.filter((id) => availableCircleIds.includes(id));
 
+const availableTags = computed<Tag[]>(() => props.tags ?? []);
+
 const form = useForm({
     media_path: null as string | null,
     caption: '',
     circle_ids: initialCircleIds,
+    tag_ids: [] as number[],
 });
 
 const mediaPreview = ref<string | null>(null);
@@ -286,6 +298,16 @@ function submit() {
                         class="mt-2 w-full resize-none border-0 bg-transparent p-0 text-base text-sand-800 placeholder-sand-400 focus:outline-none focus:ring-0 dark:text-sand-100 dark:placeholder-sand-500"
                     />
                     <p v-if="form.errors.caption" class="mt-1 text-xs text-blush-500">{{ form.errors.caption }}</p>
+                </section>
+
+                <!-- Tags -->
+                <section class="rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm dark:bg-sand-800/60">
+                    <TagSelector
+                        :available-tags="availableTags"
+                        :selected-ids="form.tag_ids"
+                        :error="form.errors.tag_ids"
+                        @update:selected-ids="form.tag_ids = $event"
+                    />
                 </section>
 
                 <!-- Circle selection -->

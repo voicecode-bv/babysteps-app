@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import BottomSheet from '@/components/BottomSheet.vue';
+import TagSelector from '@/components/TagSelector.vue';
 import { update } from '@/actions/App/Http/Controllers/PostActionController';
 import { useTranslations } from '@/composables/useTranslations';
 import { useForm } from '@inertiajs/vue3';
@@ -10,6 +11,12 @@ interface Circle {
     name: string;
 }
 
+interface Tag {
+    id: number;
+    name: string;
+    usage_count?: number;
+}
+
 const props = withDefaults(
     defineProps<{
         open: boolean;
@@ -17,9 +24,13 @@ const props = withDefaults(
         caption: string | null;
         circles: Circle[];
         availableCircles?: Circle[] | null;
+        tags?: Tag[] | null;
+        availableTags?: Tag[] | null;
     }>(),
     {
         availableCircles: () => [],
+        tags: () => [],
+        availableTags: () => [],
     },
 );
 
@@ -32,20 +43,28 @@ const { t } = useTranslations();
 const form = useForm({
     caption: props.caption ?? '',
     circle_ids: props.circles.map((c) => c.id),
+    tag_ids: (props.tags ?? []).map((t) => t.id),
 });
 
 const availableCircles = computed<Circle[]>(() => props.availableCircles ?? []);
+const availableTags = computed<Tag[]>(() => props.availableTags ?? []);
 
 const allCirclesSelected = computed(
     () => availableCircles.value.length > 0 && form.circle_ids.length === availableCircles.value.length,
 );
 
+function sameIds(a: number[], b: number[]): boolean {
+    if (a.length !== b.length) return false;
+    const sortedA = [...a].sort();
+    const sortedB = [...b].sort();
+    return sortedA.every((id, i) => id === sortedB[i]);
+}
+
 const hasChanges = computed(() => {
     if ((form.caption ?? '') !== (props.caption ?? '')) return true;
-    const currentIds = [...props.circles.map((c) => c.id)].sort();
-    const nextIds = [...form.circle_ids].sort();
-    if (currentIds.length !== nextIds.length) return true;
-    return currentIds.some((id, i) => id !== nextIds[i]);
+    if (!sameIds(form.circle_ids, props.circles.map((c) => c.id))) return true;
+    if (!sameIds(form.tag_ids, (props.tags ?? []).map((t) => t.id))) return true;
+    return false;
 });
 
 const canSave = computed(() => form.circle_ids.length > 0 && hasChanges.value && !form.processing);
@@ -59,6 +78,7 @@ watch(
         form.defaults({
             caption: props.caption ?? '',
             circle_ids: props.circles.map((c) => c.id),
+            tag_ids: (props.tags ?? []).map((t) => t.id),
         });
         form.reset();
     },
@@ -158,6 +178,15 @@ function submit() {
                     </button>
                 </div>
                 <p v-if="form.errors.circle_ids" class="mt-2 text-xs text-blush-500">{{ form.errors.circle_ids }}</p>
+            </section>
+
+            <section>
+                <TagSelector
+                    :available-tags="availableTags"
+                    :selected-ids="form.tag_ids"
+                    :error="form.errors.tag_ids"
+                    @update:selected-ids="form.tag_ids = $event"
+                />
             </section>
         </div>
 

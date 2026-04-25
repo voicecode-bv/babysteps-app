@@ -41,6 +41,12 @@ interface Circle {
     photo: string | null;
 }
 
+interface Tag {
+    id: number;
+    name: string;
+    usage_count?: number;
+}
+
 interface Post {
     id: number;
     media_url: string;
@@ -56,15 +62,18 @@ interface Post {
     likes_count: number;
     comments_count: number;
     circles?: Circle[];
+    tags?: Tag[];
 }
 
 const props = withDefaults(
     defineProps<{
         post: Post;
         availableCircles?: Circle[] | null;
+        availableTags?: Tag[] | null;
     }>(),
     {
         availableCircles: () => [],
+        availableTags: () => [],
     },
 );
 
@@ -419,6 +428,8 @@ function timeAgo(dateString: string): string {
             :caption="post.caption"
             :circles="post.circles ?? []"
             :available-circles="availableCircles"
+            :tags="post.tags ?? []"
+            :available-tags="availableTags"
             @update:open="isEditModalOpen = $event"
         />
     </AppLayout>

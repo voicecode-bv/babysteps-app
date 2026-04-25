@@ -36,6 +36,8 @@ class PostActionController extends Controller
             'location' => ['nullable', 'string', 'max:255'],
             'circle_ids' => ['required', 'array'],
             'circle_ids.*' => ['integer'],
+            'tag_ids' => ['nullable', 'array'],
+            'tag_ids.*' => ['integer'],
         ]);
 
         $path = $validated['media_path'];
@@ -46,6 +48,7 @@ class PostActionController extends Controller
             'caption' => $validated['caption'] ?? '',
             'location' => $validated['location'] ?? '',
             'circle_ids' => $validated['circle_ids'],
+            'tag_ids' => $validated['tag_ids'] ?? [],
         ];
 
         // The cropped flow drops a sidecar with EXIF the client read off the
@@ -160,12 +163,15 @@ class PostActionController extends Controller
             'caption' => ['nullable', 'string', 'max:2200'],
             'circle_ids' => ['required', 'array', 'min:1'],
             'circle_ids.*' => ['integer'],
+            'tag_ids' => ['nullable', 'array'],
+            'tag_ids.*' => ['integer'],
         ]);
 
         try {
             $response = $this->apiClient->put("/posts/{$post}", [
                 'caption' => $validated['caption'] ?? '',
                 'circle_ids' => $validated['circle_ids'],
+                'tag_ids' => $validated['tag_ids'] ?? [],
             ]);
         } catch (ConnectionException) {
             return back()->withErrors(['caption' => __('Could not connect to the server.')]);
