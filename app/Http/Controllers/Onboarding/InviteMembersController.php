@@ -43,6 +43,12 @@ class InviteMembersController extends Controller
         $response = $this->apiClient->post("/circles/{$circle}/members", $data);
 
         if (! $response->successful()) {
+            if ($response->status() === 429) {
+                return back()->withErrors([
+                    'identifier' => __('Too many invitations sent. Please try again later.'),
+                ]);
+            }
+
             return back()->withErrors([
                 'identifier' => $this->friendlyApiError($response->json(), $field),
             ]);

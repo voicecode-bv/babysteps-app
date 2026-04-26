@@ -4,9 +4,10 @@ import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import SurfaceCard from '@/components/SurfaceCard.vue';
 import { usePullToRefresh } from '@/composables/usePullToRefresh';
 import { useTranslations } from '@/composables/useTranslations';
+import { fetchNotificationsPage, type PaginationMeta } from '@/http/notifications';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { router } from '@inertiajs/vue3';
-import { computed, onMounted, ref, useTemplateRef } from 'vue';
+import { computed, onMounted, ref, useTemplateRef, watch } from 'vue';
 import bellIcon from '../../svg/doodle-icons/bell.svg';
 import crownIcon from '../../svg/doodle-icons/crown.svg';
 import heartFilledIcon from '../../svg/doodle-icons/heart-filled.svg';
@@ -91,10 +92,15 @@ interface OwnershipTransfer {
     };
 }
 
+interface NotificationsPage {
+    data: Notification[];
+    meta: PaginationMeta;
+}
+
 const props = defineProps<{
     circleInvitations?: CircleInvitation[];
     ownershipTransfers?: OwnershipTransfer[];
-    notifications: Notification[];
+    notifications: NotificationsPage;
 }>();
 
 const optimisticallyRead = ref<Set<string>>(new Set());
@@ -102,6 +108,27 @@ const optimisticallyRead = ref<Set<string>>(new Set());
 const hiddenNotificationTypes = new Set<string>(['circle-ownership-transfer-requested']);
 
 const { t } = useTranslations();
+
+const items = ref<Notification[]>([]);
+const currentPage = ref(1);
+const lastPage = ref(1);
+const isLoadingMore = ref(false);
+const loadMoreError = ref<string | null>(null);
+
+function syncFromProps() {
+    items.value = props.notifications?.data ?? [];
+    currentPage.value = props.notifications?.meta?.current_page ?? 1;
+    lastPage.value = props.notifications?.meta?.last_page ?? 1;
+    loadMoreError.value = null;
+}
+
+watch(
+    () => props.notifications,
+    () => {
+        syncFromProps();
+    },
+    { immediate: true },
+);
 
 function goBack() {
     window.history.back();
@@ -112,10 +139,11 @@ function isRead(notification: Notification): boolean {
 }
 
 const visibleNotifications = computed(() =>
-    (props.notifications ?? []).filter((n) => !hiddenNotificationTypes.has(n.type)),
+    items.value.filter((n) => !hiddenNotificationTypes.has(n.type)),
 );
 
 const hasUnread = computed(() => visibleNotifications.value.some((n) => !isRead(n)));
+const hasMore = computed(() => currentPage.value < lastPage.value);
 
 const layoutRef = useTemplateRef<InstanceType<typeof AppLayout>>('layout');
 const containerRef = computed(() => layoutRef.value?.mainRef ?? null);
@@ -144,8 +172,28 @@ onMounted(() => {
     });
 });
 
+async function loadMore() {
+    if (isLoadingMore.value || !hasMore.value) return;
+
+    isLoadingMore.value = true;
+    loadMoreError.value = null;
+
+    try {
+        const result = await fetchNotificationsPage<Notification>(currentPage.value + 1);
+        const seen = new Set(items.value.map((n) => n.id));
+        const incoming = result.data.filter((n) => !seen.has(n.id));
+        items.value = [...items.value, ...incoming];
+        currentPage.value = result.meta.current_page;
+        lastPage.value = result.meta.last_page;
+    } catch {
+        loadMoreError.value = t('Failed to load notifications');
+    } finally {
+        isLoadingMore.value = false;
+    }
+}
+
 function markAllAsRead() {
-    const unreadIds = props.notifications.filter((n) => !n.read_at).map((n) => n.id);
+    const unreadIds = items.value.filter((n) => !n.read_at).map((n) => n.id);
     unreadIds.forEach((id) => optimisticallyRead.value.add(id));
 
     router.post(
@@ -313,7 +361,7 @@ interface NotificationGroup {
 }
 
 const groupedNotifications = computed<NotificationGroup[]>(() => {
-    if (!props.notifications?.length) {
+    if (!items.value.length) {
         return [];
     }
 
@@ -325,7 +373,7 @@ const groupedNotifications = computed<NotificationGroup[]>(() => {
         earlier: { key: 'earlier', label: t('Earlier'), items: [] },
     };
 
-    for (const notification of props.notifications) {
+    for (const notification of items.value) {
         if (hiddenNotificationTypes.has(notification.type)) continue;
         const age = now - new Date(notification.created_at).getTime();
 
@@ -569,8 +617,20 @@ const groupedNotifications = computed<NotificationGroup[]>(() => {
                     </div>
                 </template>
 
+                <!-- Load more / pagination footer -->
+                <div v-if="!isLoading && hasMore" class="flex flex-col items-center gap-2 px-4 py-4">
+                    <button
+                        class="text-sm font-medium text-sand-500 disabled:opacity-50 dark:text-sand-400"
+                        :disabled="isLoadingMore"
+                        @click="loadMore"
+                    >
+                        {{ isLoadingMore ? t('Loading more...') : t('Load more') }}
+                    </button>
+                    <p v-if="loadMoreError" class="text-xs text-blush-500">{{ loadMoreError }}</p>
+                </div>
+
                 <!-- Empty state -->
-                <SurfaceCard v-else-if="!isLoading && (!circleInvitations || circleInvitations.length === 0) && (!ownershipTransfers || ownershipTransfers.length === 0)" class="mt-4">
+                <SurfaceCard v-if="!isLoading && groupedNotifications.length === 0 && (!circleInvitations || circleInvitations.length === 0) && (!ownershipTransfers || ownershipTransfers.length === 0)" class="mt-4">
                     <div class="flex flex-col items-center justify-center py-10 text-center">
                         <IconTile :icon="bellIcon" size="lg" tone="sage" />
                         <h3 class="mt-4 font-display text-lg font-semibold text-teal dark:text-sage-100">

@@ -90,6 +90,10 @@ class CircleActionController extends Controller
             return back();
         }
 
+        if ($response->status() === 429) {
+            return back()->withErrors(['identifier' => __('Too many invitations sent. Please try again later.')]);
+        }
+
         return back()->withErrors(['identifier' => $response->json('message', __('Failed to invite member'))]);
     }
 
