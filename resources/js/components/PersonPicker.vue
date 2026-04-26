@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { useTranslations } from '@/composables/useTranslations';
+import { useTranslations } from '@/spa/composables/useTranslations';
 import userIcon from '../../svg/doodle-icons/user.svg';
 
 interface Person {

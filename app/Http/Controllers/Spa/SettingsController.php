@@ -1,0 +1,57 @@
+<?php
+
+namespace App\Http\Controllers\Spa;
+
+use App\Http\Controllers\Controller;
+use App\Services\ApiClient;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
+use Illuminate\Validation\ValidationException;
+
+/**
+ * BFF-only endpoints voor settings — alleen de file-upload paden blijven hier.
+ * Alle andere settings (bio, tags, notifications, default circles, account
+ * export/delete, locale) gaan vanuit de SPA direct naar de externe API.
+ */
+class SettingsController extends Controller
+{
+    public function __construct(protected ApiClient $apiClient) {}
+
+    public function updateAvatar(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'avatar_path' => ['required', 'string'],
+        ]);
+
+        $path = $validated['avatar_path'];
+
+        if (! file_exists($path)) {
+            throw ValidationException::withMessages(['avatar_path' => __('Image file not found.')]);
+        }
+
+        $mimeType = File::mimeType($path);
+        $extension = match ($mimeType) {
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/heic' => 'heic',
+            'image/heif' => 'heif',
+            default => pathinfo($path, PATHINFO_EXTENSION) ?: 'jpg',
+        };
+
+        $response = $this->apiClient->authenticated()
+            ->attach('avatar', file_get_contents($path), 'avatar.'.$extension, ['Content-Type' => $mimeType])
+            ->post('/profile/avatar');
+
+        if (! $response->successful()) {
+            throw ValidationException::withMessages([
+                'avatar_path' => $response->json('message', __('Failed to upload photo')),
+            ]);
+        }
+
+        $avatarUrl = $response->json('user.avatar');
+        $request->user()->update(['avatar' => $avatarUrl]);
+
+        return response()->json(['avatar' => $avatarUrl]);
+    }
+}

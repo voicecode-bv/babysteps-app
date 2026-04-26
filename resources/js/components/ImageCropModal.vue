@@ -2,7 +2,7 @@
 import { computed, ref, useTemplateRef, watch } from 'vue';
 import { Cropper } from 'vue-advanced-cropper';
 import BottomSheet from '@/components/BottomSheet.vue';
-import { useTranslations } from '@/composables/useTranslations';
+import { useTranslations } from '@/spa/composables/useTranslations';
 import { readExif, type ExifData } from '@/composables/useExif';
 import 'vue-advanced-cropper/dist/style.css';
 

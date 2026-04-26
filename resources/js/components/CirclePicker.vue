@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useTranslations } from '@/composables/useTranslations';
+import { useTranslations } from '@/spa/composables/useTranslations';
 import { computed, ref } from 'vue';
 import userIcon from '../../svg/doodle-icons/user.svg';
 

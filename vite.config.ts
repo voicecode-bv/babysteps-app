@@ -1,6 +1,4 @@
 import flareSourcemapUploader from '@flareapp/vite';
-import inertia from '@inertiajs/vite';
-import { wayfinder } from '@laravel/vite-plugin-wayfinder';
 import tailwindcss from '@tailwindcss/vite';
 import vue from '@vitejs/plugin-vue';
 import laravel from 'laravel-vite-plugin';
@@ -14,13 +12,15 @@ export default defineConfig({
             '@nativephp/mobile': path.resolve(__dirname, 'vendor/nativephp/mobile/resources/dist/native.js'),
         },
     },
+    build: {
+        chunkSizeWarningLimit: 2000,
+    },
     plugins: [
         laravel({
-            input: ['resources/css/app.css', 'resources/js/app.ts'],
+            input: ['resources/css/app.css', 'resources/js/spa/main.ts'],
             refresh: true,
             hotFile: nativephpHotFile(),
         }),
-        inertia(),
         tailwindcss(),
         vue({
             template: {
@@ -29,9 +29,6 @@ export default defineConfig({
                     includeAbsolute: false,
                 },
             },
-        }),
-        wayfinder({
-            formVariants: true,
         }),
         nativephpMobile(),
         flareSourcemapUploader({

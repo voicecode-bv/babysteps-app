@@ -181,49 +181,14 @@ class ApiClient
 
     public const SETTINGS_CACHE_TTL = 300;
 
-    public static function profileCacheKey(int $userId): string
-    {
-        return 'settings_profile_'.$userId;
-    }
-
     public static function circlesCacheKey(): string
     {
         return 'circles';
     }
 
-    public static function serviceKeysCacheKey(): string
-    {
-        return 'service_keys';
-    }
-
     /**
-     * Fetch and cache the profile for a given username. Returns null on failure.
-     *
-     * @return array<string, mixed>|null
-     */
-    public function cachedProfile(int $userId, string $username): ?array
-    {
-        return Cache::remember(
-            self::profileCacheKey($userId),
-            self::SETTINGS_CACHE_TTL,
-            function () use ($username) {
-                try {
-                    $response = $this->get("/profiles/{$username}");
-                } catch (ConnectionException) {
-                    return null;
-                }
-
-                if ($response->failed() || $response->json('data') === null) {
-                    return null;
-                }
-
-                return $this->proxyMediaUrls($response->json('data'));
-            },
-        );
-    }
-
-    /**
-     * Fetch and cache the current user's circles.
+     * Fetch and cache the current user's circles. Used door Spa\AuthController
+     * om na login te beslissen of de SPA naar onboarding of de feed gaat.
      *
      * @return array<int, array<string, mixed>>
      */
@@ -244,38 +209,6 @@ class ApiClient
                     : [];
             },
         );
-    }
-
-    /**
-     * Fetch and cache public service keys (Mapbox, Flare, etc.) from the API.
-     *
-     * @return array<string, array<string, string|null>>
-     */
-    public function cachedServiceKeys(): array
-    {
-        $cached = Cache::get(self::serviceKeysCacheKey());
-
-        if (is_array($cached) && $cached !== []) {
-            return $cached;
-        }
-
-        try {
-            $response = $this->get('/service-keys');
-        } catch (ConnectionException) {
-            return [];
-        }
-
-        if (! $response->successful()) {
-            return [];
-        }
-
-        $data = $response->json() ?? [];
-
-        if ($data !== []) {
-            Cache::put(self::serviceKeysCacheKey(), $data, self::SETTINGS_CACHE_TTL);
-        }
-
-        return $data;
     }
 
     /**

@@ -1,7 +1,6 @@
 <?php
 
-use App\Http\Middleware\AuthenticateToken;
-use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\AuthenticateApiToken;
 use App\Http\Middleware\SetLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -17,16 +16,13 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
             SetLocale::class,
-            HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);
 
-        // Disable CSRF verification entirely for NativePHP mobile compatibility
-        // Android WebView has issues with XSRF-TOKEN cookie accessibility
         $middleware->preventRequestForgery();
 
         $middleware->alias([
-            'auth.token' => AuthenticateToken::class,
+            'auth.api' => AuthenticateApiToken::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

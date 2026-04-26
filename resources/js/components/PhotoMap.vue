@@ -1,11 +1,9 @@
 <script setup lang="ts">
-import { router } from '@inertiajs/vue3';
 import type { Feature, FeatureCollection, Point } from 'geojson';
-import mapboxgl from 'mapbox-gl';
+import type MapboxGlNamespace from 'mapbox-gl';
 import type { GeoJSONSource, LngLatBoundsLike, MapMouseEvent } from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
 import { onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue';
-import { useTranslations } from '@/composables/useTranslations';
+import { useTranslations } from '@/spa/composables/useTranslations';
 
 interface PhotoProperties {
     post_id: number;
@@ -23,9 +21,11 @@ const props = withDefaults(
         mapboxToken: string | null;
         fetchUrl: string;
         mediaType?: 'image' | 'video' | 'all';
+        onPostClick?: (postId: number) => void;
     }>(),
     {
         mediaType: 'all',
+        onPostClick: undefined,
     },
 );
 
@@ -36,7 +36,8 @@ const isLoading = ref(false);
 const isTruncated = ref(false);
 const hasError = ref(false);
 
-let map: mapboxgl.Map | null = null;
+let mapboxgl: typeof MapboxGlNamespace | null = null;
+let map: MapboxGlNamespace.Map | null = null;
 let abortController: AbortController | null = null;
 let fetchTimeout: ReturnType<typeof setTimeout> | null = null;
 let didInitialFit = false;
@@ -45,7 +46,7 @@ const SOURCE_ID = 'photos';
 const CLUSTER_LAYER = 'photos-clusters';
 const CLUSTER_COUNT_LAYER = 'photos-cluster-count';
 
-const photoMarkers: Record<string, mapboxgl.Marker> = {};
+const photoMarkers: Record<string, MapboxGlNamespace.Marker> = {};
 
 const NETHERLANDS_CENTER: [number, number] = [5.2913, 52.1326];
 const FALLBACK_ZOOM = 6.8;
@@ -90,6 +91,7 @@ async function fetchPhotos(bbox: string): Promise<PhotoResponse | null> {
     try {
         const response = await fetch(buildFetchUrl(bbox), {
             headers: { Accept: 'application/json' },
+            credentials: 'same-origin',
             signal: abortController.signal,
         });
 
@@ -144,7 +146,7 @@ function scheduleBboxFetch(): void {
 }
 
 function fitToFeatures(features: Feature<Point, PhotoProperties>[]): void {
-    if (!map || features.length === 0) {
+    if (!map || !mapboxgl || features.length === 0) {
         return;
     }
 
@@ -225,7 +227,7 @@ function createPhotoMarkerElement(properties: PhotoProperties): HTMLElement {
 
     button.addEventListener('click', (event) => {
         event.stopPropagation();
-        router.visit(`/posts/${properties.post_id}`);
+        props.onPostClick?.(properties.post_id);
     });
 
     return button;
@@ -285,7 +287,9 @@ function syncPhotoMarkers(): void {
                 });
             });
 
-            photoMarkers[id] = new mapboxgl.Marker({ element }).setLngLat(coords).addTo(map);
+            if (mapboxgl) {
+                photoMarkers[id] = new mapboxgl.Marker({ element }).setLngLat(coords).addTo(map);
+            }
 
             source.getClusterLeaves(clusterId, 1, 0, (error, leaves) => {
                 if (error || !leaves || leaves.length === 0) {
@@ -408,11 +412,21 @@ function initLayers(): void {
     });
 }
 
-onMounted(() => {
+onMounted(async () => {
     if (!props.mapboxToken || !mapContainer.value) {
         return;
     }
 
+    const [{ default: mapboxModule }] = await Promise.all([
+        import('mapbox-gl'),
+        import('mapbox-gl/dist/mapbox-gl.css'),
+    ]);
+
+    if (!mapContainer.value) {
+        return;
+    }
+
+    mapboxgl = mapboxModule;
     mapboxgl.accessToken = props.mapboxToken;
 
     map = new mapboxgl.Map({

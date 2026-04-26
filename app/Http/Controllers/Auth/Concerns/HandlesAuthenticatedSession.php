@@ -4,28 +4,12 @@ namespace App\Http\Controllers\Auth\Concerns;
 
 use App\Models\User;
 use App\Services\ApiClient;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 trait HandlesAuthenticatedSession
 {
-    protected function postAuthRedirect(ApiClient $apiClient): RedirectResponse
-    {
-        if (Auth::user()?->onboarded_at !== null) {
-            return redirect()->route('feed');
-        }
-
-        $circles = $apiClient->cachedCircles();
-
-        if ($circles === []) {
-            return redirect()->route('onboarding.intro');
-        }
-
-        return redirect()->route('feed');
-    }
-
     /**
      * @param  array<string, mixed>  $userData
      */
@@ -61,20 +45,15 @@ trait HandlesAuthenticatedSession
 
     protected function primeSettingsCache(ApiClient $apiClient): void
     {
-        $user = Auth::user();
-
-        if ($user === null) {
+        if (Auth::user() === null) {
             return;
         }
 
         try {
-            Cache::forget(ApiClient::profileCacheKey($user->id));
             Cache::forget(ApiClient::circlesCacheKey());
-
-            $apiClient->cachedProfile($user->id, $user->username);
             $apiClient->cachedCircles();
         } catch (\Throwable $e) {
-            Log::warning('Failed to prime settings cache after auth', ['error' => $e->getMessage()]);
+            Log::warning('Failed to prime circles cache after auth', ['error' => $e->getMessage()]);
         }
     }
 }

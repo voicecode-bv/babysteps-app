@@ -1,0 +1,206 @@
+import { createRouter, createWebHistory, createMemoryHistory, type RouteRecordRaw } from 'vue-router';
+import { useAuthStore } from '@/spa/stores/auth';
+import { api } from '@/spa/http/apiClient';
+
+const isNative = typeof window !== 'undefined' && '__nativephp' in window;
+
+const routes: RouteRecordRaw[] = [
+    // Auth (guest-only)
+    {
+        path: '/login',
+        name: 'spa.login',
+        component: () => import('@/spa/pages/Auth/Login.vue'),
+        meta: { guest: true },
+    },
+    {
+        path: '/register',
+        name: 'spa.register',
+        component: () => import('@/spa/pages/Auth/Register.vue'),
+        meta: { guest: true },
+    },
+
+    // Onboarding (auth, no onboarded check)
+    {
+        path: '/onboarding/intro',
+        name: 'spa.onboarding.intro',
+        component: () => import('@/spa/pages/Onboarding/Intro.vue'),
+        meta: { auth: true },
+    },
+    {
+        path: '/onboarding/first-circle',
+        name: 'spa.onboarding.first-circle',
+        component: () => import('@/spa/pages/Onboarding/FirstCircle.vue'),
+        meta: { auth: true },
+    },
+    {
+        path: '/onboarding/circles/:circle/invite',
+        name: 'spa.onboarding.invite-members',
+        component: () => import('@/spa/pages/Onboarding/InviteMembers.vue'),
+        meta: { auth: true },
+    },
+    {
+        path: '/onboarding/notifications',
+        name: 'spa.onboarding.notifications',
+        component: () => import('@/spa/pages/Onboarding/Notifications.vue'),
+        meta: { auth: true },
+    },
+
+    // Main app (auth + onboarded)
+    {
+        path: '/',
+        name: 'spa.home',
+        component: () => import('@/spa/pages/Feed.vue'),
+        meta: { auth: true, onboarded: true },
+    },
+    {
+        path: '/circles/:circle/feed',
+        name: 'spa.circles.feed',
+        component: () => import('@/spa/pages/CircleFeed.vue'),
+        meta: { auth: true, onboarded: true },
+    },
+    {
+        path: '/posts/create',
+        name: 'spa.posts.create',
+        component: () => import('@/spa/pages/CreatePost.vue'),
+        meta: { auth: true, onboarded: true },
+    },
+    {
+        path: '/posts/:post',
+        name: 'spa.posts.show',
+        component: () => import('@/spa/pages/PostDetail.vue'),
+        meta: { auth: true, onboarded: true },
+    },
+
+    // Notifications
+    {
+        path: '/notifications',
+        name: 'spa.notifications',
+        component: () => import('@/spa/pages/Notifications.vue'),
+        meta: { auth: true, onboarded: true },
+    },
+
+    // Map
+    {
+        path: '/map',
+        name: 'spa.map',
+        component: () => import('@/spa/pages/Map.vue'),
+        meta: { auth: true, onboarded: true },
+    },
+    {
+        path: '/profiles/:username/map',
+        name: 'spa.profiles.map',
+        component: () => import('@/spa/pages/ProfileMap.vue'),
+        meta: { auth: true, onboarded: true },
+    },
+    {
+        path: '/circles/:circle/map',
+        name: 'spa.circles.map',
+        component: () => import('@/spa/pages/CircleMap.vue'),
+        meta: { auth: true, onboarded: true },
+    },
+
+    // Profile
+    {
+        path: '/profiles/:username',
+        name: 'spa.profiles.show',
+        component: () => import('@/spa/pages/Profile.vue'),
+        meta: { auth: true, onboarded: true },
+    },
+
+    // Circles
+    {
+        path: '/circles',
+        name: 'spa.circles.index',
+        component: () => import('@/spa/pages/Circles/Index.vue'),
+        meta: { auth: true, onboarded: true },
+    },
+    {
+        path: '/circles/:circle',
+        name: 'spa.circles.show',
+        component: () => import('@/spa/pages/Circles/Show.vue'),
+        meta: { auth: true, onboarded: true },
+    },
+    {
+        path: '/circles/:circle/transfer-ownership',
+        name: 'spa.circles.transfer-ownership',
+        component: () => import('@/spa/pages/Circles/TransferOwnership.vue'),
+        meta: { auth: true, onboarded: true },
+    },
+
+    // Settings
+    {
+        path: '/settings',
+        name: 'spa.settings',
+        component: () => import('@/spa/pages/Settings/Index.vue'),
+        meta: { auth: true, onboarded: true },
+    },
+    {
+        path: '/settings/account',
+        name: 'spa.settings.account',
+        component: () => import('@/spa/pages/Settings/Account.vue'),
+        meta: { auth: true, onboarded: true },
+    },
+    {
+        path: '/settings/tags',
+        name: 'spa.settings.tags',
+        component: () => import('@/spa/pages/Settings/Tags.vue'),
+        meta: { auth: true, onboarded: true },
+    },
+    {
+        path: '/settings/persons',
+        name: 'spa.settings.persons',
+        component: () => import('@/spa/pages/Settings/Persons.vue'),
+        meta: { auth: true, onboarded: true },
+    },
+    {
+        path: '/settings/notifications',
+        name: 'spa.settings.notifications',
+        component: () => import('@/spa/pages/Settings/NotificationPreferences.vue'),
+        meta: { auth: true, onboarded: true },
+    },
+    {
+        path: '/settings/default-circles',
+        name: 'spa.settings.default-circles',
+        component: () => import('@/spa/pages/Settings/DefaultCircles.vue'),
+        meta: { auth: true, onboarded: true },
+    },
+
+    // Catch-all → login
+    {
+        path: '/:pathMatch(.*)*',
+        redirect: { name: 'spa.login' },
+    },
+];
+
+export const router = createRouter({
+    history: isNative ? createMemoryHistory() : createWebHistory(),
+    routes,
+});
+
+router.beforeEach((to) => {
+    const auth = useAuthStore();
+
+    if (to.meta.auth && !auth.user) {
+        return { name: 'spa.login' };
+    }
+
+    if (to.meta.guest && auth.user) {
+        return { name: 'spa.home' };
+    }
+
+    if (to.meta.onboarded && auth.user && !auth.user.onboarded) {
+        return { name: 'spa.onboarding.intro' };
+    }
+});
+
+router.afterEach((to) => {
+    const auth = useAuthStore();
+    if (!auth.user) {
+        return;
+    }
+
+    api.post('/api/spa/edge/active-tab', { path: to.path }).catch(() => {
+        // Fire-and-forget; native bottom-nav blijft zoals het was bij netwerkfouten.
+        // Edge::set() is een no-op op non-native clients dus altijd veilig om aan te roepen.
+    });
+});

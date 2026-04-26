@@ -1,139 +1,56 @@
 <?php
 
-use App\Http\Controllers\Auth\AuthController;
-use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\SocialAuthController;
-use App\Http\Controllers\CircleActionController;
-use App\Http\Controllers\CircleController;
-use App\Http\Controllers\CreatePostController;
-use App\Http\Controllers\DeviceTokenController;
-use App\Http\Controllers\FeedController;
 use App\Http\Controllers\MapController;
 use App\Http\Controllers\MediaProxyController;
-use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\Onboarding\CompleteController as OnboardingCompleteController;
-use App\Http\Controllers\Onboarding\FirstCircleController as OnboardingFirstCircleController;
-use App\Http\Controllers\Onboarding\IntroController as OnboardingIntroController;
-use App\Http\Controllers\Onboarding\InviteMembersController as OnboardingInviteMembersController;
-use App\Http\Controllers\Onboarding\NotificationController as OnboardingNotificationController;
 use App\Http\Controllers\PostActionController;
-use App\Http\Controllers\PostController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\Settings\AccountController;
-use App\Http\Controllers\Settings\DefaultCircleController;
-use App\Http\Controllers\Settings\NotificationPreferenceController;
-use App\Http\Controllers\Settings\PersonController;
-use App\Http\Controllers\Settings\TagController;
-use App\Http\Controllers\SettingsController;
-use App\Http\Controllers\TagActionController;
-use App\Http\Middleware\EnsureOnboarded;
-use App\Http\Middleware\HandleNativeEdge;
+use App\Http\Controllers\Spa\AuthController as SpaAuthController;
+use App\Http\Controllers\Spa\BootstrapController as SpaBootstrapController;
+use App\Http\Controllers\Spa\CircleMediaController as SpaCircleMediaController;
+use App\Http\Controllers\Spa\EdgeController as SpaEdgeController;
+use App\Http\Controllers\Spa\PersonsController as SpaPersonsController;
+use App\Http\Controllers\Spa\PostsController as SpaPostsController;
+use App\Http\Controllers\Spa\SettingsController as SpaSettingsController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/login', [LoginController::class, 'show'])->name('login');
-Route::get('/register', [RegisterController::class, 'show'])->name('register');
-Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
-Route::post('/register', [AuthController::class, 'register'])->name('register.submit');
-Route::get('/auth/verify', [AuthController::class, 'verify'])->name('auth.verify');
+// SPA BFF — alleen wat technisch niet client-side kan: bootstrap-mirror,
+// auth-token-houder, native bridge (Edge), en file-upload paden waarvoor
+// NativePhp Camera een file:// pad oplevert dat alleen serverside leesbaar is.
+Route::prefix('api/spa')->group(function () {
+    Route::get('/bootstrap', SpaBootstrapController::class);
+    Route::post('/auth/login', [SpaAuthController::class, 'login']);
+    Route::post('/auth/register', [SpaAuthController::class, 'register']);
 
+    Route::middleware('auth.api')->group(function () {
+        Route::post('/auth/logout', [SpaAuthController::class, 'logout']);
+        Route::post('/edge/active-tab', [SpaEdgeController::class, 'setActiveTab']);
+
+        Route::post('/settings/profile/avatar', [SpaSettingsController::class, 'updateAvatar']);
+        Route::post('/settings/persons/{person}/photo', [SpaPersonsController::class, 'updatePhoto'])->whereNumber('person');
+        Route::post('/circles/{circle}/photo', [SpaCircleMediaController::class, 'updatePhoto'])->whereNumber('circle');
+        Route::post('/posts', [SpaPostsController::class, 'store']);
+    });
+});
+
+// OAuth callback — externe API redirect terug naar deze BFF.
 Route::get('/oauth/callback', [SocialAuthController::class, 'callback'])->name('oauth.callback');
 
-Route::put('/locale', [LoginController::class, 'updateLocale'])->name('locale.update');
+// Public proxy: media-cache (signed image-URLs vanuit externe API gaan via deze
+// proxy zodat tokens niet in de client lekken).
 Route::get('/media-proxy', MediaProxyController::class)->name('media-proxy');
 
-Route::middleware(['auth.token', HandleNativeEdge::class])->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-    Route::post('/device-token', [DeviceTokenController::class, 'store'])->name('device-token.store');
-    Route::get('/onboarding/intro', OnboardingIntroController::class)->name('onboarding.intro');
-    Route::get('/onboarding/first-circle', [OnboardingFirstCircleController::class, 'show'])->name('onboarding.first-circle');
-    Route::post('/onboarding/first-circle', [OnboardingFirstCircleController::class, 'store'])->name('onboarding.first-circle.store');
-    Route::get('/onboarding/circles/{circle}/invite', [OnboardingInviteMembersController::class, 'show'])->name('onboarding.invite-members')->whereNumber('circle');
-    Route::post('/onboarding/circles/{circle}/invite', [OnboardingInviteMembersController::class, 'store'])->name('onboarding.invite-members.store')->whereNumber('circle');
-    Route::get('/onboarding/notifications', OnboardingNotificationController::class)->name('onboarding.notifications');
-    Route::post('/onboarding/complete', OnboardingCompleteController::class)->name('onboarding.complete');
-});
-
-Route::middleware(['auth.token', HandleNativeEdge::class, EnsureOnboarded::class])->group(function () {
-    Route::get('/', FeedController::class)->name('feed');
-    Route::get('/circles/{circle}/feed', [FeedController::class, 'circle'])->name('circles.feed')->whereNumber('circle');
-    Route::get('/posts/create', CreatePostController::class)->name('posts.create');
-    Route::get('/posts/{post}', [PostController::class, 'show'])->name('posts.show')->whereNumber('post');
-
+// Session-cookie protected proxy paden. Reden voor BFF: NativePhp file://
+// paden of fetch-kant waar PhotoMap geen bearer-headers toevoegt.
+Route::middleware('auth.api')->group(function () {
     Route::get('/native-media', [PostActionController::class, 'serveMedia'])->name('native-media');
     Route::post('/posts/cropped-media', [PostActionController::class, 'storeCroppedMedia'])->name('posts.cropped-media');
-    Route::post('/posts', [PostActionController::class, 'store'])->name('posts.store');
-    Route::put('/posts/{post}', [PostActionController::class, 'update'])->name('posts.update')->whereNumber('post');
-    Route::delete('/posts/{post}', [PostActionController::class, 'destroy'])->name('posts.destroy')->whereNumber('post');
-    Route::get('/posts/{post}/likes', [PostActionController::class, 'indexLikes'])->name('posts.likes.index')->whereNumber('post');
-    Route::post('/posts/{post}/like', [PostActionController::class, 'like'])->name('posts.like')->whereNumber('post');
-    Route::delete('/posts/{post}/like', [PostActionController::class, 'unlike'])->name('posts.unlike')->whereNumber('post');
-    Route::get('/posts/{post}/comments', [PostActionController::class, 'indexComments'])->name('posts.comments.index')->whereNumber('post');
-    Route::post('/posts/{post}/comments', [PostActionController::class, 'comment'])->name('posts.comments.store')->whereNumber('post');
-    Route::delete('/comments/{comment}', [PostActionController::class, 'destroyComment'])->name('comments.destroy')->whereNumber('comment');
-    Route::post('/comments/{comment}/like', [PostActionController::class, 'likeComment'])->name('comments.like')->whereNumber('comment');
-    Route::delete('/comments/{comment}/like', [PostActionController::class, 'unlikeComment'])->name('comments.unlike')->whereNumber('comment');
 
-    Route::get('/tags', [TagActionController::class, 'index'])->name('tags.index');
-    Route::post('/tags', [TagActionController::class, 'store'])->name('tags.store');
-
-    Route::get('/map', [MapController::class, 'show'])->name('map');
     Route::get('/photos/map', [MapController::class, 'photos'])->name('photos.map');
-    Route::get('/profiles/{username}/map', [MapController::class, 'profile'])->name('profiles.map');
     Route::get('/profiles/{username}/photos/map', [MapController::class, 'profilePhotos'])->name('profiles.photos.map');
-    Route::get('/circles/{circle}/map', [MapController::class, 'circle'])->name('circles.map')->whereNumber('circle');
     Route::get('/circles/{circle}/photos/map', [MapController::class, 'circlePhotos'])->name('circles.photos.map')->whereNumber('circle');
-
-    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications');
-    Route::get('/notifications/load', [NotificationController::class, 'loadPage'])->name('notifications.load');
-    Route::post('/notifications/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
-
-    Route::get('/settings', [SettingsController::class, 'show'])->name('settings');
-    Route::get('/settings/account', [AccountController::class, 'show'])->name('settings.account');
-    Route::post('/account/export', [AccountController::class, 'export'])->name('account.export');
-    Route::delete('/account', [AccountController::class, 'destroy'])->name('account.destroy');
-
-    Route::get('/settings/tags', [TagController::class, 'show'])->name('settings.tags');
-    Route::put('/tags/{tag}', [TagController::class, 'update'])->name('tags.update')->whereNumber('tag');
-    Route::delete('/tags/{tag}', [TagController::class, 'destroy'])->name('tags.destroy')->whereNumber('tag');
-
-    Route::get('/settings/persons', [PersonController::class, 'show'])->name('settings.persons');
-    Route::post('/persons', [PersonController::class, 'store'])->name('persons.store');
-    Route::put('/persons/{person}', [PersonController::class, 'update'])->name('persons.update')->whereNumber('person');
-    Route::delete('/persons/{person}', [PersonController::class, 'destroy'])->name('persons.destroy')->whereNumber('person');
-    Route::post('/persons/{person}/photo', [PersonController::class, 'updatePhoto'])->name('persons.update-photo')->whereNumber('person');
-    Route::delete('/persons/{person}/photo', [PersonController::class, 'deletePhoto'])->name('persons.delete-photo')->whereNumber('person');
-
-    Route::get('/settings/notifications', [NotificationPreferenceController::class, 'show'])->name('settings.notifications');
-    Route::put('/settings/notifications', [NotificationPreferenceController::class, 'update'])->name('settings.notifications.update');
-
-    Route::get('/settings/default-circles', [DefaultCircleController::class, 'show'])->name('settings.default-circles');
-    Route::put('/settings/default-circles', [DefaultCircleController::class, 'update'])->name('settings.default-circles.update');
-
-    Route::get('/profiles/{username}', [ProfileController::class, 'show'])->name('profiles.show');
-    Route::put('/profile/bio', [ProfileController::class, 'updateBio'])->name('profile.update-bio');
-    Route::post('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.update-avatar');
-    Route::delete('/profile/avatar', [ProfileController::class, 'deleteAvatar'])->name('profile.delete-avatar');
-    Route::put('/profile/locale', [ProfileController::class, 'updateLocale'])->name('profile.update-locale');
-
-    Route::get('/circles', [CircleController::class, 'index'])->name('circles.index');
-    Route::get('/circles/{circle}', [CircleController::class, 'show'])->name('circles.show')->whereNumber('circle');
-    Route::post('/circles', [CircleActionController::class, 'store'])->name('circles.store');
-    Route::post('/circles/{circle}/photo', [CircleActionController::class, 'updatePhoto'])->name('circles.update-photo')->whereNumber('circle');
-    Route::delete('/circles/{circle}/photo', [CircleActionController::class, 'deletePhoto'])->name('circles.delete-photo')->whereNumber('circle');
-    Route::put('/circles/{circle}', [CircleActionController::class, 'update'])->name('circles.update')->whereNumber('circle');
-    Route::put('/circles/{circle}/settings', [CircleActionController::class, 'updateSettings'])->name('circles.update-settings')->whereNumber('circle');
-    Route::delete('/circles/{circle}', [CircleActionController::class, 'destroy'])->name('circles.destroy')->whereNumber('circle');
-    Route::post('/circles/{circle}/members', [CircleActionController::class, 'addMember'])->name('circles.members.store')->whereNumber('circle');
-    Route::post('/circle-invitations/{invitation}/accept', [CircleActionController::class, 'acceptInvitation'])->name('circle-invitations.accept')->whereNumber('invitation');
-    Route::post('/circle-invitations/{invitation}/decline', [CircleActionController::class, 'declineInvitation'])->name('circle-invitations.decline')->whereNumber('invitation');
-    Route::delete('/circles/{circle}/invitations/{invitation}', [CircleActionController::class, 'cancelInvitation'])->name('circles.invitations.destroy')->whereNumber(['circle', 'invitation']);
-    Route::delete('/circles/{circle}/members/{user}', [CircleActionController::class, 'removeMember'])->name('circles.members.destroy');
-    Route::post('/circles/{circle}/leave', [CircleActionController::class, 'leave'])->name('circles.leave')->whereNumber('circle');
-
-    Route::get('/circles/{circle}/transfer-ownership', [CircleController::class, 'transferOwnership'])->name('circles.transfer-ownership')->whereNumber('circle');
-    Route::post('/circles/{circle}/ownership-transfer', [CircleActionController::class, 'initiateOwnershipTransfer'])->name('circles.ownership-transfer.store')->whereNumber('circle');
-    Route::delete('/circles/{circle}/ownership-transfer/{transfer}', [CircleActionController::class, 'cancelOwnershipTransfer'])->name('circles.ownership-transfer.destroy')->whereNumber(['circle', 'transfer']);
-    Route::post('/circle-ownership-transfers/{transfer}/accept', [CircleActionController::class, 'acceptOwnershipTransfer'])->name('circle-ownership-transfers.accept')->whereNumber('transfer');
-    Route::post('/circle-ownership-transfers/{transfer}/decline', [CircleActionController::class, 'declineOwnershipTransfer'])->name('circle-ownership-transfers.decline')->whereNumber('transfer');
 });
+
+// SPA shell — vangt alle overige routes (incl. /, /login, /spa-test/*, etc.).
+Route::get('/{any?}', fn () => view('spa'))
+    ->where('any', '^(?!api/|oauth/|media-proxy|native-media|posts/cropped-media|photos/map|profiles/[^/]+/photos/map|circles/[^/]+/photos/map).*$')
+    ->name('spa.shell');

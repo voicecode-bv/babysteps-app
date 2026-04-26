@@ -13,9 +13,13 @@ class SetLocale
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if ($request->user()?->locale) {
+        $supported = ['en', 'nl'];
+
+        if ($request->user()?->locale && in_array($request->user()->locale, $supported, true)) {
             app()->setLocale($request->user()->locale);
-        } elseif (session('locale')) {
+        } elseif (in_array($request->getPreferredLanguage($supported), $supported, true)) {
+            app()->setLocale($request->getPreferredLanguage($supported));
+        } elseif (session('locale') && in_array(session('locale'), $supported, true)) {
             app()->setLocale(session('locale'));
         }
 

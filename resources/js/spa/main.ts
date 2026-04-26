@@ -1,0 +1,114 @@
+import { flare } from '@flareapp/js';
+import { flareVue } from '@flareapp/vue';
+import { createApp } from 'vue';
+import { createPinia } from 'pinia';
+import App from '@/spa/App.vue';
+import { router } from '@/spa/router';
+import { ApiError, NetworkError, configureApiClient } from '@/spa/http/apiClient';
+import { configureExternalApi } from '@/spa/http/externalApi';
+import { useAuthStore } from '@/spa/stores/auth';
+import { useI18nStore } from '@/spa/stores/i18n';
+import { useServiceKeysStore } from '@/spa/stores/serviceKeys';
+import { useToastsStore } from '@/spa/stores/toasts';
+
+if (typeof window !== 'undefined' && import.meta.env.PROD) {
+    flare.light();
+}
+
+function inferInitialLocale(): string {
+    if (typeof window === 'undefined') {
+        return 'en';
+    }
+    const stored = window.localStorage?.getItem('spa.locale');
+    if (stored === 'en' || stored === 'nl') {
+        return stored;
+    }
+    const browser = (window.navigator?.language ?? '').slice(0, 2).toLowerCase();
+    return browser === 'nl' ? 'nl' : 'en';
+}
+
+async function bootstrap(): Promise<void> {
+    const app = createApp(App);
+    const pinia = createPinia();
+
+    app.use(pinia);
+
+    const auth = useAuthStore();
+    const i18n = useI18nStore();
+
+    const initialLocale = inferInitialLocale();
+    await i18n.load(initialLocale);
+
+    configureApiClient({
+        auth: () => ({
+            token: auth.token,
+            clear: () => auth.clear(),
+        }),
+        locale: () => i18n.locale,
+        onUnauthorized: () => {
+            router.push({ name: 'spa.login' });
+        },
+    });
+
+    try {
+        const data = await auth.bootstrap();
+        if (data.locale && data.locale !== i18n.locale) {
+            await i18n.load(data.locale);
+        }
+        configureExternalApi({
+            baseUrl: data.api_base,
+            auth: () => ({ token: auth.token, clear: () => auth.clear() }),
+            locale: () => i18n.locale,
+            onUnauthorized: () => {
+                router.push({ name: 'spa.login' });
+            },
+        });
+
+        // Pre-warm service-keys (Mapbox token etc.) parallel zodat de eerste
+        // Map-page bezoek niet hoeft te wachten op een netwerk-roundtrip.
+        if (auth.user) {
+            useServiceKeysStore().ensureLoaded().catch(() => null);
+        }
+    } catch {
+        // Bootstrap failed; route guards will redirect to login.
+    }
+
+    // Globale error-tap: laat onverwachte network/server fouten als toast zien.
+    // Validation/auth errors worden door pages zelf afgehandeld en niet hier
+    // doorgesluisd.
+    const toasts = useToastsStore();
+    const i18nStore = i18n;
+    app.config.errorHandler = (err) => {
+        if (err instanceof NetworkError) {
+            toasts.error(i18nStore.t('No internet connection'));
+            return;
+        }
+        if (err instanceof ApiError && err.status >= 500) {
+            toasts.error(i18nStore.t('Something went wrong. Please try again.'));
+            return;
+        }
+        if (import.meta.env.DEV) {
+            console.error(err);
+        }
+    };
+
+    app.use(router);
+    app.use(flareVue);
+
+    await router.isReady();
+
+    if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        if (url.searchParams.get('oauth') === 'success') {
+            url.searchParams.delete('oauth');
+            window.history.replaceState({}, '', url.toString());
+            if (auth.user) {
+                router.replace({ name: 'spa.home' });
+            }
+        }
+    }
+
+    app.mount('#spa-app');
+}
+
+bootstrap();

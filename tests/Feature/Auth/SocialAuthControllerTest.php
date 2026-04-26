@@ -32,7 +32,7 @@ it('stores the token and syncs the user on a successful callback', function () {
     $this->app->instance(ApiClient::class, $client);
 
     $this->get('/oauth/callback?token=good-token')
-        ->assertRedirect();
+        ->assertRedirect('/?oauth=success');
 
     $this->assertDatabaseHas('users', [
         'email' => 'jane@example.com',
@@ -42,19 +42,17 @@ it('stores the token and syncs the user on a successful callback', function () {
     Queue::assertPushed(SyncDeviceInfo::class);
 });
 
-it('surfaces an error when the callback contains an error query', function () {
+it('redirects to login with error query when callback has an error', function () {
     $this->get('/oauth/callback?error=oauth_failed')
-        ->assertRedirect(route('login'))
-        ->assertSessionHasErrors(['email']);
+        ->assertRedirect('/login?oauth_error=oauth_failed');
 });
 
-it('surfaces an error when the callback has no token', function () {
+it('redirects to login with missing_token error when no token is provided', function () {
     $this->get('/oauth/callback')
-        ->assertRedirect(route('login'))
-        ->assertSessionHasErrors(['email']);
+        ->assertRedirect('/login?oauth_error=missing_token');
 });
 
-it('clears the token and errors out when validateToken fails after storing', function () {
+it('clears the token and redirects with invalid_token error when validateToken fails', function () {
     $client = Mockery::mock(ApiClient::class);
     $client->shouldReceive('storeToken')->once()->with('bad-token')->andReturn(true);
     $client->shouldReceive('validateToken')->once()->andReturn(['valid' => false]);
@@ -63,8 +61,7 @@ it('clears the token and errors out when validateToken fails after storing', fun
     $this->app->instance(ApiClient::class, $client);
 
     $this->get('/oauth/callback?token=bad-token')
-        ->assertRedirect(route('login'))
-        ->assertSessionHasErrors(['email']);
+        ->assertRedirect('/login?oauth_error=invalid_token');
 
     $this->assertGuest();
 });
@@ -93,7 +90,7 @@ it('persists the pre-auth session locale when syncing the local user via social 
 
     $this->withSession(['locale' => 'nl'])
         ->get('/oauth/callback?token=good-token')
-        ->assertRedirect();
+        ->assertRedirect('/?oauth=success');
 
     expect(User::where('api_user_id', 42)->value('locale'))->toBe('nl');
 });
@@ -120,7 +117,7 @@ it('falls back to the API-provided locale when no session locale is set during s
 
     $this->app->instance(ApiClient::class, $client);
 
-    $this->get('/oauth/callback?token=good-token')->assertRedirect();
+    $this->get('/oauth/callback?token=good-token')->assertRedirect('/?oauth=success');
 
     expect(User::where('api_user_id', 42)->value('locale'))->toBe('nl');
 });
@@ -148,7 +145,7 @@ it('stores the token in the session and rotates the session id when the browser 
     $this->startSession();
     $preLoginSessionId = session()->getId();
 
-    $this->get('/oauth/callback?token=browser-token')->assertRedirect();
+    $this->get('/oauth/callback?token=browser-token')->assertRedirect('/?oauth=success');
 
     expect(session('api_token'))->toBe('browser-token');
     expect(session()->getId())->not->toBe($preLoginSessionId);

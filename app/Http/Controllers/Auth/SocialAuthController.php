@@ -18,17 +18,13 @@ class SocialAuthController extends Controller
     public function callback(Request $request): RedirectResponse
     {
         if ($request->filled('error')) {
-            return redirect()->route('login')->withErrors([
-                'email' => $this->errorMessage($request->string('error')->toString()),
-            ]);
+            return redirect('/login?oauth_error='.urlencode($request->string('error')->toString()));
         }
 
         $token = $request->string('token')->toString();
 
         if ($token === '') {
-            return redirect()->route('login')->withErrors([
-                'email' => __('Social sign-in failed'),
-            ]);
+            return redirect('/login?oauth_error=missing_token');
         }
 
         $this->apiClient->storeToken($token);
@@ -38,9 +34,7 @@ class SocialAuthController extends Controller
         if (! ($result['valid'] ?? false) || ! isset($result['user'])) {
             $this->apiClient->clearToken();
 
-            return redirect()->route('login')->withErrors([
-                'email' => __('Social sign-in failed'),
-            ]);
+            return redirect('/login?oauth_error=invalid_token');
         }
 
         $this->syncLocalUser($result['user']);
@@ -49,14 +43,6 @@ class SocialAuthController extends Controller
 
         $this->primeSettingsCache($this->apiClient);
 
-        return $this->postAuthRedirect($this->apiClient);
-    }
-
-    private function errorMessage(string $code): string
-    {
-        return match ($code) {
-            'missing_email' => __('Social sign-in failed: missing email'),
-            default => __('Social sign-in failed'),
-        };
+        return redirect('/?oauth=success');
     }
 }

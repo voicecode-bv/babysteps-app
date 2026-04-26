@@ -1,0 +1,121 @@
+import { withRetry } from '@/spa/http/retry';
+
+export class ApiError extends Error {
+    constructor(
+        public status: number,
+        public errors: Record<string, string[]> = {},
+        message: string,
+    ) {
+        super(message);
+    }
+}
+
+export class NetworkError extends Error {
+    constructor(message = 'Network error') {
+        super(message);
+    }
+}
+
+function isTransient(error: unknown): boolean {
+    if (error instanceof NetworkError) return true;
+    if (error instanceof ApiError) {
+        return error.status === 503 || error.status === 504 || error.status === 0;
+    }
+    return false;
+}
+
+interface AuthLike {
+    token: string | null;
+    clear(): void;
+}
+
+let authResolver: (() => AuthLike) | null = null;
+let localeResolver: (() => string) | null = null;
+let unauthorizedHandler: (() => void) | null = null;
+
+export function configureApiClient(opts: {
+    auth: () => AuthLike;
+    locale: () => string;
+    onUnauthorized: () => void;
+}): void {
+    authResolver = opts.auth;
+    localeResolver = opts.locale;
+    unauthorizedHandler = opts.onUnauthorized;
+}
+
+async function performCall<T>(method: string, url: string, body?: unknown): Promise<T> {
+    const auth = authResolver?.();
+    const locale = localeResolver?.();
+    const headers: Record<string, string> = { Accept: 'application/json' };
+
+    if (auth?.token) {
+        headers.Authorization = `Bearer ${auth.token}`;
+    }
+
+    if (locale) {
+        headers['Accept-Language'] = locale;
+    }
+
+    if (body !== undefined) {
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const xsrf = readCookie('XSRF-TOKEN');
+    if (xsrf) {
+        headers['X-XSRF-TOKEN'] = decodeURIComponent(xsrf);
+    }
+
+    let response: globalThis.Response;
+    try {
+        response = await fetch(url, {
+            method,
+            headers,
+            body: body !== undefined ? JSON.stringify(body) : undefined,
+            credentials: 'same-origin',
+        });
+    } catch {
+        throw new NetworkError();
+    }
+
+    if (response.status === 401) {
+        auth?.clear();
+        unauthorizedHandler?.();
+        throw new ApiError(401, {}, 'Unauthorized');
+    }
+
+    if (response.status === 422) {
+        const data = await response.json().catch(() => ({}));
+        throw new ApiError(422, data.errors ?? {}, data.message ?? 'Validation failed');
+    }
+
+    if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new ApiError(response.status, {}, data.message ?? `HTTP ${response.status}`);
+    }
+
+    if (response.status === 204) {
+        return undefined as T;
+    }
+
+    return (await response.json()) as T;
+}
+
+function call<T>(method: string, url: string, body?: unknown): Promise<T> {
+    // Alleen GETs retryen — mutaties zijn niet idempotent.
+    if (method === 'GET') {
+        return withRetry(() => performCall<T>(method, url, body), isTransient);
+    }
+    return performCall<T>(method, url, body);
+}
+
+function readCookie(name: string): string | null {
+    const match = document.cookie.match(new RegExp('(^|;\\s*)' + name + '=([^;]*)'));
+    return match ? match[2] : null;
+}
+
+export const api = {
+    get: <T>(url: string) => call<T>('GET', url),
+    post: <T>(url: string, body?: unknown) => call<T>('POST', url, body ?? {}),
+    put: <T>(url: string, body?: unknown) => call<T>('PUT', url, body ?? {}),
+    delete: <T>(url: string) => call<T>('DELETE', url),
+};
