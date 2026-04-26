@@ -333,5 +333,26 @@
     "Share a photo to get things started.": "Deel een foto om te beginnen.",
     "No tags yet. Create your first one below.": "Nog geen labels. Maak hieronder je eerste aan.",
 
-    "Create a circle to set it as a default for new posts.": "Maak een kring aan om die als standaard voor nieuwe berichten in te stellen."
+    "Create a circle to set it as a default for new posts.": "Maak een kring aan om die als standaard voor nieuwe berichten in te stellen.",
+
+    "Persons": "Personen",
+    "Add person": "Persoon toevoegen",
+    "Edit person": "Persoon bewerken",
+    "Remove person": "Persoon verwijderen",
+    "Add your first person": "Voeg je eerste persoon toe",
+    "No persons yet": "Nog geen personen",
+    "Add the people closest to you to tag them in your posts.": "Voeg de mensen die je dierbaar zijn toe om ze te taggen in je berichten.",
+    "Are you sure you want to remove \":name\"?": "Weet je zeker dat je \":name\" wilt verwijderen?",
+    "\":name\" is linked to :count posts. Removing this person also removes the link from those posts.": "\":name\" is gekoppeld aan :count berichten. Verwijderen haalt deze persoon ook van die berichten af.",
+    "Name": "Naam",
+    "Birthdate": "Geboortedatum",
+    "Change photo": "Foto wijzigen",
+    "Remove photo": "Foto verwijderen",
+    "Failed to add person": "Persoon toevoegen mislukt",
+    "Failed to update person": "Persoon bijwerken mislukt",
+    "Failed to upload photo": "Foto uploaden mislukt",
+    "Tag persons": "Personen taggen",
+    "No persons selected": "Geen personen geselecteerd",
+    "No persons yet. Add them in Settings → Persons.": "Nog geen personen. Voeg ze toe via Instellingen → Personen.",
+    "Remove": "Verwijderen"
 }

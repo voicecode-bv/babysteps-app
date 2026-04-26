@@ -23,6 +23,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Settings\AccountController;
 use App\Http\Controllers\Settings\DefaultCircleController;
 use App\Http\Controllers\Settings\NotificationPreferenceController;
+use App\Http\Controllers\Settings\PersonController;
 use App\Http\Controllers\Settings\TagController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\TagActionController;
@@ -94,6 +95,13 @@ Route::middleware(['auth.token', HandleNativeEdge::class, EnsureOnboarded::class
     Route::get('/settings/tags', [TagController::class, 'show'])->name('settings.tags');
     Route::put('/tags/{tag}', [TagController::class, 'update'])->name('tags.update')->whereNumber('tag');
     Route::delete('/tags/{tag}', [TagController::class, 'destroy'])->name('tags.destroy')->whereNumber('tag');
+
+    Route::get('/settings/persons', [PersonController::class, 'show'])->name('settings.persons');
+    Route::post('/persons', [PersonController::class, 'store'])->name('persons.store');
+    Route::put('/persons/{person}', [PersonController::class, 'update'])->name('persons.update')->whereNumber('person');
+    Route::delete('/persons/{person}', [PersonController::class, 'destroy'])->name('persons.destroy')->whereNumber('person');
+    Route::post('/persons/{person}/photo', [PersonController::class, 'updatePhoto'])->name('persons.update-photo')->whereNumber('person');
+    Route::delete('/persons/{person}/photo', [PersonController::class, 'deletePhoto'])->name('persons.delete-photo')->whereNumber('person');
 
     Route::get('/settings/notifications', [NotificationPreferenceController::class, 'show'])->name('settings.notifications');
     Route::put('/settings/notifications', [NotificationPreferenceController::class, 'update'])->name('settings.notifications.update');

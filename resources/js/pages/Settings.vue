@@ -34,6 +34,17 @@ const page = usePage();
 
 const currentLocale = computed(() => page.props.locale as string);
 
+const languageIconStyle = computed(() => ({
+    maskImage: `url(${globeIcon})`,
+    WebkitMaskImage: `url(${globeIcon})`,
+    maskSize: 'contain',
+    WebkitMaskSize: 'contain',
+    maskRepeat: 'no-repeat',
+    WebkitMaskRepeat: 'no-repeat',
+    maskPosition: 'center',
+    WebkitMaskPosition: 'center',
+}));
+
 const isEditingBio = ref(false);
 const bioForm = useForm({ bio: props.profile.bio ?? '' });
 
@@ -188,30 +199,28 @@ onUnmounted(() => {
                 </SurfaceCard>
 
                 <!-- Language -->
-                <SurfaceCard>
-                    <h3 class="mb-3 flex items-center gap-3 text-sm font-semibold text-sand-900 dark:text-sand-100">
-                        <IconTile :icon="globeIcon" size="sm" tone="sage" />
+                <div class="flex items-center justify-between gap-3 px-2">
+                    <span class="flex items-center gap-2 text-xs font-medium text-sand-500 dark:text-sand-400">
+                        <span aria-hidden="true" class="inline-block size-3.5 bg-current" :style="languageIconStyle"></span>
                         {{ t('Language') }}
-                    </h3>
-                    <div class="flex gap-2">
-                        <Button
-                            block
-                            size="lg"
-                            :variant="currentLocale === 'nl' ? 'primary' : 'secondary'"
+                    </span>
+                    <div class="flex items-center gap-1 rounded-full bg-sand-100/70 p-0.5 text-xs font-medium dark:bg-sand-800/60">
+                        <button
+                            class="rounded-full px-3 py-1 transition"
+                            :class="currentLocale === 'nl' ? 'bg-white text-teal shadow-sm dark:bg-sand-900 dark:text-sand-100' : 'text-sand-500 dark:text-sand-400'"
                             @click="setLocale('nl')"
                         >
-                            Nederlands
-                        </Button>
-                        <Button
-                            block
-                            size="lg"
-                            :variant="currentLocale === 'en' ? 'primary' : 'secondary'"
+                            NL
+                        </button>
+                        <button
+                            class="rounded-full px-3 py-1 transition"
+                            :class="currentLocale === 'en' ? 'bg-white text-teal shadow-sm dark:bg-sand-900 dark:text-sand-100' : 'text-sand-500 dark:text-sand-400'"
                             @click="setLocale('en')"
                         >
-                            English
-                        </Button>
+                            EN
+                        </button>
                     </div>
-                </SurfaceCard>
+                </div>
 
                 <!-- Default circles link -->
                 <Link :href="'/settings/default-circles'" class="block">
@@ -228,13 +237,13 @@ onUnmounted(() => {
                     </SurfaceCard>
                 </Link>
 
-                <!-- Notifications link -->
-                <Link :href="'/settings/notifications'" class="block">
+                <!-- Persons link -->
+                <Link :href="'/settings/persons'" class="block">
                     <SurfaceCard>
                         <div class="flex items-center justify-between gap-3">
                             <span class="flex items-center gap-3 text-sm font-semibold text-sand-900 dark:text-sand-100">
-                                <IconTile :icon="bellIcon" size="sm" tone="sage" />
-                                {{ t('Push notifications') }}
+                                <IconTile :icon="usersIcon" size="sm" tone="sage" />
+                                {{ t('Persons') }}
                             </span>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5 text-sand-500 dark:text-sand-400">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
@@ -250,6 +259,21 @@ onUnmounted(() => {
                             <span class="flex items-center gap-3 text-sm font-semibold text-sand-900 dark:text-sand-100">
                                 <IconTile :icon="tagIcon" size="sm" tone="sage" />
                                 {{ t('Tags') }}
+                            </span>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5 text-sand-500 dark:text-sand-400">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                            </svg>
+                        </div>
+                    </SurfaceCard>
+                </Link>
+
+                <!-- Notifications link -->
+                <Link :href="'/settings/notifications'" class="block">
+                    <SurfaceCard>
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="flex items-center gap-3 text-sm font-semibold text-sand-900 dark:text-sand-100">
+                                <IconTile :icon="bellIcon" size="sm" tone="sage" />
+                                {{ t('Push notifications') }}
                             </span>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5 text-sand-500 dark:text-sand-400">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />

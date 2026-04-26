@@ -226,21 +226,18 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
                                     </form>
                                 </template>
                                 <div v-else class="flex items-center gap-3">
-                                    <IconTile :icon="tagIcon" size="sm" tone="sage" />
-                                    <div class="min-w-0 flex-1">
-                                        <p class="truncate text-base font-semibold text-sand-900 dark:text-sand-100">{{ tag.name }}</p>
-                                        <p class="text-xs text-sand-500 dark:text-sand-400">
-                                            {{ tag.usage_count === 1 ? t(':count post', { count: tag.usage_count }) : t(':count posts', { count: tag.usage_count }) }}
-                                        </p>
-                                    </div>
                                     <button
-                                        class="flex size-9 items-center justify-center rounded-lg text-sand-500 transition hover:bg-sand-100 hover:text-teal dark:text-sand-400 dark:hover:bg-sand-700/60"
+                                        class="flex min-w-0 flex-1 items-center gap-3 text-left"
                                         :aria-label="t('Edit tag')"
                                         @click="startEdit(tag)"
                                     >
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
-                                        </svg>
+                                        <IconTile :icon="tagIcon" size="sm" tone="sage" />
+                                        <div class="min-w-0 flex-1">
+                                            <p class="truncate text-base font-semibold text-sand-900 dark:text-sand-100">{{ tag.name }}</p>
+                                            <p class="text-xs text-sand-500 dark:text-sand-400">
+                                                {{ tag.usage_count === 1 ? t(':count post', { count: tag.usage_count }) : t(':count posts', { count: tag.usage_count }) }}
+                                            </p>
+                                        </div>
                                     </button>
                                     <button
                                         class="flex size-9 items-center justify-center rounded-lg text-sand-500 transition hover:bg-blush-50 hover:text-blush-500 dark:text-sand-400 dark:hover:bg-blush-900/30"

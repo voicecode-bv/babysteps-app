@@ -5,8 +5,9 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { store } from '@/actions/App/Http/Controllers/PostActionController';
 import CirclePicker from '@/components/CirclePicker.vue';
 import ImageCropModal from '@/components/ImageCropModal.vue';
+import PersonPicker from '@/components/PersonPicker.vue';
 import TagSelector from '@/components/TagSelector.vue';
-import { type ExifData } from '@/composables/useExif';
+import type {ExifData} from '@/composables/useExif';
 import { useTranslations } from '@/composables/useTranslations';
 import AppLayout from '@/layouts/AppLayout.vue';
 import cameraIcon from '../../svg/doodle-icons/camera.svg';
@@ -42,16 +43,25 @@ interface Tag {
     usage_count?: number;
 }
 
+interface Person {
+    id: number;
+    name: string;
+    avatar?: string | null;
+    avatar_thumbnail?: string | null;
+}
+
 const props = withDefaults(
     defineProps<{
         circles?: Circle[] | null;
         defaultCircleIds?: number[] | null;
         tags?: Tag[] | null;
+        persons?: Person[] | null;
     }>(),
     {
         circles: () => [],
         defaultCircleIds: () => [],
         tags: () => [],
+        persons: () => [],
     },
 );
 
@@ -65,12 +75,14 @@ const availableCircleIds = circles.value.map((c) => c.id);
 const initialCircleIds = defaultCircleIds.value.filter((id) => availableCircleIds.includes(id));
 
 const availableTags = computed<Tag[]>(() => props.tags ?? []);
+const availablePersons = computed<Person[]>(() => props.persons ?? []);
 
 const form = useForm({
     media_path: null as string | null,
     caption: '',
     circle_ids: initialCircleIds,
     tag_ids: [] as number[],
+    person_ids: [] as number[],
 });
 
 const mediaPreview = ref<string | null>(null);
@@ -215,7 +227,14 @@ onUnmounted(() => {
 });
 
 function submit() {
-    form.post(store.url());
+    form
+        .transform((data) => ({
+            media_path: data.media_path,
+            caption: data.caption,
+            circle_ids: data.circle_ids,
+            tag_ids: [...data.tag_ids, ...data.person_ids],
+        }))
+        .post(store.url());
 }
 </script>
 
@@ -291,6 +310,15 @@ function submit() {
                         :selected-ids="form.tag_ids"
                         :error="form.errors.tag_ids"
                         @update:selected-ids="form.tag_ids = $event"
+                    />
+                </section>
+
+                <!-- Persons -->
+                <section class="rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm dark:bg-sand-800/60">
+                    <PersonPicker
+                        :persons="availablePersons"
+                        :selected-ids="form.person_ids"
+                        @update:selected-ids="form.person_ids = $event"
                     />
                 </section>
 

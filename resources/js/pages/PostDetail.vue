@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { Link, router, usePage } from '@inertiajs/vue3';
+import { Dialog, Events, Off, On } from '@nativephp/mobile';
+import mapboxgl from 'mapbox-gl';
+import { computed, onBeforeUnmount, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 import CommentsSheet from '@/components/CommentsSheet.vue';
 import EditPostModal from '@/components/EditPostModal.vue';
 import LikesSheet from '@/components/LikesSheet.vue';
@@ -7,13 +11,9 @@ import { usePullToRefresh } from '@/composables/usePullToRefresh';
 import { useTranslations } from '@/composables/useTranslations';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { Comment } from '@/types/comment';
-import { Link, router, usePage } from '@inertiajs/vue3';
-import { Dialog, Events, Off, On } from '@nativephp/mobile';
-import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { computed, onBeforeUnmount, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
-import heartIcon from '../../svg/doodle-icons/heart.svg';
 import heartFilledIcon from '../../svg/doodle-icons/heart-filled.svg';
+import heartIcon from '../../svg/doodle-icons/heart.svg';
 import messageIcon from '../../svg/doodle-icons/message.svg';
 import pencilIcon from '../../svg/doodle-icons/pencil-3.svg';
 import tagIcon from '../../svg/doodle-icons/tag.svg';
@@ -46,7 +46,11 @@ interface Circle {
 
 interface Tag {
     id: number;
+    type?: string;
     name: string;
+    birthdate?: string | null;
+    avatar_thumbnail?: string | null;
+    avatar?: string | null;
     usage_count?: number;
 }
 
@@ -76,13 +80,18 @@ const props = withDefaults(
         mapboxToken?: string | null;
         availableCircles?: Circle[] | null;
         availableTags?: Tag[] | null;
+        availablePersons?: Tag[] | null;
     }>(),
     {
         mapboxToken: null,
         availableCircles: () => [],
         availableTags: () => [],
+        availablePersons: () => [],
     },
 );
+
+const visibleTags = computed(() => (props.post.tags ?? []).filter((tag) => (tag.type ?? 'tag') === 'tag'));
+const visiblePersons = computed(() => (props.post.tags ?? []).filter((tag) => tag.type === 'person'));
 
 const { t } = useTranslations();
 
@@ -104,12 +113,16 @@ const videoRef = ref<HTMLVideoElement>();
 const mediaLoaded = ref(false);
 
 const isCaptionTruncatable = computed(() => {
-    if (!props.post.caption) return false;
+    if (!props.post.caption) {
+        return false;
+    }
+
     return props.post.caption.length > 100 || props.post.caption.includes('\n');
 });
 
 function toggleMute() {
     isMuted.value = !isMuted.value;
+
     if (videoRef.value) {
         videoRef.value.muted = isMuted.value;
     }
@@ -121,6 +134,7 @@ function toggleFullscreen() {
 
 watch(isFullscreen, (val) => {
     const scrollContainer = document.querySelector('main[scroll-region]') as HTMLElement | null;
+
     if (scrollContainer) {
         scrollContainer.style.overflow = val ? 'hidden' : '';
     }
@@ -215,8 +229,10 @@ onMounted(() => {
 onUnmounted(() => {
     Off(Events.Alert.ButtonPressed, handleButtonPressed);
     document.removeEventListener('keydown', handleKeydown);
+
     if (isFullscreen.value) {
         const scrollContainer = document.querySelector('main[scroll-region]') as HTMLElement | null;
+
         if (scrollContainer) {
             scrollContainer.style.overflow = '';
         }
@@ -228,22 +244,38 @@ function timeAgo(dateString: string): string {
     const now = new Date();
     const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-    if (seconds < 60) return t('just now');
-    if (seconds < 3600) return t(':count min ago', { count: Math.floor(seconds / 60) });
-    if (seconds < 86400) return t(':count hours ago', { count: Math.floor(seconds / 3600) });
+    if (seconds < 60) {
+        return t('just now');
+    }
+
+    if (seconds < 3600) {
+        return t(':count min ago', { count: Math.floor(seconds / 60) });
+    }
+
+    if (seconds < 86400) {
+        return t(':count hours ago', { count: Math.floor(seconds / 3600) });
+    }
+
     if (seconds < 604800) {
         const days = Math.floor(seconds / 86400);
+
         return t(days === 1 ? ':count day ago' : ':count days ago', { count: days });
     }
+
     if (seconds < 2592000) {
         const weeks = Math.floor(seconds / 604800);
+
         return t(weeks === 1 ? ':count week ago' : ':count weeks ago', { count: weeks });
     }
+
     if (seconds < 31536000) {
         const months = Math.floor(seconds / 2592000);
+
         return t(months === 1 ? ':count month ago' : ':count months ago', { count: months });
     }
+
     const years = Math.floor(seconds / 31536000);
+
     return t(years === 1 ? ':count year ago' : ':count years ago', { count: years });
 }
 </script>
@@ -265,7 +297,7 @@ function timeAgo(dateString: string): string {
             </button>
         </template>
 
-        <div class="mt-10 pb-10">
+        <div class="mt-10 pb-24">
             <PullToRefreshIndicator :pull-distance="pullDistance" :is-refreshing="isRefreshing" />
 
             <div>
@@ -445,8 +477,34 @@ function timeAgo(dateString: string): string {
                     </div>
                 </div>
 
+                <!-- Persons -->
+                <div v-if="visiblePersons.length > 0" class="bg-white px-4 pt-4 dark:bg-sand-900">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span
+                            v-for="person in visiblePersons"
+                            :key="person.id"
+                            class="inline-flex items-center gap-1.5 rounded-full bg-sand-100 px-1 py-1 pr-3 text-xs font-semibold text-sand-800 dark:bg-sand-800 dark:text-sand-100"
+                        >
+                            <img
+                                v-if="person.avatar_thumbnail"
+                                :src="person.avatar_thumbnail"
+                                :alt="person.name"
+                                class="size-6 rounded-full object-cover"
+                            />
+                            <span
+                                v-else
+                                aria-hidden="true"
+                                class="flex size-6 items-center justify-center rounded-full bg-sage-100 text-teal dark:bg-sage-900/40"
+                            >
+                                <span class="inline-block size-3.5 bg-current" :style="iconMaskStyle(tagIcon)"></span>
+                            </span>
+                            {{ person.name }}
+                        </span>
+                    </div>
+                </div>
+
                 <!-- Tags -->
-                <div v-if="post.tags && post.tags.length > 0" class="bg-white px-4 pt-4 dark:bg-sand-900">
+                <div v-if="visibleTags.length > 0" class="bg-white px-4 pt-4 dark:bg-sand-900">
                     <div class="flex flex-wrap items-center gap-2">
                         <span
                             aria-hidden="true"
@@ -454,7 +512,7 @@ function timeAgo(dateString: string): string {
                             :style="iconMaskStyle(tagIcon)"
                         ></span>
                         <span
-                            v-for="tag in post.tags"
+                            v-for="tag in visibleTags"
                             :key="tag.id"
                             class="rounded-full bg-linear-to-r from-sage-100 to-teal-muted/30 px-3 py-1 text-xs font-semibold text-teal ring-1 ring-inset ring-teal/15 dark:from-sage-900/40 dark:to-teal-muted/15 dark:text-sage-200 dark:ring-sage-700/40"
                         >
@@ -503,6 +561,7 @@ function timeAgo(dateString: string): string {
             :available-circles="availableCircles"
             :tags="post.tags ?? []"
             :available-tags="availableTags"
+            :available-persons="availablePersons"
             @update:open="isEditModalOpen = $event"
         />
     </AppLayout>

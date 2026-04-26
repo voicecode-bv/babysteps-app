@@ -323,5 +323,26 @@
     "React with hearts, leave comments, and keep in touch. Calmly, privately, together.": "React with hearts, leave comments, and keep in touch. Calmly, privately, together.",
 
     "Default circles": "Default circles",
-    "Create a circle to set it as a default for new posts.": "Create a circle to set it as a default for new posts."
+    "Create a circle to set it as a default for new posts.": "Create a circle to set it as a default for new posts.",
+
+    "Persons": "Persons",
+    "Add person": "Add person",
+    "Edit person": "Edit person",
+    "Remove person": "Remove person",
+    "Add your first person": "Add your first person",
+    "No persons yet": "No persons yet",
+    "Add the people closest to you to tag them in your posts.": "Add the people closest to you to tag them in your posts.",
+    "Are you sure you want to remove \":name\"?": "Are you sure you want to remove \":name\"?",
+    "\":name\" is linked to :count posts. Removing this person also removes the link from those posts.": "\":name\" is linked to :count posts. Removing this person also removes the link from those posts.",
+    "Name": "Name",
+    "Birthdate": "Birthdate",
+    "Change photo": "Change photo",
+    "Remove photo": "Remove photo",
+    "Failed to add person": "Failed to add person",
+    "Failed to update person": "Failed to update person",
+    "Failed to upload photo": "Failed to upload photo",
+    "Tag persons": "Tag persons",
+    "No persons selected": "No persons selected",
+    "No persons yet. Add them in Settings → Persons.": "No persons yet. Add them in Settings → Persons.",
+    "Remove": "Remove"
 }

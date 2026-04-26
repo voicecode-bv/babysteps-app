@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import BottomSheet from '@/components/BottomSheet.vue';
-import CirclePicker from '@/components/CirclePicker.vue';
-import TagSelector from '@/components/TagSelector.vue';
-import { update } from '@/actions/App/Http/Controllers/PostActionController';
-import { useTranslations } from '@/composables/useTranslations';
 import { useForm } from '@inertiajs/vue3';
 import { computed, watch } from 'vue';
+import { update } from '@/actions/App/Http/Controllers/PostActionController';
+import BottomSheet from '@/components/BottomSheet.vue';
+import CirclePicker from '@/components/CirclePicker.vue';
+import PersonPicker from '@/components/PersonPicker.vue';
+import TagSelector from '@/components/TagSelector.vue';
+import { useTranslations } from '@/composables/useTranslations';
 
 interface Circle {
     id: number;
@@ -18,8 +19,11 @@ interface Circle {
 
 interface Tag {
     id: number;
+    type?: string;
     name: string;
     usage_count?: number;
+    avatar_thumbnail?: string | null;
+    avatar?: string | null;
 }
 
 const props = withDefaults(
@@ -31,11 +35,13 @@ const props = withDefaults(
         availableCircles?: Circle[] | null;
         tags?: Tag[] | null;
         availableTags?: Tag[] | null;
+        availablePersons?: Tag[] | null;
     }>(),
     {
         availableCircles: () => [],
         tags: () => [],
         availableTags: () => [],
+        availablePersons: () => [],
     },
 );
 
@@ -45,26 +51,48 @@ const emit = defineEmits<{
 
 const { t } = useTranslations();
 
+const initialTagIds = (props.tags ?? []).filter((t) => (t.type ?? 'tag') === 'tag').map((t) => t.id);
+const initialPersonIds = (props.tags ?? []).filter((t) => t.type === 'person').map((t) => t.id);
+
 const form = useForm({
     caption: props.caption ?? '',
     circle_ids: props.circles.map((c) => c.id),
-    tag_ids: (props.tags ?? []).map((t) => t.id),
+    tag_ids: initialTagIds,
+    person_ids: initialPersonIds,
 });
 
 const availableCircles = computed<Circle[]>(() => props.availableCircles ?? []);
 const availableTags = computed<Tag[]>(() => props.availableTags ?? []);
+const availablePersons = computed<Tag[]>(() => props.availablePersons ?? []);
 
 function sameIds(a: number[], b: number[]): boolean {
-    if (a.length !== b.length) return false;
+    if (a.length !== b.length) {
+        return false;
+    }
+
     const sortedA = [...a].sort();
     const sortedB = [...b].sort();
+
     return sortedA.every((id, i) => id === sortedB[i]);
 }
 
 const hasChanges = computed(() => {
-    if ((form.caption ?? '') !== (props.caption ?? '')) return true;
-    if (!sameIds(form.circle_ids, props.circles.map((c) => c.id))) return true;
-    if (!sameIds(form.tag_ids, (props.tags ?? []).map((t) => t.id))) return true;
+    if ((form.caption ?? '') !== (props.caption ?? '')) {
+        return true;
+    }
+
+    if (!sameIds(form.circle_ids, props.circles.map((c) => c.id))) {
+        return true;
+    }
+
+    if (!sameIds(form.tag_ids, initialTagIds)) {
+        return true;
+    }
+
+    if (!sameIds(form.person_ids, initialPersonIds)) {
+        return true;
+    }
+
     return false;
 });
 
@@ -73,13 +101,19 @@ const canSave = computed(() => form.circle_ids.length > 0 && hasChanges.value &&
 watch(
     () => props.open,
     (isOpen) => {
-        if (!isOpen) return;
+        if (!isOpen) {
+            return;
+        }
+
+        const tagIds = (props.tags ?? []).filter((t) => (t.type ?? 'tag') === 'tag').map((t) => t.id);
+        const personIds = (props.tags ?? []).filter((t) => t.type === 'person').map((t) => t.id);
 
         form.clearErrors();
         form.defaults({
             caption: props.caption ?? '',
             circle_ids: props.circles.map((c) => c.id),
-            tag_ids: (props.tags ?? []).map((t) => t.id),
+            tag_ids: tagIds,
+            person_ids: personIds,
         });
         form.reset();
     },
@@ -98,10 +132,16 @@ function onSheetUpdate(value: boolean) {
 }
 
 function submit() {
-    form.put(update.url(props.postId), {
-        preserveScroll: true,
-        onSuccess: () => close(),
-    });
+    form
+        .transform((data) => ({
+            caption: data.caption,
+            circle_ids: data.circle_ids,
+            tag_ids: [...data.tag_ids, ...data.person_ids],
+        }))
+        .put(update.url(props.postId), {
+            preserveScroll: true,
+            onSuccess: () => close(),
+        });
 }
 </script>
 
@@ -149,6 +189,14 @@ function submit() {
                     :selected-ids="form.tag_ids"
                     :error="form.errors.tag_ids"
                     @update:selected-ids="form.tag_ids = $event"
+                />
+            </section>
+
+            <section v-if="availablePersons.length > 0">
+                <PersonPicker
+                    :persons="availablePersons"
+                    :selected-ids="form.person_ids"
+                    @update:selected-ids="form.person_ids = $event"
                 />
             </section>
         </div>

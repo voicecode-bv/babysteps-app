@@ -1,13 +1,13 @@
 <script setup lang="ts">
+import { router, useForm, usePage } from '@inertiajs/vue3';
+import { Dialog, Events, Off, On } from '@nativephp/mobile';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import AccountController from '@/actions/App/Http/Controllers/Settings/AccountController';
 import Button from '@/components/Button.vue';
 import IconTile from '@/components/IconTile.vue';
 import SurfaceCard from '@/components/SurfaceCard.vue';
 import { useTranslations } from '@/composables/useTranslations';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { router, useForm, usePage } from '@inertiajs/vue3';
-import { Dialog, Events, Off, On } from '@nativephp/mobile';
-import { computed, onMounted, onUnmounted, ref } from 'vue';
 import downloadIcon from '../../../svg/doodle-icons/arrow-circle-down.svg';
 import userDeleteIcon from '../../../svg/doodle-icons/user-delete.svg';
 

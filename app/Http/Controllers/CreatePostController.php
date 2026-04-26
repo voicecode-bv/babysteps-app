@@ -13,7 +13,13 @@ class CreatePostController extends Controller
         return Inertia::render('CreatePost', [
             'circles' => $apiClient->get('/circles')->json('data'),
             'defaultCircleIds' => $apiClient->get('/default-circles')->json('data') ?? [],
-            'tags' => fn () => $apiClient->get('/tags')->json('data') ?? [],
+            'tags' => array_values(array_filter(
+                $apiClient->get('/tags?type=tag')->json('data') ?? [],
+                fn ($tag) => ($tag['type'] ?? 'tag') === 'tag',
+            )),
+            'persons' => $apiClient->proxyMediaUrls(
+                $apiClient->get('/tags?type=person')->json('data') ?? []
+            ) ?? [],
         ]);
     }
 }
