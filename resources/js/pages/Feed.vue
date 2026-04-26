@@ -124,14 +124,6 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
                                 <span aria-hidden="true" class="inline-block size-7 bg-sand-600 dark:bg-sand-300" :style="iconMaskStyle(userIcon)"></span>
                             </div>
                         </div>
-                        <div
-                            v-if="!circle.is_owner && !circle.members_can_invite"
-                            class="absolute bottom-0 right-0 flex size-5 items-center justify-center rounded-full bg-teal ring-2 ring-white dark:ring-sand-900"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="size-3 text-white">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
-                            </svg>
-                        </div>
                     </div>
                     <span class="max-w-16 truncate text-[10px] font-medium text-sand-700 dark:text-sand-300">{{ circle.name }}</span>
                 </Link>
