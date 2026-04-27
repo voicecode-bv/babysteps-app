@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useTranslations } from '@/spa/composables/useTranslations';
-import { computed, ref, useSlots } from 'vue';
+import { computed, nextTick, onMounted, ref, useSlots } from 'vue';
 
 const props = withDefaults(defineProps<{
     showHeader?: boolean;
@@ -15,6 +15,36 @@ const slots = useSlots();
 const hasHeaderLeft = computed(() => !!slots['header-left']);
 
 const mainRef = ref<HTMLElement | null>(null);
+
+// Bij elke nieuwe mount: scroll-positie naar 0 én forceer een paint-pass.
+// vue-router's `scrollBehavior` werkt niet voor onze custom scroll-container,
+// en WKWebView toont na route-transities soms een lege pagina tot er
+// gescrollt wordt — beide opgelost door deze reset.
+function resetScroll(): void {
+    if (mainRef.value) {
+        mainRef.value.scrollTop = 0;
+    }
+    if (typeof window !== 'undefined') {
+        window.scrollTo(0, 0);
+        if (document.documentElement) document.documentElement.scrollTop = 0;
+        if (document.body) document.body.scrollTop = 0;
+    }
+}
+
+onMounted(async () => {
+    // Drie ronden: direct, na nextTick, na rAF — dekt zowel "DOM staat al klaar"
+    // als "transition rondt nog af". WKWebView reageert pas met een paint
+    // op één van deze.
+    resetScroll();
+    await nextTick();
+    resetScroll();
+    if (typeof requestAnimationFrame !== 'undefined') {
+        requestAnimationFrame(() => {
+            resetScroll();
+            requestAnimationFrame(resetScroll);
+        });
+    }
+});
 
 defineExpose({ mainRef });
 </script>
@@ -38,7 +68,11 @@ defineExpose({ mainRef });
 
         <slot name="above" />
 
-        <main ref="mainRef" class="pt-[var(--inset-top)] flex h-dvh flex-col flex-1 overflow-y-auto">
+        <main
+            ref="mainRef"
+            class="pt-[var(--inset-top)] flex h-dvh flex-col flex-1 overflow-y-auto"
+            style="transform: translate3d(0, 0, 0); will-change: transform;"
+        >
             <slot />
         </main>
     </div>

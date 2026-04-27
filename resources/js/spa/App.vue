@@ -26,9 +26,7 @@ useNetworkStatus();
             leave-from-class="opacity-100"
             leave-to-class="opacity-0"
         >
-            <Suspense>
-                <component :is="Component" />
-            </Suspense>
+            <component :is="Component" />
         </Transition>
     </RouterView>
     <ToastContainer />
