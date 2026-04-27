@@ -311,7 +311,7 @@ function maskStyle(icon: string) {
             </div>
         </template>
 
-        <div class="relative mt-10 min-h-full pb-[calc(theme(spacing.24)+env(safe-area-inset-bottom))]">
+        <div class="relative mt-10 pb-24">
             <PullToRefreshIndicator :pull-distance="pullDistance" :is-refreshing="isRefreshing" />
 
             <div v-if="circle" class="relative space-y-4 px-4 pt-4 pb-24">

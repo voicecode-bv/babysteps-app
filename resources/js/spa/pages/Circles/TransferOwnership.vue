@@ -149,7 +149,7 @@ onUnmounted(() => {
             </button>
         </template>
 
-        <div class="relative mt-10 min-h-full pb-[calc(theme(spacing.24)+env(safe-area-inset-bottom))]">
+        <div class="relative mt-10 pb-24">
             <div class="relative space-y-4 px-4 pt-4 pb-24">
                 <SurfaceCard>
                     <div class="flex items-start gap-3">
