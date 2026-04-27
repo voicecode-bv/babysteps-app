@@ -11,6 +11,7 @@ import { useTranslations } from '@/spa/composables/useTranslations';
 import { useApiForm } from '@/spa/composables/useApiForm';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useToastsStore } from '@/spa/stores/toasts';
+import { useAuthStore } from '@/spa/stores/auth';
 import { useCirclesStore } from '@/spa/stores/circles';
 import { externalApi } from '@/spa/http/externalApi';
 import { api } from '@/spa/http/apiClient';
@@ -51,6 +52,7 @@ const { t } = useTranslations();
 const route = useRoute();
 const router = useRouter();
 const toasts = useToastsStore();
+const auth = useAuthStore();
 const circlesStore = useCirclesStore();
 
 const circleId = computed(() => Number(route.params.circle));
@@ -214,9 +216,16 @@ async function handleButtonPressed(payload: { index: number; label: string; id?:
         }
     }
     if (payload.id === 'leave-circle-confirm' && payload.index === 1) {
+        const userId = auth.user?.id;
+        if (!userId) {
+            toasts.error(t('Failed to leave circle'));
+            return;
+        }
         isLeaving.value = true;
         try {
-            await externalApi.post(`/circles/${circleId.value}/leave`);
+            // Verlaten = je eigen lidmaatschap verwijderen via dezelfde route
+            // die ook eigenaren gebruiken om members te verwijderen.
+            await externalApi.delete(`/circles/${circleId.value}/members/${userId}`);
             circlesStore.remove(circleId.value);
             toasts.success(t('Left circle'));
             router.push({ name: 'spa.circles.index' });

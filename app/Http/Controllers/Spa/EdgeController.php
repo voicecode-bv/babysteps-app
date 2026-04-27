@@ -3,17 +3,12 @@
 namespace App\Http\Controllers\Spa;
 
 use App\Http\Controllers\Controller;
-use App\Services\ApiClient;
-use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Native\Mobile\Edge\Edge;
 
 class EdgeController extends Controller
 {
-    public function __construct(protected ApiClient $apiClient) {}
-
     public function setActiveTab(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -22,15 +17,17 @@ class EdgeController extends Controller
 
         $path = $this->normalizePath($validated['path']);
 
-        if ($this->isOnboardingPath($path)) {
+        if ($this->shouldHideBottomNav($path)) {
             Edge::clear();
 
             return response()->json(['cleared' => true]);
         }
 
         $activeTab = $this->resolveActiveTab($path);
+        $mapUrl = $this->resolveMapUrl($path);
+        $profileUrl = $this->resolveProfileUrl($request);
 
-        $this->setupBottomNav($activeTab);
+        $this->setupBottomNav($activeTab, $mapUrl, $profileUrl);
 
         return response()->json(['active' => $activeTab]);
     }
@@ -47,42 +44,51 @@ class EdgeController extends Controller
         return str_starts_with($path, '/onboarding/');
     }
 
+    protected function shouldHideBottomNav(string $path): bool
+    {
+        // Onboarding + de create-post wizard nemen de volledige hoogte: de
+        // native bottom-bar zit in de weg van hun eigen sticky footer.
+        return $this->isOnboardingPath($path) || $path === '/posts/create';
+    }
+
     protected function resolveActiveTab(string $path): string
     {
         return match (true) {
             $path === '/' => 'home',
+            $path === '/map' => 'map',
+            preg_match('#^/circles/\d+/map$#', $path) === 1 => 'map',
+            preg_match('#^/profiles/[^/]+/map$#', $path) === 1 => 'map',
             str_starts_with($path, '/circles') => 'circles',
             $path === '/posts/create' => 'add',
-            str_starts_with($path, '/notifications') => 'notifications',
-            str_starts_with($path, '/settings') => 'settings',
+            str_starts_with($path, '/profiles/') => 'profile',
             default => 'home',
         };
     }
 
-    protected function getUnreadNotificationCount(): int
+    protected function resolveMapUrl(string $path): string
     {
-        $count = Cache::get('unread_notification_count');
-
-        if ($count !== null) {
-            return $count;
+        if (preg_match('#^/circles/(\d+)(?:/.*)?$#', $path, $matches) === 1) {
+            return url('/circles/'.$matches[1].'/map');
         }
 
-        try {
-            $response = $this->apiClient->get('/notifications/unread-count');
-            $count = $response->successful() ? (int) $response->json('count', 0) : 0;
-        } catch (ConnectionException) {
-            $count = 0;
+        if (preg_match('#^/profiles/([^/]+)(?:/.*)?$#', $path, $matches) === 1) {
+            return url('/profiles/'.$matches[1].'/map');
         }
 
-        Cache::put('unread_notification_count', $count, 60);
-
-        return $count;
+        return url('/map');
     }
 
-    protected function setupBottomNav(string $activeTab): void
+    protected function resolveProfileUrl(Request $request): string
     {
-        $unreadCount = $this->getUnreadNotificationCount();
+        $username = $request->user()?->username;
 
+        return $username
+            ? url('/profiles/'.$username)
+            : url('/');
+    }
+
+    protected function setupBottomNav(string $activeTab, string $mapUrl, string $profileUrl): void
+    {
         $contextIndex = Edge::startContext();
 
         Edge::add('bottom_nav_item', [
@@ -119,22 +125,22 @@ class EdgeController extends Controller
         ]);
 
         Edge::add('bottom_nav_item', [
-            'id' => 'notifications',
-            'icon' => 'bell',
-            'label' => __('Notifications'),
-            'url' => url('/notifications'),
-            'active' => $activeTab === 'notifications',
-            'badge' => $unreadCount > 0 ? (string) $unreadCount : null,
+            'id' => 'map',
+            'icon' => 'map',
+            'label' => __('Map'),
+            'url' => $mapUrl,
+            'active' => $activeTab === 'map',
+            'badge' => null,
             'badge_color' => null,
             'news' => false,
         ]);
 
         Edge::add('bottom_nav_item', [
-            'id' => 'settings',
-            'icon' => 'gearshape',
-            'label' => __('Settings'),
-            'url' => url('/settings'),
-            'active' => $activeTab === 'settings',
+            'id' => 'profile',
+            'icon' => 'person.crop.circle',
+            'label' => __('Profile'),
+            'url' => $profileUrl,
+            'active' => $activeTab === 'profile',
             'badge' => null,
             'badge_color' => null,
             'news' => false,

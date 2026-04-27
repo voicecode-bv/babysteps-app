@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Camera, Events, Off, On } from '@nativephp/mobile';
 import { computed, defineAsyncComponent, onMounted, onUnmounted, ref } from 'vue';
-import { RouterLink, useRouter } from 'vue-router';
+import { useRouter } from 'vue-router';
 import CirclePicker from '@/components/CirclePicker.vue';
 import PersonPicker from '@/components/PersonPicker.vue';
 import type { ExifData } from '@/composables/useExif';
@@ -20,7 +20,6 @@ import { useTagsStore } from '@/spa/stores/tags';
 import { useToastsStore } from '@/spa/stores/toasts';
 import type { PostData } from '@/spa/components/PostCard.vue';
 import { api } from '@/spa/http/apiClient';
-import { externalApi } from '@/spa/http/externalApi';
 import cameraIcon from '../../../svg/doodle-icons/camera.svg';
 import cropIcon from '../../../svg/doodle-icons/crop.svg';
 import photoIcon from '../../../svg/doodle-icons/photo.svg';
@@ -72,7 +71,6 @@ async function loadFormData(): Promise<void> {
             personsStore.ensureLoaded().catch(() => null),
         ]);
 
-        // Pre-select default circles among available
         const availableIds = circles.value.map((c) => c.id);
         form.data.circle_ids = defaultCircleIds.value.filter((id) => availableIds.includes(id));
     } catch {
@@ -92,9 +90,90 @@ const mediaPreview = ref<string | null>(null);
 const mediaIsVideo = ref(false);
 const showSourcePicker = ref(false);
 const showCropModal = ref(false);
-const uploadProgress = ref<number | null>(null);
 
-const isValidForm = computed(() => form.data.media_path !== null && form.data.circle_ids.length > 0);
+// Wizard-stappen: 0=media, 1=caption, 2=tags & personen, 3=cirkels.
+const TOTAL_STEPS = 4;
+const currentStep = ref(0);
+
+const hasMedia = computed(() => form.data.media_path !== null);
+const hasMetadata = computed(
+    () => form.data.tag_ids.length > 0 || form.data.person_ids.length > 0,
+);
+const hasCircles = computed(() => form.data.circle_ids.length > 0);
+
+const canAdvance = computed(() => {
+    switch (currentStep.value) {
+        case 0:
+            return hasMedia.value;
+        case 1:
+        case 2:
+            return true;
+        case 3:
+            return hasCircles.value;
+        default:
+            return false;
+    }
+});
+
+const stepHeading = computed(() => {
+    switch (currentStep.value) {
+        case 0:
+            return t('Choose your moment');
+        case 1:
+            return t('Tell your story');
+        case 2:
+            return t('Tag people and topics');
+        case 3:
+            return t('Almost there');
+        default:
+            return '';
+    }
+});
+
+const stepSubtitle = computed(() => {
+    switch (currentStep.value) {
+        case 0:
+            return t('Pick a photo or video to share');
+        case 1:
+            return t('Add a caption to give context');
+        case 2:
+            return t('Help others find this moment');
+        case 3:
+            return t('Choose who you want to share with');
+        default:
+            return '';
+    }
+});
+
+const primaryLabel = computed(() => {
+    if (currentStep.value === TOTAL_STEPS - 1) {
+        return form.processing ? t('Sharing...') : t('Share');
+    }
+    if (currentStep.value === 1 && !form.data.caption.trim()) {
+        return t('Skip');
+    }
+    if (currentStep.value === 2 && !hasMetadata.value) {
+        return t('Skip');
+    }
+    return t('Next');
+});
+
+function goNext(): void {
+    if (currentStep.value === TOTAL_STEPS - 1) {
+        submit();
+        return;
+    }
+    if (!canAdvance.value) return;
+    currentStep.value = Math.min(TOTAL_STEPS - 1, currentStep.value + 1);
+}
+
+function goBack(): void {
+    if (currentStep.value === 0) {
+        router.push({ name: 'spa.home' });
+        return;
+    }
+    currentStep.value = Math.max(0, currentStep.value - 1);
+}
 
 function openSourcePicker(): void {
     showSourcePicker.value = true;
@@ -232,12 +311,8 @@ function buildOptimisticPost(): PostData {
 }
 
 async function submit(): Promise<void> {
-    uploadProgress.value = null;
-    if (form.processing) return;
+    if (form.processing || !hasMedia.value || !hasCircles.value) return;
 
-    // Alleen een optimistic prepend doen als we een renderbare preview
-    // hebben — anders eindigt PostCard met een leeg img-element wat een
-    // transparante ruimte in de feed achterlaat.
     const hasPreview = !!mediaPreview.value;
     const optimistic = hasPreview ? buildOptimisticPost() : null;
     const targetCircleIds = [...form.data.circle_ids];
@@ -249,14 +324,11 @@ async function submit(): Promise<void> {
         }
     }
 
-    // Direct terug naar Feed — upload draait op de achtergrond.
     router.push({ name: 'spa.home' });
     toasts.info(t('Posting...'));
 
     try {
         await form.post('/api/spa/posts');
-        // Server is klaar — wis caches zodat de volgende feed-mount/refresh
-        // de echte post (server-side ids/urls/status) ophaalt.
         feedCache.invalidate('home');
         for (const circleId of targetCircleIds) {
             feedCache.invalidate(`circle:${circleId}`);
@@ -290,19 +362,40 @@ function iconMaskStyle(url: string) {
 <template>
     <AppLayout :title="t('New post')">
         <template #header-left>
-            <RouterLink :to="{ name: 'spa.home' }" class="text-sand-700 dark:text-sand-300">
+            <button class="flex items-center text-sand-700 dark:text-sand-300" :aria-label="t('Back')" @click="goBack">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
                 </svg>
-            </RouterLink>
-        </template>
-        <template #header-right>
-            <span />
+            </button>
         </template>
 
         <div class="relative mt-10 min-h-full pb-[calc(theme(spacing.40)+env(safe-area-inset-bottom))]">
-            <div class="relative space-y-5 px-4 pt-4 pb-24">
-                <section class="overflow-hidden rounded-lg bg-white/50 shadow-sm backdrop-blur-sm dark:bg-sand-800/60">
+            <div class="px-4 pt-4">
+                <div class="flex items-center justify-center gap-1.5" :aria-label="t('Step :current of :total', { current: currentStep + 1, total: TOTAL_STEPS })">
+                    <span
+                        v-for="step in TOTAL_STEPS"
+                        :key="step"
+                        class="h-1.5 rounded-full transition-all duration-200"
+                        :class="step - 1 === currentStep
+                            ? 'w-8 bg-teal'
+                            : step - 1 < currentStep
+                                ? 'w-4 bg-teal/60'
+                                : 'w-4 bg-sand-200 dark:bg-sand-700'"
+                    />
+                </div>
+                <p class="mt-3 text-center text-[11px] font-medium uppercase tracking-widest text-sand-500 dark:text-sand-400">
+                    {{ t('Step :current of :total', { current: currentStep + 1, total: TOTAL_STEPS }) }}
+                </p>
+                <h2 class="mt-1 text-center font-display text-2xl font-semibold text-teal dark:text-sage-100">
+                    {{ stepHeading }}
+                </h2>
+                <p class="mt-1 text-center text-sm text-sand-600 dark:text-sand-400">
+                    {{ stepSubtitle }}
+                </p>
+            </div>
+
+            <div class="relative mt-6 space-y-5 px-4 pb-32">
+                <section v-show="currentStep === 0" class="overflow-hidden rounded-lg bg-white/50 shadow-sm backdrop-blur-sm dark:bg-sand-800/60">
                     <div v-if="mediaPreview" class="relative">
                         <video v-if="mediaIsVideo" :src="mediaPreview" class="w-full object-cover" controls />
                         <img v-else :src="mediaPreview" class="w-full object-cover" :alt="t('Selected photo')" />
@@ -335,7 +428,7 @@ function iconMaskStyle(url: string) {
                     <p v-if="form.errors.media_path" class="px-5 pb-4 text-xs text-blush-500">{{ form.errors.media_path }}</p>
                 </section>
 
-                <section class="rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm dark:bg-sand-800/60">
+                <section v-show="currentStep === 1" class="rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm dark:bg-sand-800/60">
                     <label for="post-caption" class="text-xs font-medium uppercase tracking-wider text-sand-500 dark:text-sand-400">
                         {{ t('Caption') }}
                     </label>
@@ -343,45 +436,65 @@ function iconMaskStyle(url: string) {
                         id="post-caption"
                         v-model="form.data.caption"
                         :placeholder="t('Write a caption...')"
-                        rows="3"
+                        rows="6"
                         maxlength="2200"
                         class="mt-2 w-full resize-none border-0 bg-transparent p-0 text-base text-sand-800 placeholder-sand-400 focus:outline-none focus:ring-0 dark:text-sand-100 dark:placeholder-sand-500"
                     />
                     <p v-if="form.errors.caption" class="mt-1 text-xs text-blush-500">{{ form.errors.caption }}</p>
                 </section>
 
-                <section class="relative z-20 rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm dark:bg-sand-800/60">
-                    <TagSelector
-                        :available-tags="availableTags"
-                        :selected-ids="form.data.tag_ids"
-                        :error="form.errors.tag_ids"
-                        @update:selected-ids="form.data.tag_ids = $event"
-                    />
-                </section>
+                <template v-if="currentStep === 2">
+                    <section class="relative z-20 rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm dark:bg-sand-800/60">
+                        <PersonPicker
+                            :persons="availablePersons"
+                            :selected-ids="form.data.person_ids"
+                            layout="grid"
+                            @update:selected-ids="form.data.person_ids = $event"
+                        />
+                    </section>
 
-                <section class="rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm dark:bg-sand-800/60">
-                    <PersonPicker
-                        :persons="availablePersons"
-                        :selected-ids="form.data.person_ids"
-                        @update:selected-ids="form.data.person_ids = $event"
-                    />
-                </section>
+                    <section class="relative z-10 rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm dark:bg-sand-800/60">
+                        <TagSelector
+                            :available-tags="availableTags"
+                            :selected-ids="form.data.tag_ids"
+                            :error="form.errors.tag_ids"
+                            @update:selected-ids="form.data.tag_ids = $event"
+                        />
+                    </section>
+                </template>
 
-                <section v-if="circles.length > 0" class="rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm dark:bg-sand-800/60">
+                <section v-show="currentStep === 3" class="rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm dark:bg-sand-800/60">
                     <CirclePicker
+                        v-if="circles.length > 0"
                         :circles="circles"
                         :selected-ids="form.data.circle_ids"
                         :error="form.errors.circle_ids"
+                        layout="grid"
                         @update:selected-ids="form.data.circle_ids = $event"
                     />
+                    <p v-else class="text-sm text-sand-600 dark:text-sand-400">
+                        {{ t('Create a circle to set it as a default for new posts.') }}
+                    </p>
                 </section>
+            </div>
+        </div>
 
+        <div class="pb-6 left-[var(--inset-left)] right-[var(--inset-right)] fixed bottom-0 z-30 border-t border-sand-200 bg-white/90 backdrop-blur-md dark:border-sand-800 dark:bg-sand-900/90">
+            <div class="flex items-center justify-between gap-3 px-4 py-3">
                 <button
-                    :disabled="!isValidForm || form.processing"
-                    class="w-full rounded-full bg-teal py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-light disabled:opacity-40"
-                    @click="submit"
+                    type="button"
+                    class="rounded-full px-5 py-2.5 text-sm font-medium text-sand-700 transition active:bg-sand-100 dark:text-sand-200 dark:active:bg-sand-800"
+                    @click="goBack"
                 >
-                    {{ form.processing ? t('Sharing...') : t('Share') }}
+                    {{ currentStep === 0 ? t('Cancel') : t('Back') }}
+                </button>
+                <button
+                    type="button"
+                    class="rounded-full bg-teal px-7 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-light disabled:cursor-not-allowed disabled:opacity-40"
+                    :disabled="!canAdvance || form.processing"
+                    @click="goNext"
+                >
+                    {{ primaryLabel }}
                 </button>
             </div>
         </div>

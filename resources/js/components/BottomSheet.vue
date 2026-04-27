@@ -151,7 +151,7 @@ function handleKeydown(event: KeyboardEvent) {
 watch(
     () => props.open,
     (isOpen) => {
-        const scrollContainer = document.querySelector('main[scroll-region]') as HTMLElement | null;
+        const scrollContainer = document.querySelector('main') as HTMLElement | null;
 
         if (scrollContainer) {
             scrollContainer.style.overflow = isOpen ? 'hidden' : '';
@@ -187,7 +187,7 @@ onUnmounted(() => {
     }
 
     setKeyboardInset(0);
-    const scrollContainer = document.querySelector('main[scroll-region]') as HTMLElement | null;
+    const scrollContainer = document.querySelector('main') as HTMLElement | null;
 
     if (scrollContainer) {
         scrollContainer.style.overflow = '';

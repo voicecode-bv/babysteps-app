@@ -17,6 +17,7 @@ import { useFeedCacheStore } from '@/spa/stores/feedCache';
 import { usePostCacheStore } from '@/spa/stores/postCache';
 import { useTagsStore } from '@/spa/stores/tags';
 import { useToastsStore } from '@/spa/stores/toasts';
+import { useServiceKeysStore } from '@/spa/stores/serviceKeys';
 import { externalApi } from '@/spa/http/externalApi';
 import heartFilledIcon from '../../../svg/doodle-icons/heart-filled.svg';
 import heartIcon from '../../../svg/doodle-icons/heart.svg';
@@ -141,6 +142,30 @@ onMounted(async () => {
 });
 
 const isOwner = computed(() => post.value?.user.id === auth.user?.id);
+const serviceKeys = useServiceKeysStore();
+
+const hasLocation = computed(
+    () => post.value?.latitude !== null
+        && post.value?.latitude !== undefined
+        && post.value?.longitude !== null
+        && post.value?.longitude !== undefined,
+);
+
+const staticMapUrl = computed<string | null>(() => {
+    const token = serviceKeys.mapboxToken;
+    if (!token || !hasLocation.value || !post.value) return null;
+    const lng = post.value.longitude;
+    const lat = post.value.latitude;
+    const pin = `pin-l+1d5f5c(${lng},${lat})`;
+    return `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/${pin}/${lng},${lat},14/640x320@2x?access_token=${token}`;
+});
+
+const mapTarget = computed(() => {
+    const firstCircle = post.value?.circles?.[0];
+    return firstCircle
+        ? { name: 'spa.circles.map', params: { circle: firstCircle.id } }
+        : { name: 'spa.map' };
+});
 
 const videoRef = ref<HTMLVideoElement>();
 const { isMuted, isFullscreen, toggleMute, toggleFullscreen } = useVideoFullscreen(videoRef);
@@ -309,16 +334,28 @@ watch(
                 </svg>
             </button>
         </template>
-        <template v-if="isOwner" #header-right>
-            <button class="text-blush-500 disabled:opacity-50" :aria-label="t('Delete post')" :disabled="isDeleting" @click="deletePost">
-                <svg v-if="!isDeleting" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                </svg>
-                <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="size-5 animate-spin">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-opacity="0.25" />
-                    <path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
-                </svg>
-            </button>
+        <template #header-right>
+            <div class="flex items-center gap-3 text-sand-700 dark:text-sand-300">
+                <RouterLink
+                    v-if="post"
+                    :to="mapTarget"
+                    class="flex items-center"
+                    :aria-label="t('Open map')"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m0-8.25L3.32 4.507a.75.75 0 0 0-1.07.68v11.124c0 .285.165.544.421.666L9 19.5m0-12.75 6 3m-6 9 6-3m0 0V15m0-8.25 5.68-2.243a.75.75 0 0 1 1.07.68v11.124a.75.75 0 0 1-.421.666L15 19.5M15 6.75V15" />
+                    </svg>
+                </RouterLink>
+                <button v-if="isOwner" class="text-blush-500 disabled:opacity-50" :aria-label="t('Delete post')" :disabled="isDeleting" @click="deletePost">
+                    <svg v-if="!isDeleting" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                    </svg>
+                    <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="size-5 animate-spin">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-opacity="0.25" />
+                        <path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+                    </svg>
+                </button>
+            </div>
         </template>
 
         <div class="mt-10 pb-32">
@@ -444,6 +481,28 @@ watch(
                         <span class="ml-auto text-xs text-white/80 drop-shadow">{{ timeAgo(post.created_at) }}</span>
                     </div>
                 </div>
+
+                <RouterLink
+                    v-if="staticMapUrl"
+                    :to="mapTarget"
+                    class="relative block aspect-[2/1] w-full overflow-hidden bg-sand-100 dark:bg-sand-800"
+                    :aria-label="t('Open map')"
+                >
+                    <img
+                        :src="staticMapUrl"
+                        :alt="post.location ?? t('Open map')"
+                        class="size-full object-cover"
+                        loading="lazy"
+                        decoding="async"
+                    />
+                    <div v-if="post.location" class="absolute inset-x-0 bottom-0 flex items-center gap-1.5 bg-gradient-to-t from-black/60 via-black/20 to-transparent px-4 pb-2 pt-8 text-xs font-medium text-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4 drop-shadow">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                        </svg>
+                        <span class="drop-shadow">{{ post.location }}</span>
+                    </div>
+                </RouterLink>
 
                 <div v-if="(post.persons ?? []).length > 0" class="bg-white px-4 pt-4 dark:bg-sand-900">
                     <div class="flex flex-wrap items-center gap-2">

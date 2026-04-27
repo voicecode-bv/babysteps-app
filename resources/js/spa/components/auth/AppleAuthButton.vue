@@ -13,6 +13,9 @@ const props = defineProps<{
 const i18n = useI18nStore();
 const src = computed(() => (i18n.locale === 'nl' ? appleButtonNl : appleButtonEn));
 
+// Browser.auth is fire-and-forget: de native shell start de auth-sessie en
+// geeft het callback-resultaat terug via de deeplink scheme, niet via deze
+// promise. We negeren bewust de teruggegeven waarde.
 async function go(): Promise<void> {
     await Browser.auth(props.url);
 }

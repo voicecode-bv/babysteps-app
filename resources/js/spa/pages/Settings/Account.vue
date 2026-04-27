@@ -20,6 +20,7 @@ const auth = useAuthStore();
 const toasts = useToastsStore();
 
 const accountError = ref<string | null>(null);
+const exportError = ref<string | null>(null);
 const exportSuccess = ref(false);
 const isDeleting = ref(false);
 
@@ -30,7 +31,7 @@ function goBack(): void {
 }
 
 async function requestExport(): Promise<void> {
-    accountError.value = null;
+    exportError.value = null;
     exportSuccess.value = false;
     try {
         await exportForm.post('/account/export', {
@@ -39,8 +40,19 @@ async function requestExport(): Promise<void> {
                 toasts.success(t('Check your inbox, we sent you a download link.'));
             },
         });
+        // 422-validatie wordt door useApiForm in `errors` gezet zonder te
+        // throwen — in dat geval is `onSuccess` niet gevuurd.
+        if (!exportSuccess.value) {
+            const fallback = t('We could not request your data export. Please try again later.');
+            const message = Object.values(exportForm.errors)[0] || fallback;
+            exportError.value = message;
+            toasts.error(message);
+        }
     } catch (error) {
-        accountError.value = (error as Error).message ?? t('We could not request your data export. Please try again later.');
+        const message = (error as Error).message
+            || t('We could not request your data export. Please try again later.');
+        exportError.value = message;
+        toasts.error(message);
     }
 }
 
@@ -130,8 +142,8 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
                         </Button>
                     </Transition>
 
-                    <p v-if="exportForm.errors.export" class="mt-4 rounded-lg bg-blush-50 p-3 text-sm text-blush-700 dark:bg-blush-900/30 dark:text-blush-200">
-                        {{ exportForm.errors.export }}
+                    <p v-if="exportError" class="mt-4 rounded-lg bg-blush-50 p-3 text-sm text-blush-700 dark:bg-blush-900/30 dark:text-blush-200">
+                        {{ exportError }}
                     </p>
                 </SurfaceCard>
 

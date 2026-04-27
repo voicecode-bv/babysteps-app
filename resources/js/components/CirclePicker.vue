@@ -18,10 +18,12 @@ const props = withDefaults(
         selectedIds: number[];
         error?: string | null;
         defaultCollapsed?: boolean;
+        layout?: 'scroll' | 'grid';
     }>(),
     {
         error: null,
         defaultCollapsed: false,
+        layout: 'scroll',
     },
 );
 
@@ -47,6 +49,10 @@ function iconMaskStyle(url: string) {
 }
 
 const allSelected = computed(() => props.circles.length > 0 && props.selectedIds.length === props.circles.length);
+
+const sortedCircles = computed(() =>
+    [...props.circles].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })),
+);
 
 const summaryText = computed(() => {
     if (props.selectedIds.length === 0) return t('No circles selected');
@@ -111,12 +117,18 @@ function toggleAll() {
             </button>
         </div>
 
-        <div v-if="!isCollapsed" class="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1 no-scrollbar">
+        <div
+            v-if="!isCollapsed"
+            :class="layout === 'grid'
+                ? 'grid grid-cols-4 gap-x-3 gap-y-4'
+                : '-mx-1 flex gap-3 overflow-x-auto px-1 pb-1 no-scrollbar'"
+        >
             <button
-                v-for="circle in circles"
+                v-for="circle in sortedCircles"
                 :key="circle.id"
                 type="button"
-                class="flex shrink-0 flex-col items-center gap-1.5"
+                class="flex flex-col items-center gap-1.5"
+                :class="layout === 'grid' ? '' : 'shrink-0'"
                 @click="toggle(circle.id)"
             >
                 <div

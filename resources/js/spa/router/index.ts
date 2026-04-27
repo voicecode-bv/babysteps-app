@@ -18,6 +18,12 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/spa/pages/Auth/Register.vue'),
         meta: { guest: true },
     },
+    {
+        path: '/oauth-callback',
+        name: 'spa.oauth-callback',
+        alias: '/oauth/callback',
+        component: () => import('@/spa/pages/Auth/OAuthCallback.vue'),
+    },
 
     // Onboarding (auth, no onboarded check)
     {

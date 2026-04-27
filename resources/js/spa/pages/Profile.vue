@@ -8,6 +8,7 @@ import { useTranslations } from '@/spa/composables/useTranslations';
 import { useInfiniteScroll, type PaginatedResponse } from '@/spa/composables/useInfiniteScroll';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { externalApi } from '@/spa/http/externalApi';
+import { useAuthStore } from '@/spa/stores/auth';
 
 interface Profile {
     id: number;
@@ -22,8 +23,10 @@ interface Profile {
 const { t } = useTranslations();
 const route = useRoute();
 const router = useRouter();
+const auth = useAuthStore();
 
 const username = computed(() => String(route.params.username));
+const isOwnProfile = computed(() => auth.user?.username === username.value);
 
 const layoutRef = useTemplateRef<InstanceType<typeof AppLayout>>('layout');
 const containerRef = computed(() => layoutRef.value?.mainRef ?? null);
@@ -87,15 +90,15 @@ function mediaKey(post: PostData): string {
             </button>
         </template>
 
-        <template #header-right>
+        <template v-if="profile && isOwnProfile" #header-right>
             <RouterLink
-                v-if="profile"
-                :to="{ name: 'spa.profiles.map', params: { username: profile.username } }"
+                :to="{ name: 'spa.settings' }"
                 class="flex items-center text-sand-700 dark:text-sand-300"
-                :aria-label="t('Open map')"
+                :aria-label="t('Open settings')"
             >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m0-8.25L3.32 4.507a.75.75 0 0 0-1.07.68v11.124c0 .285.165.544.421.666L9 19.5m0-12.75 6 3m-6 9 6-3m0 0V15m0-8.25 5.68-2.243a.75.75 0 0 1 1.07.68v11.124a.75.75 0 0 1-.421.666L15 19.5M15 6.75V15" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
                 </svg>
             </RouterLink>
         </template>

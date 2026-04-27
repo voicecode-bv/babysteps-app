@@ -7,14 +7,12 @@ import SurfaceCard from '@/components/SurfaceCard.vue';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
-import { useToastsStore } from '@/spa/stores/toasts';
 import { useCirclesStore } from '@/spa/stores/circles';
 import { useDefaultCirclesStore } from '@/spa/stores/defaultCircles';
 import usersIcon from '../../../../svg/doodle-icons/user.svg';
 
 const { t } = useTranslations();
 const router = useRouter();
-const toasts = useToastsStore();
 const circlesStore = useCirclesStore();
 const defaultCirclesStore = useDefaultCirclesStore();
 
@@ -54,16 +52,20 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
 onMounted(() => loadDefaults());
 
 async function toggleCircle(circleId: number): Promise<void> {
-    const current = defaultCirclesStore.ids ?? [];
+    // Intersect met de zichtbare kringen zodat eventuele stale IDs (kring
+    // verwijderd of lidmaatschap opgezegd) niet meer in de payload komen —
+    // de externe API valideert dat ieder ID nog geldig is.
+    const validIds = new Set(circles.value.map((c) => c.id));
+    const current = (defaultCirclesStore.ids ?? []).filter((id) => validIds.has(id));
     const next = current.includes(circleId)
         ? current.filter((id) => id !== circleId)
         : [...current, circleId];
 
     try {
         await defaultCirclesStore.setIds(next);
-        toasts.success(t('Default circles updated'));
     } catch {
-        toasts.error(t('Failed to update default circles'));
+        // Stille rollback in de store; geen toast — net als bij
+        // NotificationPreferences blijft de toggle UI de waarheid tonen.
     }
 }
 </script>

@@ -10,6 +10,8 @@ export interface Toast {
 
 let nextId = 1;
 
+const MAX_TOASTS = 3;
+
 export const useToastsStore = defineStore('spa-toasts', {
     state: () => ({
         toasts: [] as Toast[],
@@ -18,6 +20,11 @@ export const useToastsStore = defineStore('spa-toasts', {
         push(message: string, variant: ToastVariant = 'info', durationMs = 4000): number {
             const id = nextId++;
             this.toasts.push({ id, message, variant });
+            // Hou de oudste toasts uit beeld zodra de stack vol is, anders
+            // overspoelt een burst aan errors het hele scherm.
+            if (this.toasts.length > MAX_TOASTS) {
+                this.toasts.splice(0, this.toasts.length - MAX_TOASTS);
+            }
             if (durationMs > 0) {
                 setTimeout(() => this.dismiss(id), durationMs);
             }

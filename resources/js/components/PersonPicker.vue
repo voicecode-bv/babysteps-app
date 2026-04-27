@@ -16,10 +16,12 @@ const props = withDefaults(
         selectedIds: number[];
         error?: string | null;
         defaultCollapsed?: boolean;
+        layout?: 'scroll' | 'grid';
     }>(),
     {
         error: null,
         defaultCollapsed: false,
+        layout: 'scroll',
     },
 );
 
@@ -51,6 +53,10 @@ const summaryText = computed(() => {
 
     return t(':count selected', { count: String(props.selectedIds.length) });
 });
+
+const sortedPersons = computed(() =>
+    [...props.persons].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })),
+);
 
 function toggle(personId: number) {
     if (props.selectedIds.includes(personId)) {
@@ -93,12 +99,18 @@ function toggle(personId: number) {
             {{ t('No persons yet. Add them in Settings → Persons.') }}
         </div>
 
-        <div v-else-if="!isCollapsed" class="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1 no-scrollbar">
+        <div
+            v-else-if="!isCollapsed"
+            :class="layout === 'grid'
+                ? 'grid grid-cols-4 gap-x-3 gap-y-4'
+                : '-mx-1 flex gap-3 overflow-x-auto px-1 pb-1 no-scrollbar'"
+        >
             <button
-                v-for="person in persons"
+                v-for="person in sortedPersons"
                 :key="person.id"
                 type="button"
-                class="flex shrink-0 flex-col items-center gap-1.5"
+                class="flex flex-col items-center gap-1.5"
+                :class="layout === 'grid' ? '' : 'shrink-0'"
                 @click="toggle(person.id)"
             >
                 <div

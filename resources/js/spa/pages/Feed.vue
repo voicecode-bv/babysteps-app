@@ -12,6 +12,7 @@ import { externalApi } from '@/spa/http/externalApi';
 import { useCirclesStore } from '@/spa/stores/circles';
 import { useFeedCacheStore } from '@/spa/stores/feedCache';
 import cameraIcon from '../../../svg/doodle-icons/camera.svg';
+import heartIcon from '../../../svg/doodle-icons/heart.svg';
 import starIcon from '../../../svg/doodle-icons/star.svg';
 import userIcon from '../../../svg/doodle-icons/user.svg';
 
@@ -107,7 +108,17 @@ function iconMaskStyle(url: string) {
 <template>
     <AppLayout ref="layout" :show-header="false">
         <template #above>
-            <div class="pt-[var(--inset-top)] left-[var(--inset-left)] right-[var(--inset-right)] fixed z-100 flex gap-3 overflow-x-auto no-scrollbar border-b border-sand-200 bg-white px-4 py-3 dark:border-sand-800 dark:bg-sand-900">
+            <div class="pt-[var(--inset-top)] left-[var(--inset-left)] right-[var(--inset-right)] fixed z-100 border-b border-sand-200 bg-white dark:border-sand-800 dark:bg-sand-900">
+                <div class="flex items-center justify-end px-4 pt-2">
+                    <RouterLink
+                        :to="{ name: 'spa.notifications' }"
+                        :aria-label="t('Open notifications')"
+                        class="flex size-9 items-center justify-center rounded-full text-accent transition-colors hover:bg-sand-100 dark:hover:bg-sand-800"
+                    >
+                        <span aria-hidden="true" class="inline-block size-6 bg-accent" :style="iconMaskStyle(heartIcon)"></span>
+                    </RouterLink>
+                </div>
+                <div class="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-3 pt-1">
                 <RouterLink :to="{ name: 'spa.circles.index' }" class="group flex shrink-0 flex-col items-center gap-1.5">
                     <div class="rounded-full p-0.5">
                         <div class="flex size-14 items-center justify-center rounded-full border-2 border-dashed border-sand-300 transition-transform duration-500 group-hover:rotate-90 dark:border-sand-600">
@@ -148,10 +159,11 @@ function iconMaskStyle(url: string) {
                     </div>
                     <span class="max-w-16 truncate text-[10px] font-medium text-sand-700 dark:text-sand-300">{{ circle.name }}</span>
                 </RouterLink>
+                </div>
             </div>
         </template>
 
-        <div class="pb-24 mt-23.75">
+        <div class="pb-24 mt-36">
             <PullToRefreshIndicator :pull-distance="pullDistance" :is-refreshing="isRefreshing" />
 
             <template v-if="feed.items.length === 0 && feed.loading">
@@ -217,8 +229,6 @@ function iconMaskStyle(url: string) {
 </template>
 
 <style scoped>
-* { overscroll-behavior: none; }
-
 .circle-ring {
     background: conic-gradient(
         from 0deg,

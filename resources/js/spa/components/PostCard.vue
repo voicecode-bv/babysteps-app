@@ -198,7 +198,7 @@ function timeAgo(dateString: string): string {
                     loading="lazy"
                     @load="mediaLoaded = true"
                 />
-                <div v-if="post.media_status === 'processing'" class="absolute inset-0 flex items-center justify-center bg-black/15">
+                <div v-if="post.media_status === 'processing' && !mediaLoaded" class="absolute inset-0 flex items-center justify-center bg-black/15">
                     <span class="rounded-full bg-black/55 px-3 py-1.5 text-xs font-medium text-white">{{ t('Uploading...') }}</span>
                 </div>
             </button>

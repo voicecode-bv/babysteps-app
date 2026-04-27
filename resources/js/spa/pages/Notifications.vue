@@ -374,6 +374,44 @@ const groupedNotifications = computed<NotificationGroup[]>(() => {
 
     return Object.values(groups).filter((group) => group.items.length > 0);
 });
+
+// Sentinel-tokens zodat `t()`'s placeholder-substitutie niet de zinnen
+// kapot maakt voordat we ze splitsen — namen kunnen zelf placeholder-syntax
+// bevatten, dus we vervangen `:inviter` / `:circle` met onwaarschijnlijke
+// markers en splitsen de string vervolgens om gestylede spans te renderen.
+const INVITER_TOKEN = ' inv-inviter ';
+const CIRCLE_TOKEN = ' inv-circle ';
+
+interface InvitationSegment {
+    text: string;
+    type: 'plain' | 'inviter' | 'circle';
+}
+
+function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
+    const tpl = t(':inviter invited you to :circle', {
+        inviter: INVITER_TOKEN,
+        circle: CIRCLE_TOKEN,
+    });
+    const segments: InvitationSegment[] = [];
+    const regex = new RegExp(`(${INVITER_TOKEN}|${CIRCLE_TOKEN})`, 'g');
+    let lastIndex = 0;
+    let match: RegExpExecArray | null;
+    while ((match = regex.exec(tpl)) !== null) {
+        if (match.index > lastIndex) {
+            segments.push({ text: tpl.slice(lastIndex, match.index), type: 'plain' });
+        }
+        if (match[0] === INVITER_TOKEN) {
+            segments.push({ text: invitation.inviter.name, type: 'inviter' });
+        } else {
+            segments.push({ text: invitation.circle.name, type: 'circle' });
+        }
+        lastIndex = regex.lastIndex;
+    }
+    if (lastIndex < tpl.length) {
+        segments.push({ text: tpl.slice(lastIndex), type: 'plain' });
+    }
+    return segments;
+}
 </script>
 
 <template>
@@ -410,7 +448,7 @@ const groupedNotifications = computed<NotificationGroup[]>(() => {
                     </div>
                     <ul class="mt-4 divide-y divide-sand-100/80 dark:divide-sand-700/50">
                         <li v-for="transfer in ownershipTransfers" :key="`transfer-${transfer.id}`" class="flex items-start gap-3 px-5 py-4">
-                            <div class="flex-shrink-0">
+                            <div class="shrink-0">
                                 <img v-if="transfer.from_user.avatar" :src="transfer.from_user.avatar" :alt="transfer.from_user.name" class="size-11 rounded-full bg-sand-200 object-cover shadow-sm ring-2 ring-white dark:bg-sand-700 dark:ring-sand-800" loading="lazy" decoding="async" />
                                 <div v-else class="flex size-11 items-center justify-center rounded-full bg-sand-100 ring-2 ring-white dark:bg-sand-700 dark:ring-sand-800">
                                     <IconTile :icon="userIcon" size="sm" tone="sand" />
@@ -444,7 +482,7 @@ const groupedNotifications = computed<NotificationGroup[]>(() => {
                     </div>
                     <ul class="mt-4 divide-y divide-sand-100/80 dark:divide-sand-700/50">
                         <li v-for="invitation in circleInvitations" :key="`invitation-${invitation.id}`" class="flex items-start gap-3 px-5 py-4">
-                            <div class="flex-shrink-0">
+                            <div class="shrink-0">
                                 <img v-if="invitation.inviter.avatar" :src="invitation.inviter.avatar" :alt="invitation.inviter.name" class="size-11 rounded-full bg-sand-200 object-cover shadow-sm ring-2 ring-white dark:bg-sand-700 dark:ring-sand-800" loading="lazy" decoding="async" />
                                 <div v-else class="flex size-11 items-center justify-center rounded-full bg-sand-100 ring-2 ring-white dark:bg-sand-700 dark:ring-sand-800">
                                     <IconTile :icon="userIcon" size="sm" tone="sand" />
@@ -452,9 +490,11 @@ const groupedNotifications = computed<NotificationGroup[]>(() => {
                             </div>
                             <div class="min-w-0 flex-1">
                                 <p class="text-sm text-sand-900 dark:text-sand-100">
-                                    <span class="font-semibold">{{ invitation.inviter.name }}</span>
-                                    <span class="text-sand-600 dark:text-sand-400"> {{ t('invited you to') }} </span>
-                                    <span class="font-semibold text-teal dark:text-sage-100">{{ invitation.circle.name }}</span>
+                                    <template v-for="(segment, idx) in invitationSegments(invitation)" :key="idx">
+                                        <span v-if="segment.type === 'inviter'" class="font-semibold">{{ segment.text }}</span>
+                                        <span v-else-if="segment.type === 'circle'" class="font-semibold text-teal dark:text-sage-100">{{ segment.text }}</span>
+                                        <span v-else class="text-sand-600 dark:text-sand-400">{{ segment.text }}</span>
+                                    </template>
                                 </p>
                                 <p class="mt-0.5 text-xs text-sand-500 dark:text-sand-400">{{ timeAgo(invitation.created_at) }}</p>
                                 <div class="mt-3 flex gap-2">
@@ -473,7 +513,7 @@ const groupedNotifications = computed<NotificationGroup[]>(() => {
                 <SurfaceCard v-if="isLoading" :padded="false">
                     <div class="divide-y divide-sand-100/80 dark:divide-sand-700/50">
                         <div v-for="n in 5" :key="n" class="flex items-start gap-3 px-5 py-4">
-                            <div class="size-11 flex-shrink-0 animate-pulse rounded-full bg-sand-200 dark:bg-sand-700" />
+                            <div class="size-11 shrink-0 animate-pulse rounded-full bg-sand-200 dark:bg-sand-700" />
                             <div class="min-w-0 flex-1 space-y-2">
                                 <div class="h-3.5 animate-pulse rounded-full bg-sand-200 dark:bg-sand-700" :style="{ width: `${55 + n * 6}%` }" />
                                 <div class="h-3 w-20 animate-pulse rounded-full bg-sand-200/70 dark:bg-sand-700/70" />
@@ -489,7 +529,7 @@ const groupedNotifications = computed<NotificationGroup[]>(() => {
                             <ul class="divide-y divide-sand-100/80 dark:divide-sand-700/50">
                                 <li v-for="notification in group.items" :key="notification.id">
                                     <button class="flex w-full items-start gap-3 px-5 py-4 text-left transition" :class="{ 'bg-sage-50/60 dark:bg-sage-900/20': !isRead(notification) }" @click="openNotification(notification)">
-                                        <div class="relative flex-shrink-0">
+                                        <div class="relative shrink-0">
                                             <img v-if="notification.data.user_avatar" :src="notification.data.user_avatar" :alt="notification.data.user_name" class="size-11 rounded-full bg-sand-200 object-cover shadow-sm ring-2 ring-white dark:bg-sand-700 dark:ring-sand-800" loading="lazy" decoding="async" />
                                             <div v-else class="flex size-11 items-center justify-center rounded-full bg-sand-100 ring-2 ring-white dark:bg-sand-700 dark:ring-sand-800">
                                                 <IconTile :icon="userIcon" size="sm" tone="sand" />
@@ -504,7 +544,7 @@ const groupedNotifications = computed<NotificationGroup[]>(() => {
                                             </p>
                                             <p class="mt-1 text-xs text-sand-500 dark:text-sand-400">{{ timeAgo(notification.created_at) }}</p>
                                         </div>
-                                        <div class="flex flex-shrink-0 items-start gap-2 pt-1">
+                                        <div class="flex shrink-0 items-start gap-2 pt-1">
                                             <img v-if="notification.data.post_media_url" :src="notification.data.post_media_url" class="size-12 rounded-md bg-sand-200 object-cover shadow-sm dark:bg-sand-700" alt="" loading="lazy" decoding="async" />
                                             <span v-if="!isRead(notification)" class="mt-1 inline-block size-2 rounded-full bg-teal" aria-hidden="true" />
                                         </div>

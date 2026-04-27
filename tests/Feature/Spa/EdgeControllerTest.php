@@ -2,14 +2,8 @@
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Cache;
 
 uses(RefreshDatabase::class);
-
-beforeEach(function () {
-    // Voorkomt dat EdgeController een live HTTP-call naar /notifications/unread-count doet.
-    Cache::put('unread_notification_count', 0, 60);
-});
 
 it('returns active tab for the home path', function () {
     $user = User::factory()->create();
@@ -29,13 +23,58 @@ it('returns active tab for circles path', function () {
     $response->assertOk()->assertJsonPath('active', 'circles');
 });
 
-it('returns active tab for settings path', function () {
+it('falls back to home for settings path now that the tab is gone', function () {
     $user = User::factory()->create();
 
     $response = $this->actingAs($user)
         ->postJson('/api/spa/edge/active-tab', ['path' => '/settings/persons']);
 
-    $response->assertOk()->assertJsonPath('active', 'settings');
+    $response->assertOk()->assertJsonPath('active', 'home');
+});
+
+it('returns active tab for a profile path', function () {
+    $user = User::factory()->create(['username' => 'jane']);
+
+    $response = $this->actingAs($user)
+        ->postJson('/api/spa/edge/active-tab', ['path' => '/profiles/jane']);
+
+    $response->assertOk()->assertJsonPath('active', 'profile');
+});
+
+it('treats a profile map path as the map tab', function () {
+    $user = User::factory()->create(['username' => 'jane']);
+
+    $response = $this->actingAs($user)
+        ->postJson('/api/spa/edge/active-tab', ['path' => '/profiles/jane/map']);
+
+    $response->assertOk()->assertJsonPath('active', 'map');
+});
+
+it('returns active tab for the global map path', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)
+        ->postJson('/api/spa/edge/active-tab', ['path' => '/map']);
+
+    $response->assertOk()->assertJsonPath('active', 'map');
+});
+
+it('returns active tab for a circle map path', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)
+        ->postJson('/api/spa/edge/active-tab', ['path' => '/circles/12/map']);
+
+    $response->assertOk()->assertJsonPath('active', 'map');
+});
+
+it('falls back to home when visiting notifications', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)
+        ->postJson('/api/spa/edge/active-tab', ['path' => '/notifications']);
+
+    $response->assertOk()->assertJsonPath('active', 'home');
 });
 
 it('clears the bottom nav for onboarding paths', function () {
@@ -43,6 +82,15 @@ it('clears the bottom nav for onboarding paths', function () {
 
     $response = $this->actingAs($user)
         ->postJson('/api/spa/edge/active-tab', ['path' => '/onboarding/intro']);
+
+    $response->assertOk()->assertJsonPath('cleared', true);
+});
+
+it('clears the bottom nav on the create-post wizard', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)
+        ->postJson('/api/spa/edge/active-tab', ['path' => '/posts/create']);
 
     $response->assertOk()->assertJsonPath('cleared', true);
 });
