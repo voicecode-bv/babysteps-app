@@ -9,7 +9,6 @@ import { configureExternalApi } from '@/spa/http/externalApi';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useI18nStore } from '@/spa/stores/i18n';
 import { useServiceKeysStore } from '@/spa/stores/serviceKeys';
-import { useToastsStore } from '@/spa/stores/toasts';
 
 if (typeof window !== 'undefined' && import.meta.env.PROD) {
     flare.light();
@@ -80,16 +79,9 @@ async function bootstrap(): Promise<void> {
 
     // Globale error-tap: laat onverwachte network/server fouten als toast zien.
     // Validation/auth errors worden door pages zelf afgehandeld en niet hier
-    // doorgesluisd.
-    const toasts = useToastsStore();
-    const i18nStore = i18n;
+    // doorgesluisd. Onverwachte network/server fouten alleen loggen in dev.
     app.config.errorHandler = (err) => {
-        if (err instanceof NetworkError) {
-            toasts.error(i18nStore.t('No internet connection'));
-            return;
-        }
-        if (err instanceof ApiError && err.status >= 500) {
-            toasts.error(i18nStore.t('Something went wrong. Please try again.'));
+        if (err instanceof NetworkError || err instanceof ApiError) {
             return;
         }
         if (import.meta.env.DEV) {

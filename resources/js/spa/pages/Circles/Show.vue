@@ -10,7 +10,6 @@ import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { useApiForm } from '@/spa/composables/useApiForm';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
-import { useToastsStore } from '@/spa/stores/toasts';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useCirclesStore } from '@/spa/stores/circles';
 import { externalApi } from '@/spa/http/externalApi';
@@ -51,7 +50,6 @@ interface Circle {
 const { t } = useTranslations();
 const route = useRoute();
 const router = useRouter();
-const toasts = useToastsStore();
 const auth = useAuthStore();
 const circlesStore = useCirclesStore();
 
@@ -217,20 +215,16 @@ async function handleButtonPressed(payload: { index: number; label: string; id?:
     }
     if (payload.id === 'leave-circle-confirm' && payload.index === 1) {
         const userId = auth.user?.id;
-        if (!userId) {
-            toasts.error(t('Failed to leave circle'));
-            return;
-        }
+        if (!userId) return;
         isLeaving.value = true;
         try {
             // Verlaten = je eigen lidmaatschap verwijderen via dezelfde route
             // die ook eigenaren gebruiken om members te verwijderen.
             await externalApi.delete(`/circles/${circleId.value}/members/${userId}`);
             circlesStore.remove(circleId.value);
-            toasts.success(t('Left circle'));
             router.push({ name: 'spa.circles.index' });
         } catch {
-            toasts.error(t('Failed to leave circle'));
+            // ignore — gebruiker blijft op de huidige kring
         } finally {
             isLeaving.value = false;
         }
@@ -240,10 +234,9 @@ async function handleButtonPressed(payload: { index: number; label: string; id?:
         try {
             await externalApi.delete(`/circles/${circleId.value}`);
             circlesStore.remove(circleId.value);
-            toasts.success(t('Circle deleted'));
             router.push({ name: 'spa.circles.index' });
         } catch {
-            toasts.error(t('Failed to delete circle'));
+            // ignore — kring blijft staan
         } finally {
             isDeleting.value = false;
         }

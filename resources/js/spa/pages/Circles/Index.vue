@@ -9,14 +9,12 @@ import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { useApiForm } from '@/spa/composables/useApiForm';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
-import { useToastsStore } from '@/spa/stores/toasts';
 import { useCirclesStore } from '@/spa/stores/circles';
 import { externalApi } from '@/spa/http/externalApi';
 import usersIcon from '../../../../svg/doodle-icons/user.svg';
 
 const { t } = useTranslations();
 const router = useRouter();
-const toasts = useToastsStore();
 const circlesStore = useCirclesStore();
 
 const circles = computed(() => circlesStore.items);
@@ -58,7 +56,6 @@ async function createCircle(): Promise<void> {
             showCreateForm.value = false;
             circlesStore.invalidate();
             void loadCircles();
-            toasts.success(t('Circle created'));
         },
     });
 }

@@ -6,7 +6,6 @@ import BottomSheet from '@/components/BottomSheet.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useCommentsCacheStore } from '@/spa/stores/commentsCache';
-import { useToastsStore } from '@/spa/stores/toasts';
 import { externalApi } from '@/spa/http/externalApi';
 import heartIcon from '../../../svg/doodle-icons/heart.svg';
 import heartFilledIcon from '../../../svg/doodle-icons/heart-filled.svg';
@@ -57,7 +56,6 @@ const emit = defineEmits<{
 
 const { t } = useTranslations();
 const auth = useAuthStore();
-const toasts = useToastsStore();
 const commentsCache = useCommentsCacheStore();
 const authUserId = computed(() => auth.user?.id ?? null);
 
@@ -444,7 +442,6 @@ async function deleteComment(comment: Comment): Promise<void> {
         await externalApi.delete(`/comments/${comment.id}`);
         commentsCache.invalidate(props.postId);
         emit('commentDeleted', comment);
-        toasts.success(t('Comment deleted'));
     } catch {
         if (backupParent && backupParent.replies) {
             const next = [...backupParent.replies];
@@ -455,7 +452,6 @@ async function deleteComment(comment: Comment): Promise<void> {
             next.splice(backupIndex, 0, comment);
             comments.value = next;
         }
-        toasts.error(t('Failed to delete comment'));
     }
 }
 
@@ -553,7 +549,6 @@ async function submitComment(): Promise<void> {
 
         commentsCache.invalidate(props.postId);
         emit('commentAdded', created);
-        toasts.success(parentId ? t('Reply posted') : t('Comment posted'));
     } catch {
         if (parentId) {
             const parent = comments.value.find((c) => c.id === parentId);
@@ -565,7 +560,6 @@ async function submitComment(): Promise<void> {
         }
         body.value = submittedBody;
         replyingTo.value = submittedReplyingTo;
-        toasts.error(t('Failed to post comment'));
     } finally {
         isSubmitting.value = false;
     }

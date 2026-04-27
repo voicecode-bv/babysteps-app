@@ -17,7 +17,6 @@ import { useDefaultCirclesStore } from '@/spa/stores/defaultCircles';
 import { useFeedCacheStore } from '@/spa/stores/feedCache';
 import { usePersonsStore } from '@/spa/stores/persons';
 import { useTagsStore } from '@/spa/stores/tags';
-import { useToastsStore } from '@/spa/stores/toasts';
 import type { PostData } from '@/spa/components/PostCard.vue';
 import { api } from '@/spa/http/apiClient';
 import cameraIcon from '../../../svg/doodle-icons/camera.svg';
@@ -50,7 +49,6 @@ interface Person {
 const { t } = useTranslations();
 const router = useRouter();
 const auth = useAuthStore();
-const toasts = useToastsStore();
 const feedCache = useFeedCacheStore();
 const circlesStore = useCirclesStore();
 const personsStore = usePersonsStore();
@@ -90,6 +88,27 @@ const mediaPreview = ref<string | null>(null);
 const mediaIsVideo = ref(false);
 const showSourcePicker = ref(false);
 const showCropModal = ref(false);
+
+// iOS WKWebView verschuift `position: fixed`-elementen niet wanneer het
+// toetsenbord opent — ze blijven gepind aan de layout-viewport. We meten de
+// keyboard-insteek via `visualViewport` en duwen de footer met een translate
+// boven het toetsenbord.
+const keyboardInset = ref(0);
+
+function readKeyboardInset(): number {
+    if (typeof window === 'undefined') return 0;
+    const vv = window.visualViewport;
+    if (!vv) return 0;
+    // Alleen het hoogteverschil — geen offsetTop, want die fluctueert tijdens
+    // iOS-scroll en dat veroorzaakt schokkerig "verspringen" van de footer.
+    const delta = window.innerHeight - vv.height;
+    // Negeer micro-schommelingen (URL-bar herijkt zichzelf in WKWebView).
+    return delta > 80 ? delta : 0;
+}
+
+function updateKeyboardInset(): void {
+    keyboardInset.value = readKeyboardInset();
+}
 
 // Wizard-stappen: 0=media, 1=caption, 2=tags & personen, 3=cirkels.
 const TOTAL_STEPS = 4;
@@ -271,12 +290,15 @@ onMounted(() => {
     On(Events.Camera.PhotoTaken, handlePhotoTaken);
     On(Events.Camera.VideoRecorded, handleVideoRecorded);
     On(Events.Gallery.MediaSelected, handleMediaSelected);
+    updateKeyboardInset();
+    window.visualViewport?.addEventListener('resize', updateKeyboardInset);
 });
 
 onUnmounted(() => {
     Off(Events.Camera.PhotoTaken, handlePhotoTaken);
     Off(Events.Camera.VideoRecorded, handleVideoRecorded);
     Off(Events.Gallery.MediaSelected, handleMediaSelected);
+    window.visualViewport?.removeEventListener('resize', updateKeyboardInset);
 });
 
 function buildOptimisticPost(): PostData {
@@ -325,7 +347,6 @@ async function submit(): Promise<void> {
     }
 
     router.push({ name: 'spa.home' });
-    toasts.info(t('Posting...'));
 
     try {
         await form.post('/api/spa/posts');
@@ -333,7 +354,6 @@ async function submit(): Promise<void> {
         for (const circleId of targetCircleIds) {
             feedCache.invalidate(`circle:${circleId}`);
         }
-        toasts.success(t('Post shared'));
     } catch {
         if (optimistic) {
             feedCache.removeItem('home', optimistic.id);
@@ -341,7 +361,6 @@ async function submit(): Promise<void> {
                 feedCache.removeItem(`circle:${circleId}`, optimistic.id);
             }
         }
-        toasts.error(t('Failed to share post'));
     }
 }
 
@@ -479,7 +498,15 @@ function iconMaskStyle(url: string) {
             </div>
         </div>
 
-        <div class="pb-6 left-[var(--inset-left)] right-[var(--inset-right)] fixed bottom-0 z-30 border-t border-sand-200 bg-white/90 backdrop-blur-md dark:border-sand-800 dark:bg-sand-900/90">
+        <div
+            class="left-[var(--inset-left)] right-[var(--inset-right)] fixed bottom-0 z-30 border-t border-sand-200 bg-white/90 backdrop-blur-md transition-transform duration-150 ease-out dark:border-sand-800 dark:bg-sand-900/90"
+            :style="{
+                transform: keyboardInset > 0 ? `translateY(-${keyboardInset}px)` : undefined,
+                paddingBottom: keyboardInset > 0
+                    ? '0.5rem'
+                    : 'max(var(--inset-bottom, 0px), env(safe-area-inset-bottom, 0px), 1.25rem)',
+            }"
+        >
             <div class="flex items-center justify-between gap-3 px-4 py-3">
                 <button
                     type="button"

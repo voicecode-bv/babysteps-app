@@ -12,7 +12,6 @@ import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { useApiForm } from '@/spa/composables/useApiForm';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
-import { useToastsStore } from '@/spa/stores/toasts';
 import { useCirclesStore } from '@/spa/stores/circles';
 import { usePersonsStore } from '@/spa/stores/persons';
 import { api, ApiError } from '@/spa/http/apiClient';
@@ -41,7 +40,6 @@ interface Circle {
 
 const { t } = useTranslations();
 const router = useRouter();
-const toasts = useToastsStore();
 const circlesStore = useCirclesStore();
 const personsStore = usePersonsStore();
 
@@ -183,7 +181,6 @@ async function submit(): Promise<void> {
         await syncCircleIds(personId, currentCircleIds, selectedCircleIds.value);
         sheetOpen.value = false;
         await loadData(true);
-        toasts.success(t('Person updated'));
     } catch (error) {
         if (error instanceof ApiError && error.status === 422) {
             editForm.errors = Object.fromEntries(
@@ -233,7 +230,6 @@ async function createPerson(): Promise<void> {
         editingPersonId.value = data.data.id;
         sheetOpen.value = false;
         await loadData(true);
-        toasts.success(t('Person added'));
     } catch (error) {
         if (error instanceof ApiError && error.status === 422) {
             editForm.errors = Object.fromEntries(
@@ -279,9 +275,8 @@ async function handleButtonPressed(payload: { index: number; id?: string | null 
             sheetOpen.value = false;
         }
         await loadData(true);
-        toasts.success(t('Person removed'));
     } catch {
-        toasts.error(t('Failed to remove person'));
+        // ignore — gebruiker blijft op de huidige lijst
     }
 }
 
@@ -300,9 +295,8 @@ async function deletePhoto(): Promise<void> {
     try {
         await externalApi.delete(`/persons/${editingPerson.value.id}/avatar`);
         await loadData(true);
-        toasts.success(t('Photo removed'));
     } catch {
-        toasts.error(t('Failed to remove photo'));
+        // ignore — foto blijft staan
     }
 }
 
@@ -350,7 +344,6 @@ async function handleMediaSelected(payload: { success: boolean; files: { path: s
         pendingPhotoPreview.value = null;
     } catch {
         if (previous) personsStore.update(personId, previous);
-        toasts.error(t('Failed to upload photo'));
     } finally {
         photoUploading.value = false;
     }

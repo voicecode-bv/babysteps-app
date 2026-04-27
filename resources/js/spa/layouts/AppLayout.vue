@@ -50,7 +50,7 @@ defineExpose({ mainRef });
 </script>
 
 <template>
-    <div class="flex min-h-dvh flex-col">
+    <div class="flex h-dvh flex-col">
         <header
             v-if="props.showHeader"
             class="pt-[var(--inset-top,0)] left-[var(--inset-left,0)] right-[var(--inset-right,0)] fixed z-100 flex items-center justify-between border-b border-sand-200 bg-white px-4 py-3 dark:border-sand-800 dark:bg-sand-900"

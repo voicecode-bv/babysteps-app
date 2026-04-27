@@ -9,7 +9,6 @@ import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { useApiForm } from '@/spa/composables/useApiForm';
 import { useAuthStore } from '@/spa/stores/auth';
-import { useToastsStore } from '@/spa/stores/toasts';
 import { externalApi } from '@/spa/http/externalApi';
 import downloadIcon from '../../../../svg/doodle-icons/arrow-circle-down.svg';
 import userDeleteIcon from '../../../../svg/doodle-icons/user-delete.svg';
@@ -17,7 +16,6 @@ import userDeleteIcon from '../../../../svg/doodle-icons/user-delete.svg';
 const { t } = useTranslations();
 const router = useRouter();
 const auth = useAuthStore();
-const toasts = useToastsStore();
 
 const accountError = ref<string | null>(null);
 const exportError = ref<string | null>(null);
@@ -37,22 +35,17 @@ async function requestExport(): Promise<void> {
         await exportForm.post('/account/export', {
             onSuccess: () => {
                 exportSuccess.value = true;
-                toasts.success(t('Check your inbox, we sent you a download link.'));
             },
         });
         // 422-validatie wordt door useApiForm in `errors` gezet zonder te
         // throwen — in dat geval is `onSuccess` niet gevuurd.
         if (!exportSuccess.value) {
             const fallback = t('We could not request your data export. Please try again later.');
-            const message = Object.values(exportForm.errors)[0] || fallback;
-            exportError.value = message;
-            toasts.error(message);
+            exportError.value = Object.values(exportForm.errors)[0] || fallback;
         }
     } catch (error) {
-        const message = (error as Error).message
+        exportError.value = (error as Error).message
             || t('We could not request your data export. Please try again later.');
-        exportError.value = message;
-        toasts.error(message);
     }
 }
 

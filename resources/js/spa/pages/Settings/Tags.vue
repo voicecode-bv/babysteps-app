@@ -10,14 +10,12 @@ import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { useApiForm } from '@/spa/composables/useApiForm';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
-import { useToastsStore } from '@/spa/stores/toasts';
 import { useTagsStore, type Tag } from '@/spa/stores/tags';
 import { externalApi } from '@/spa/http/externalApi';
 import tagIcon from '../../../../svg/doodle-icons/tag.svg';
 
 const { t } = useTranslations();
 const router = useRouter();
-const toasts = useToastsStore();
 const tagsStore = useTagsStore();
 
 const tags = computed<Tag[] | null>(() => tagsStore.items);
@@ -70,10 +68,8 @@ async function createTag(): Promise<void> {
     try {
         const response = await externalApi.post<{ data: Tag }>('/tags', { name });
         tagsStore.update(optimistic.id, response.data);
-        toasts.success(t('Tag created'));
     } catch {
         tagsStore.remove(optimistic.id);
-        toasts.error(t('Failed to create tag'));
     }
 }
 
@@ -102,10 +98,8 @@ async function saveEdit(tag: Tag): Promise<void> {
 
     try {
         await externalApi.put(`/tags/${tag.id}`, { name: newName });
-        toasts.success(t('Tag updated'));
     } catch {
         tagsStore.update(tag.id, { name: previousName });
-        toasts.error(t('Failed to update tag'));
     }
 }
 
@@ -143,10 +137,8 @@ async function handleButtonPressed(payload: { index: number; id?: string | null 
 
     try {
         await externalApi.delete(`/tags/${tagId}`);
-        toasts.success(t('Tag deleted'));
     } catch {
         if (previous) tagsStore.prepend(previous);
-        toasts.error(t('Failed to delete tag'));
     }
 }
 

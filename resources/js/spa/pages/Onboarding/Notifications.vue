@@ -4,7 +4,6 @@ import { useRouter } from 'vue-router';
 import { Events, On, PushNotifications } from '@nativephp/mobile';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { useAuthStore } from '@/spa/stores/auth';
-import { useToastsStore } from '@/spa/stores/toasts';
 import { externalApi } from '@/spa/http/externalApi';
 import cameraIcon from '../../../../svg/doodle-icons/camera.svg';
 import heartIcon from '../../../../svg/doodle-icons/heart.svg';
@@ -14,7 +13,6 @@ import settingIcon from '../../../../svg/doodle-icons/setting.svg';
 const { t } = useTranslations();
 const router = useRouter();
 const auth = useAuthStore();
-const toasts = useToastsStore();
 
 function iconMaskStyle(url: string) {
     return {
@@ -77,7 +75,6 @@ async function completeOnboarding(): Promise<void> {
         // Niet kritiek; bootstrap haalt straks alsnog onboarded-status op.
     }
     await auth.bootstrap();
-    toasts.success(t('Welcome to innerr'));
     router.push('/');
 }
 

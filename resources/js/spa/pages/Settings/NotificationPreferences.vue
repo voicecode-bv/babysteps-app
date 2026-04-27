@@ -7,13 +7,11 @@ import SurfaceCard from '@/components/SurfaceCard.vue';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
-import { useToastsStore } from '@/spa/stores/toasts';
 import { useNotificationPreferencesStore, type NotificationPreferences as Preferences } from '@/spa/stores/notificationPreferences';
 import bellIcon from '../../../../svg/doodle-icons/bell.svg';
 
 const { t } = useTranslations();
 const router = useRouter();
-const toasts = useToastsStore();
 const prefsStore = useNotificationPreferencesStore();
 
 const preferences = computed<Preferences | null>(() => prefsStore.preferences);
@@ -57,7 +55,7 @@ async function togglePreference(key: keyof Preferences): Promise<void> {
     try {
         await prefsStore.toggle(key);
     } catch {
-        toasts.error(t('Failed to update preferences'));
+        // Stille rollback in de store; geen toast.
     }
 }
 </script>

@@ -16,7 +16,6 @@ import { usePersonsStore } from '@/spa/stores/persons';
 import { useFeedCacheStore } from '@/spa/stores/feedCache';
 import { usePostCacheStore } from '@/spa/stores/postCache';
 import { useTagsStore } from '@/spa/stores/tags';
-import { useToastsStore } from '@/spa/stores/toasts';
 import { useServiceKeysStore } from '@/spa/stores/serviceKeys';
 import { externalApi } from '@/spa/http/externalApi';
 import heartFilledIcon from '../../../svg/doodle-icons/heart-filled.svg';
@@ -88,7 +87,6 @@ const { t } = useTranslations();
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
-const toasts = useToastsStore();
 
 const postId = computed(() => Number(route.params.post));
 const post = ref<Post | null>(null);
@@ -244,10 +242,9 @@ async function handleButtonPressed(payload: { index: number; id?: string | null 
             // Feed-caches zijn nu stale (post is weg) — wis 'm zodat de
             // volgende feed-bezoek opnieuw fetcht.
             useFeedCacheStore().clear();
-            toasts.success(t('Post deleted'));
             router.push({ name: 'spa.home' });
         } catch {
-            toasts.error(t('Failed to delete post'));
+            // ignore — gebruiker blijft op de post staan
         } finally {
             isDeleting.value = false;
         }
@@ -566,7 +563,7 @@ watch(
             :available-tags="editAvailableTags"
             :available-persons="editAvailablePersons"
             @update:open="isEditModalOpen = $event"
-            @updated="() => { toasts.success(t('Post updated')); loadPost(); }"
+            @updated="loadPost"
         />
     </AppLayout>
 </template>
