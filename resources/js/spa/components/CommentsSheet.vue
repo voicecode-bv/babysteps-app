@@ -642,7 +642,7 @@ defineExpose({
             <button class="mt-2 text-xs font-medium text-sand-500 dark:text-sand-400" @click="loadPage(1)">{{ t('Try again') }}</button>
         </div>
 
-        <div v-else-if="comments.length === 0" class="flex flex-col items-center justify-center px-8 py-16 text-center">
+        <div v-else-if="comments.length === 0" class="flex flex-col items-center justify-center px-8 py-2 text-center">
             <div aria-hidden="true" class="mb-4 flex size-16 items-center justify-center rounded-2xl bg-sage-100 text-teal dark:bg-sage-900/40">
                 <span class="inline-block size-8 bg-current" :style="iconMaskStyle(messageIcon)"></span>
             </div>
@@ -804,7 +804,13 @@ defineExpose({
                 </button>
             </div>
             <div class="flex items-center gap-3 px-4 py-3">
-                <div class="size-8 flex-shrink-0 rounded-full bg-sand-200 dark:bg-sand-800" />
+                <img
+                    :src="auth.user?.avatar ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(auth.user?.name ?? '')}&background=f0dcc6&color=5c3f24&size=64`"
+                    :alt="auth.user?.name ?? ''"
+                    class="size-8 flex-shrink-0 rounded-full bg-sand-200 object-cover dark:bg-sand-800"
+                    loading="lazy"
+                    decoding="async"
+                />
                 <form class="flex flex-1 items-center gap-2" @submit.prevent="submitComment">
                     <input
                         ref="commentInput"

@@ -22,7 +22,6 @@ import heartFilledIcon from '../../../svg/doodle-icons/heart-filled.svg';
 import heartIcon from '../../../svg/doodle-icons/heart.svg';
 import messageIcon from '../../../svg/doodle-icons/message.svg';
 import pencilIcon from '../../../svg/doodle-icons/pencil-3.svg';
-import tagIcon from '../../../svg/doodle-icons/tag.svg';
 
 interface User {
     id: number;
@@ -46,6 +45,8 @@ interface Person {
     id: number;
     name: string;
     avatar_thumbnail?: string | null;
+    user_id?: number | null;
+    user_username?: string | null;
 }
 
 interface AvailableCircle extends Circle {
@@ -54,13 +55,18 @@ interface AvailableCircle extends Circle {
     is_owner?: boolean;
 }
 
-interface TagOrPerson {
+interface AvailableTag {
     id: number;
     name: string;
-    type?: 'tag' | 'person';
     usage_count?: number;
+}
+
+interface AvailablePerson {
+    id: number;
+    name: string;
     avatar_thumbnail?: string | null;
     avatar?: string | null;
+    user_id?: number | null;
 }
 
 interface Post {
@@ -180,8 +186,8 @@ const isLikesSheetOpen = ref(false);
 const isCommentsSheetOpen = ref(false);
 const isEditModalOpen = ref(false);
 const editAvailableCircles = ref<AvailableCircle[]>([]);
-const editAvailableTags = ref<TagOrPerson[]>([]);
-const editAvailablePersons = ref<TagOrPerson[]>([]);
+const editAvailableTags = ref<AvailableTag[]>([]);
+const editAvailablePersons = ref<AvailablePerson[]>([]);
 
 function openLikes(): void {
     isLikesSheetOpen.value = true;
@@ -200,24 +206,17 @@ async function openEditModal(): Promise<void> {
     try {
         const [circles, tags, persons] = await Promise.all([
             circlesStore.ensureLoaded().catch(() => [] as AvailableCircle[]),
-            tagsStore.ensureLoaded().catch(() => [] as TagOrPerson[]),
-            personsStore.ensureLoaded().catch(() => [] as TagOrPerson[]),
+            tagsStore.ensureLoaded().catch(() => [] as AvailableTag[]),
+            personsStore.ensureLoaded().catch(() => [] as AvailablePerson[]),
         ]);
         editAvailableCircles.value = circles as AvailableCircle[];
-        editAvailableTags.value = tags as TagOrPerson[];
-        editAvailablePersons.value = persons as TagOrPerson[];
+        editAvailableTags.value = tags as AvailableTag[];
+        editAvailablePersons.value = persons as AvailablePerson[];
     } catch {
         // open anyway with empty available lists
     }
     isEditModalOpen.value = true;
 }
-
-const editTagsAndPersons = computed<TagOrPerson[]>(() => {
-    if (!post.value) return [];
-    const tags = (post.value.tags ?? []).map((tag) => ({ ...tag, type: 'tag' as const }));
-    const persons = (post.value.persons ?? []).map((person) => ({ id: person.id, name: person.name, type: 'person' as const }));
-    return [...tags, ...persons];
-});
 
 function onCommentAdded(): void {
     if (post.value) post.value.comments_count += 1;
@@ -331,28 +330,16 @@ watch(
                 </svg>
             </button>
         </template>
-        <template #header-right>
-            <div class="flex items-center gap-3 text-sand-700 dark:text-sand-300">
-                <RouterLink
-                    v-if="post"
-                    :to="mapTarget"
-                    class="flex items-center"
-                    :aria-label="t('Open map')"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m0-8.25L3.32 4.507a.75.75 0 0 0-1.07.68v11.124c0 .285.165.544.421.666L9 19.5m0-12.75 6 3m-6 9 6-3m0 0V15m0-8.25 5.68-2.243a.75.75 0 0 1 1.07.68v11.124a.75.75 0 0 1-.421.666L15 19.5M15 6.75V15" />
-                    </svg>
-                </RouterLink>
-                <button v-if="isOwner" class="text-blush-500 disabled:opacity-50" :aria-label="t('Delete post')" :disabled="isDeleting" @click="deletePost">
-                    <svg v-if="!isDeleting" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                    </svg>
-                    <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="size-5 animate-spin">
-                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-opacity="0.25" />
-                        <path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
-                    </svg>
-                </button>
-            </div>
+        <template v-if="isOwner" #header-right>
+            <button class="text-blush-500 disabled:opacity-50" :aria-label="t('Delete post')" :disabled="isDeleting" @click="deletePost">
+                <svg v-if="!isDeleting" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                </svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="size-5 animate-spin">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-opacity="0.25" />
+                    <path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+                </svg>
+            </button>
         </template>
 
         <div class="mt-10 pb-32">
@@ -479,57 +466,64 @@ watch(
                     </div>
                 </div>
 
-                <RouterLink
-                    v-if="staticMapUrl"
-                    :to="mapTarget"
-                    class="relative block aspect-[2/1] w-full overflow-hidden bg-sand-100 dark:bg-sand-800"
-                    :aria-label="t('Open map')"
-                >
-                    <img
-                        :src="staticMapUrl"
-                        :alt="post.location ?? t('Open map')"
-                        class="size-full object-cover"
-                        loading="lazy"
-                        decoding="async"
-                    />
-                    <div v-if="post.location" class="absolute inset-x-0 bottom-0 flex items-center gap-1.5 bg-gradient-to-t from-black/60 via-black/20 to-transparent px-4 pb-2 pt-8 text-xs font-medium text-white">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4 drop-shadow">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-                        </svg>
-                        <span class="drop-shadow">{{ post.location }}</span>
-                    </div>
-                </RouterLink>
+                <div v-if="(post.persons ?? []).length > 0 || (post.tags ?? []).length > 0 || staticMapUrl" class="space-y-5 bg-warmwhite px-4 pb-2 pt-5 dark:bg-sand-900">
+                    <section v-if="(post.persons ?? []).length > 0" class="space-y-3">
+                        <h3 class="text-[11px] font-semibold uppercase tracking-[0.18em] text-sand-500 dark:text-sand-400">{{ t('Persons') }}</h3>
+                        <div class="flex flex-wrap gap-2">
+                            <component
+                                :is="person.user_username ? RouterLink : 'span'"
+                                v-for="person in post.persons"
+                                :key="person.id"
+                                :to="person.user_username ? { name: 'spa.profiles.show', params: { username: person.user_username } } : undefined"
+                                class="inline-flex items-center gap-2 rounded-full bg-white py-1 pl-1 pr-3.5 text-xs font-semibold text-sand-800 shadow-sm ring-1 ring-sand-100 dark:bg-sand-800 dark:text-sand-100 dark:ring-sand-700/60"
+                                :class="person.user_username ? 'transition-colors hover:bg-sand-50 dark:hover:bg-sand-700' : ''"
+                            >
+                                <img v-if="person.avatar_thumbnail" :src="person.avatar_thumbnail" :alt="person.name" class="size-7 rounded-full object-cover" />
+                                <span v-else class="flex size-7 items-center justify-center rounded-full bg-sage-100 text-teal dark:bg-sage-900/40">
+                                    <span class="font-display text-xs font-semibold uppercase">{{ person.name.charAt(0) }}</span>
+                                </span>
+                                {{ person.name }}
+                            </component>
+                        </div>
+                    </section>
 
-                <div v-if="(post.persons ?? []).length > 0" class="bg-white px-4 pt-4 dark:bg-sand-900">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <span
-                            v-for="person in post.persons"
-                            :key="person.id"
-                            class="inline-flex items-center gap-1.5 rounded-full bg-sand-100 px-1 py-1 pr-3 text-xs font-semibold text-sand-800 dark:bg-sand-800 dark:text-sand-100"
-                        >
-                            <img v-if="person.avatar_thumbnail" :src="person.avatar_thumbnail" :alt="person.name" class="size-6 rounded-full object-cover" />
-                            <span v-else class="flex size-6 items-center justify-center rounded-full bg-sage-100 text-teal dark:bg-sage-900/40">
-                                <span class="inline-block size-3.5 bg-current" :style="iconMaskStyle(tagIcon)"></span>
+                    <section v-if="(post.tags ?? []).length > 0" class="space-y-3">
+                        <h3 class="text-[11px] font-semibold uppercase tracking-[0.18em] text-sand-500 dark:text-sand-400">{{ t('Tags') }}</h3>
+                        <div class="flex flex-wrap gap-2">
+                            <span
+                                v-for="tag in post.tags"
+                                :key="tag.id"
+                                class="rounded-full bg-linear-to-r from-sage-100 to-teal-muted/30 px-3.5 py-1.5 text-xs font-semibold text-teal ring-1 ring-inset ring-teal/15 dark:from-sage-900/40 dark:to-teal-muted/15 dark:text-sage-200 dark:ring-sage-700/40"
+                            >
+                                {{ tag.name }}
                             </span>
-                            {{ person.name }}
-                        </span>
-                    </div>
-                </div>
+                        </div>
+                    </section>
 
-                <div v-if="(post.tags ?? []).length > 0" class="bg-white px-4 pt-4 dark:bg-sand-900">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <span aria-hidden="true" class="inline-block size-4 bg-teal/70" :style="iconMaskStyle(tagIcon)"></span>
-                        <span
-                            v-for="tag in post.tags"
-                            :key="tag.id"
-                            class="rounded-full bg-linear-to-r from-sage-100 to-teal-muted/30 px-3 py-1 text-xs font-semibold text-teal ring-1 ring-inset ring-teal/15 dark:from-sage-900/40 dark:to-teal-muted/15 dark:text-sage-200 dark:ring-sage-700/40"
+                    <section v-if="staticMapUrl" class="space-y-3">
+                        <h3 class="text-[11px] font-semibold uppercase tracking-[0.18em] text-sand-500 dark:text-sand-400">{{ t('Location') }}</h3>
+                        <RouterLink
+                            :to="mapTarget"
+                            class="relative block aspect-[2/1] w-full overflow-hidden rounded-2xl bg-sand-100 shadow-sm ring-1 ring-sand-100 dark:bg-sand-800 dark:ring-sand-700/60"
+                            :aria-label="t('Open map')"
                         >
-                            {{ tag.name }}
-                        </span>
-                    </div>
+                            <img
+                                :src="staticMapUrl"
+                                :alt="post.location ?? t('Open map')"
+                                class="size-full object-cover"
+                                loading="lazy"
+                                decoding="async"
+                            />
+                            <div v-if="post.location" class="absolute inset-x-0 bottom-0 flex items-center gap-1.5 bg-gradient-to-t from-black/65 via-black/25 to-transparent px-4 pb-3 pt-10 text-xs font-medium text-white">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4 drop-shadow">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                                </svg>
+                                <span class="drop-shadow">{{ post.location }}</span>
+                            </div>
+                        </RouterLink>
+                    </section>
                 </div>
-
             </div>
         </div>
 
@@ -559,7 +553,8 @@ watch(
             :caption="post.caption"
             :circles="post.circles ?? []"
             :available-circles="editAvailableCircles"
-            :tags="editTagsAndPersons"
+            :tags="post.tags ?? []"
+            :persons="post.persons ?? []"
             :available-tags="editAvailableTags"
             :available-persons="editAvailablePersons"
             @update:open="isEditModalOpen = $event"

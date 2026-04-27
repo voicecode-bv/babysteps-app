@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, useTemplateRef } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import CommentsSheet from '@/spa/components/CommentsSheet.vue';
+import LikesSheet from '@/spa/components/LikesSheet.vue';
 import PostCard, { type PostData } from '@/spa/components/PostCard.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
@@ -74,9 +75,23 @@ onMounted(() => {
 const commentsPostId = ref<number | null>(null);
 const isCommentsOpen = ref(false);
 
+const likesPostId = ref<number | null>(null);
+const isLikesOpen = ref(false);
+
 function openCommentsForPost(postId: number): void {
     commentsPostId.value = postId;
     isCommentsOpen.value = true;
+}
+
+function openLikesForPost(postId: number): void {
+    likesPostId.value = postId;
+    isLikesOpen.value = true;
+}
+
+function activeLikesCount(): number {
+    if (likesPostId.value === null) return 0;
+    const target = feed.items.find((p) => p.id === likesPostId.value);
+    return target?.likes_count ?? 0;
 }
 
 function activeCommentsCount(): number {
@@ -143,6 +158,7 @@ function goBack(): void {
                 :key="post.id"
                 :post="post"
                 @open-comments="openCommentsForPost"
+                @open-likes="openLikesForPost"
             />
 
             <div v-if="feed.loading && feed.items.length > 0" class="flex items-center justify-center gap-2 py-6 text-sm text-sand-500 dark:text-sand-400">
@@ -171,6 +187,14 @@ function goBack(): void {
             @update:open="isCommentsOpen = $event"
             @comment-added="bumpActivePostCommentsCount(1)"
             @comment-deleted="bumpActivePostCommentsCount(-1)"
+        />
+
+        <LikesSheet
+            v-if="likesPostId !== null"
+            :open="isLikesOpen"
+            :post-id="likesPostId"
+            :initial-count="activeLikesCount()"
+            @update:open="isLikesOpen = $event"
         />
     </AppLayout>
 </template>

@@ -8,6 +8,7 @@ interface Person {
     name: string;
     avatar_thumbnail?: string | null;
     avatar?: string | null;
+    user_id?: number | null;
 }
 
 const props = withDefaults(
@@ -141,6 +142,14 @@ function toggle(personId: number) {
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="size-3 text-white">
                             <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                         </svg>
+                    </div>
+
+                    <div
+                        v-else-if="person.user_id"
+                        class="absolute -top-0.5 -right-0.5 flex size-5 items-center justify-center rounded-full bg-sand-100 ring-2 ring-white dark:bg-sand-800 dark:ring-sand-900"
+                        :title="t('Member of this circle')"
+                    >
+                        <span aria-hidden="true" class="inline-block size-3 bg-teal" :style="iconMaskStyle(userIcon)"></span>
                     </div>
                 </div>
                 <span

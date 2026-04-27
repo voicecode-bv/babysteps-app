@@ -8,6 +8,7 @@ export interface Person {
     avatar: string | null;
     avatar_thumbnail: string | null;
     usage_count: number;
+    user_id?: number | null;
     circle_ids?: number[];
 }
 

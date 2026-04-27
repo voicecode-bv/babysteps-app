@@ -46,6 +46,62 @@ function unlockBodyScroll() {
     document.documentElement.style.overflow = savedHtmlOverflow;
 }
 
+// iOS WKWebView blijft scroll-gestures door-routeren naar de achterliggende
+// pagina ondanks `overflow:hidden` en `overscroll-behavior:contain`. We
+// onderscheppen daarom alle touchmoves in capture-phase:
+//  - Buiten de sheet → altijd blokkeren.
+//  - Binnen de sheet → alleen blokkeren wanneer de gebruiker probeert verder
+//    te scrollen dan de inhoud toelaat (iNoBounce-patroon), zodat de bounce
+//    niet doorlekt naar de feed.
+let touchStartY = 0;
+
+function onCaptureTouchStart(event: TouchEvent): void {
+    if (event.touches.length > 0) {
+        touchStartY = event.touches[0].clientY;
+    }
+}
+
+function findScrollableAncestor(start: HTMLElement | null): HTMLElement | null {
+    let node: HTMLElement | null = start;
+    while (node && sheetRef.value && sheetRef.value.contains(node)) {
+        const style = window.getComputedStyle(node);
+        const canScrollY = (style.overflowY === 'auto' || style.overflowY === 'scroll')
+            && node.scrollHeight > node.clientHeight;
+        if (canScrollY) {
+            return node;
+        }
+        if (node === sheetRef.value) break;
+        node = node.parentElement;
+    }
+    return null;
+}
+
+function blockBackgroundTouchMove(event: TouchEvent): void {
+    const target = event.target as HTMLElement | null;
+
+    if (!target || !sheetRef.value || !sheetRef.value.contains(target)) {
+        event.preventDefault();
+        return;
+    }
+
+    const scrollEl = findScrollableAncestor(target);
+
+    if (!scrollEl) {
+        // Target zit binnen de sheet maar in een niet-scrollbaar gedeelte
+        // (bv. footer met input) — niets bewegen.
+        event.preventDefault();
+        return;
+    }
+
+    const deltaY = event.touches[0].clientY - touchStartY;
+    const atTop = scrollEl.scrollTop <= 0;
+    const atBottom = scrollEl.scrollTop + scrollEl.clientHeight >= scrollEl.scrollHeight - 1;
+
+    if ((atTop && deltaY > 0) || (atBottom && deltaY < 0)) {
+        event.preventDefault();
+    }
+}
+
 function setKeyboardInset(offset: number) {
     document.documentElement.style.setProperty('--kb-inset', `${offset}px`);
     keyboardOpen.value = offset > 0;
@@ -160,10 +216,14 @@ watch(
         if (isOpen) {
             lockBodyScroll();
             document.addEventListener('keydown', handleKeydown);
+            document.addEventListener('touchstart', onCaptureTouchStart, { passive: true, capture: true });
+            document.addEventListener('touchmove', blockBackgroundTouchMove, { passive: false, capture: true });
             updateKeyboardOffset();
         } else {
             unlockBodyScroll();
             document.removeEventListener('keydown', handleKeydown);
+            document.removeEventListener('touchstart', onCaptureTouchStart, { capture: true });
+            document.removeEventListener('touchmove', blockBackgroundTouchMove, { capture: true });
             setKeyboardInset(0);
         }
     },
@@ -178,6 +238,8 @@ onMounted(() => {
 
 onUnmounted(() => {
     document.removeEventListener('keydown', handleKeydown);
+    document.removeEventListener('touchstart', onCaptureTouchStart, { capture: true });
+    document.removeEventListener('touchmove', blockBackgroundTouchMove, { capture: true });
     window.visualViewport?.removeEventListener('resize', updateKeyboardOffset);
     window.visualViewport?.removeEventListener('scroll', updateKeyboardOffset);
 
@@ -203,10 +265,11 @@ onUnmounted(() => {
     <teleport v-if="mounted" to="body">
         <div
             :class="[
-                'fixed inset-0 z-9999 bg-black/50 transition-opacity duration-300',
+                'fixed inset-0 z-9999 touch-none bg-black/50 transition-opacity duration-300',
                 open ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0',
             ]"
             @click="close"
+            @touchmove.prevent
         />
         <div
             ref="sheetRef"
@@ -238,7 +301,7 @@ onUnmounted(() => {
             <div v-if="$slots.header" class="flex-shrink-0 border-b border-sand-100 px-4 py-3 dark:border-sand-800">
                 <slot name="header" />
             </div>
-            <div class="min-h-0 flex-1 overflow-y-auto">
+            <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain">
                 <slot />
             </div>
             <div

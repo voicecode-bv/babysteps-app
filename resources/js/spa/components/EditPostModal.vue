@@ -20,11 +20,16 @@ interface Circle {
 
 interface Tag {
     id: number;
-    type?: string;
     name: string;
     usage_count?: number;
-    avatar_thumbnail?: string | null;
+}
+
+interface Person {
+    id: number;
+    name: string;
     avatar?: string | null;
+    avatar_thumbnail?: string | null;
+    user_id?: number | null;
 }
 
 const props = withDefaults(
@@ -35,12 +40,14 @@ const props = withDefaults(
         circles: Circle[];
         availableCircles?: Circle[] | null;
         tags?: Tag[] | null;
+        persons?: Person[] | null;
         availableTags?: Tag[] | null;
-        availablePersons?: Tag[] | null;
+        availablePersons?: Person[] | null;
     }>(),
     {
         availableCircles: () => [],
         tags: () => [],
+        persons: () => [],
         availableTags: () => [],
         availablePersons: () => [],
     },
@@ -53,16 +60,8 @@ const emit = defineEmits<{
 
 const { t } = useTranslations();
 
-function tagIdsOf(list: Tag[]): number[] {
-    return list.filter((tag) => (tag.type ?? 'tag') === 'tag').map((tag) => tag.id);
-}
-
-function personIdsOf(list: Tag[]): number[] {
-    return list.filter((tag) => tag.type === 'person').map((tag) => tag.id);
-}
-
-const initialTagIds = tagIdsOf(props.tags ?? []);
-const initialPersonIds = personIdsOf(props.tags ?? []);
+const initialTagIds = (props.tags ?? []).map((tag) => tag.id);
+const initialPersonIds = (props.persons ?? []).map((person) => person.id);
 
 const form = useApiForm({
     caption: props.caption ?? '',
@@ -73,7 +72,7 @@ const form = useApiForm({
 
 const availableCircles = computed<Circle[]>(() => props.availableCircles ?? []);
 const availableTags = computed<Tag[]>(() => props.availableTags ?? []);
-const availablePersons = computed<Tag[]>(() => props.availablePersons ?? []);
+const availablePersons = computed<Person[]>(() => props.availablePersons ?? []);
 
 function sameIds(a: number[], b: number[]): boolean {
     if (a.length !== b.length) return false;
@@ -97,14 +96,11 @@ watch(
     (isOpen) => {
         if (!isOpen) return;
 
-        const tagIds = tagIdsOf(props.tags ?? []);
-        const personIds = personIdsOf(props.tags ?? []);
-
         form.errors = {};
         form.data.caption = props.caption ?? '';
         form.data.circle_ids = props.circles.map((c) => c.id);
-        form.data.tag_ids = tagIds;
-        form.data.person_ids = personIds;
+        form.data.tag_ids = (props.tags ?? []).map((tag) => tag.id);
+        form.data.person_ids = (props.persons ?? []).map((person) => person.id);
     },
 );
 
@@ -121,11 +117,11 @@ function onSheetUpdate(value: boolean): void {
 }
 
 async function submit(): Promise<void> {
-    // Externe API verwacht de gecombineerde tag_ids set (tags + persons).
     const payload = {
         caption: form.data.caption,
         circle_ids: form.data.circle_ids,
-        tag_ids: [...form.data.tag_ids, ...form.data.person_ids],
+        tag_ids: form.data.tag_ids,
+        person_ids: form.data.person_ids,
     };
 
     form.processing = true;
@@ -186,20 +182,21 @@ async function submit(): Promise<void> {
                 />
             </section>
 
+            <section v-if="availablePersons.length > 0">
+                <PersonPicker
+                    :persons="availablePersons"
+                    :selected-ids="form.data.person_ids"
+                    :error="form.errors.person_ids"
+                    @update:selected-ids="form.data.person_ids = $event"
+                />
+            </section>
+
             <section class="relative z-20">
                 <TagSelector
                     :available-tags="availableTags"
                     :selected-ids="form.data.tag_ids"
                     :error="form.errors.tag_ids"
                     @update:selected-ids="form.data.tag_ids = $event"
-                />
-            </section>
-
-            <section v-if="availablePersons.length > 0">
-                <PersonPicker
-                    :persons="availablePersons"
-                    :selected-ids="form.data.person_ids"
-                    @update:selected-ids="form.data.person_ids = $event"
                 />
             </section>
         </div>

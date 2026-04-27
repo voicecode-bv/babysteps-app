@@ -324,6 +324,7 @@
     "Invalid cropped image": "Ongeldige bijgesneden afbeelding",
 
     "Tags": "Labels",
+    "Location": "Locatie",
     "Tag name...": "Labelnaam...",
     "New tag": "Nieuw label",
     "Add tag": "Label toevoegen",
@@ -385,6 +386,8 @@
     "Failed to update person": "Persoon bijwerken mislukt",
     "Failed to upload photo": "Foto uploaden mislukt",
     "Tag persons": "Personen taggen",
+    "Member of this circle": "Lid van deze kring",
+    "tagged you in a post": "heeft je getagd in een post",
     "No persons selected": "Geen personen geselecteerd",
     "No persons yet. Add them in Settings → Persons.": "Nog geen personen. Voeg ze toe via Instellingen → Personen.",
     "Remove": "Verwijderen",

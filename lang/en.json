@@ -313,6 +313,7 @@
     "Invalid cropped image": "Invalid cropped image",
 
     "Tags": "Tags",
+    "Location": "Location",
     "Tag name...": "Tag name...",
     "New tag": "New tag",
     "Add tag": "Add tag",
@@ -376,6 +377,8 @@
     "Failed to update person": "Failed to update person",
     "Failed to upload photo": "Failed to upload photo",
     "Tag persons": "Tag persons",
+    "Member of this circle": "Member of this circle",
+    "tagged you in a post": "tagged you in a post",
     "No persons selected": "No persons selected",
     "No persons yet. Add them in Settings → Persons.": "No persons yet. Add them in Settings → Persons.",
     "Remove": "Remove",

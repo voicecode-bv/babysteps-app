@@ -41,7 +41,12 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     (e: 'openComments', postId: number): void;
+    (e: 'openLikes', postId: number): void;
 }>();
+
+function openLikes(): void {
+    emit('openLikes', props.post.id);
+}
 
 const { t } = useTranslations();
 const router = useRouter();
@@ -228,7 +233,9 @@ function timeAgo(dateString: string): string {
                             :style="iconMaskStyle(isLiked ? heartFilledIcon : heartIcon)"
                         ></span>
                     </button>
-                    <span v-else aria-hidden="true" class="inline-block size-6 bg-white drop-shadow" :style="iconMaskStyle(heartIcon)"></span>
+                    <button v-else class="flex" :aria-label="t('Show likes')" @click.stop="openLikes">
+                        <span aria-hidden="true" class="inline-block size-6 bg-white drop-shadow" :style="iconMaskStyle(heartIcon)"></span>
+                    </button>
                     <span v-if="likesCount > 0" class="text-sm font-medium text-white drop-shadow">{{ likesCount }}</span>
                 </div>
                 <button class="flex items-center gap-1 text-white drop-shadow" @click.stop="openComments">
@@ -332,7 +339,9 @@ function timeAgo(dateString: string): string {
                         <button v-if="post.user.id !== authUserId" class="flex" @click.stop="toggleLike">
                             <span aria-hidden="true" class="inline-block size-6 drop-shadow" :class="isLiked ? 'bg-blush-400' : 'bg-white'" :style="iconMaskStyle(isLiked ? heartFilledIcon : heartIcon)"></span>
                         </button>
-                        <span v-else aria-hidden="true" class="inline-block size-6 bg-white drop-shadow" :style="iconMaskStyle(heartIcon)"></span>
+                        <button v-else class="flex" :aria-label="t('Show likes')" @click.stop="openLikes">
+                            <span aria-hidden="true" class="inline-block size-6 bg-white drop-shadow" :style="iconMaskStyle(heartIcon)"></span>
+                        </button>
                         <span v-if="likesCount > 0" class="text-sm font-medium text-white drop-shadow">{{ likesCount }}</span>
                     </div>
                     <button class="flex items-center gap-1 text-white drop-shadow" @click.stop="openComments">

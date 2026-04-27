@@ -95,14 +95,32 @@ function attachObserver(target: HTMLElement): void {
     observer.observe(target);
 }
 
+function resetState(): void {
+    users.value = [];
+    seenIds.clear();
+    hasLoaded.value = false;
+    currentPage.value = 0;
+    lastPage.value = 1;
+    loadError.value = null;
+}
+
+// Eén gecombineerde watcher op (open, postId) lost meerdere bugs in één keer
+// op:
+//  - `immediate: true` zorgt dat de eerste mount (parent gebruikt v-if =
+//    'likesPostId !== null', dus het component bestaat nog niet vóór de
+//    eerste tap) direct een fetch start.
+//  - Als de gebruiker daarna een andere post opent verandert postId en/of
+//    open opnieuw — deze watcher vuurt dan opnieuw zonder dat een tweede
+//    losse postId-watcher dezelfde fetch dubbel triggert.
+//  - Sluiten (open: true → false) gaat netjes door de early-return.
 watch(
-    () => props.open,
-    (isOpen) => {
+    [() => props.open, () => props.postId],
+    ([isOpen]) => {
         if (!isOpen) return;
-        if (!hasLoaded.value) {
-            void loadPage(1);
-        }
+        resetState();
+        void loadPage(1);
     },
+    { immediate: true },
 );
 
 watch(sentinelRef, (el) => {
@@ -113,17 +131,6 @@ watch(sentinelRef, (el) => {
         observer = null;
     }
 });
-
-watch(
-    () => props.postId,
-    () => {
-        users.value = [];
-        seenIds.clear();
-        hasLoaded.value = false;
-        currentPage.value = 0;
-        lastPage.value = 1;
-    },
-);
 
 onUnmounted(() => {
     observer?.disconnect();
@@ -171,7 +178,7 @@ function onSheetUpdate(value: boolean): void {
             <button class="mt-2 text-xs font-medium text-sand-500 dark:text-sand-400" @click="loadPage(1)">{{ t('Try again') }}</button>
         </div>
 
-        <div v-else-if="users.length === 0" class="px-4 py-10 pb-24 text-center">
+        <div v-else-if="hasLoaded && users.length === 0" class="px-4 py-10 pb-24 text-center">
             <p class="text-sm font-medium text-sand-600 dark:text-sand-300">{{ t('No likes yet') }}</p>
         </div>
 

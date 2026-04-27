@@ -89,27 +89,6 @@ const mediaIsVideo = ref(false);
 const showSourcePicker = ref(false);
 const showCropModal = ref(false);
 
-// iOS WKWebView verschuift `position: fixed`-elementen niet wanneer het
-// toetsenbord opent — ze blijven gepind aan de layout-viewport. We meten de
-// keyboard-insteek via `visualViewport` en duwen de footer met een translate
-// boven het toetsenbord.
-const keyboardInset = ref(0);
-
-function readKeyboardInset(): number {
-    if (typeof window === 'undefined') return 0;
-    const vv = window.visualViewport;
-    if (!vv) return 0;
-    // Alleen het hoogteverschil — geen offsetTop, want die fluctueert tijdens
-    // iOS-scroll en dat veroorzaakt schokkerig "verspringen" van de footer.
-    const delta = window.innerHeight - vv.height;
-    // Negeer micro-schommelingen (URL-bar herijkt zichzelf in WKWebView).
-    return delta > 80 ? delta : 0;
-}
-
-function updateKeyboardInset(): void {
-    keyboardInset.value = readKeyboardInset();
-}
-
 // Wizard-stappen: 0=media, 1=caption, 2=tags & personen, 3=cirkels.
 const TOTAL_STEPS = 4;
 const currentStep = ref(0);
@@ -290,15 +269,12 @@ onMounted(() => {
     On(Events.Camera.PhotoTaken, handlePhotoTaken);
     On(Events.Camera.VideoRecorded, handleVideoRecorded);
     On(Events.Gallery.MediaSelected, handleMediaSelected);
-    updateKeyboardInset();
-    window.visualViewport?.addEventListener('resize', updateKeyboardInset);
 });
 
 onUnmounted(() => {
     Off(Events.Camera.PhotoTaken, handlePhotoTaken);
     Off(Events.Camera.VideoRecorded, handleVideoRecorded);
     Off(Events.Gallery.MediaSelected, handleMediaSelected);
-    window.visualViewport?.removeEventListener('resize', updateKeyboardInset);
 });
 
 function buildOptimisticPost(): PostData {
@@ -388,8 +364,8 @@ function iconMaskStyle(url: string) {
             </button>
         </template>
 
-        <div class="relative mt-10 min-h-full pb-[calc(theme(spacing.40)+env(safe-area-inset-bottom))]">
-            <div class="px-4 pt-4">
+        <div class="relative mt-10 flex min-h-full flex-col">
+            <div class="flex-shrink-0 px-4 pt-4">
                 <div class="flex items-center justify-center gap-1.5" :aria-label="t('Step :current of :total', { current: currentStep + 1, total: TOTAL_STEPS })">
                     <span
                         v-for="step in TOTAL_STEPS"
@@ -413,7 +389,7 @@ function iconMaskStyle(url: string) {
                 </p>
             </div>
 
-            <div class="relative mt-6 space-y-5 px-4 pb-32">
+            <div class="relative mt-6 flex-1 space-y-5 px-4 pb-6">
                 <section v-show="currentStep === 0" class="overflow-hidden rounded-lg bg-white/50 shadow-sm backdrop-blur-sm dark:bg-sand-800/60">
                     <div v-if="mediaPreview" class="relative">
                         <video v-if="mediaIsVideo" :src="mediaPreview" class="w-full object-cover" controls />
@@ -496,33 +472,28 @@ function iconMaskStyle(url: string) {
                     </p>
                 </section>
             </div>
-        </div>
 
-        <div
-            class="left-[var(--inset-left)] right-[var(--inset-right)] fixed bottom-0 z-30 border-t border-sand-200 bg-white/90 backdrop-blur-md transition-transform duration-150 ease-out dark:border-sand-800 dark:bg-sand-900/90"
-            :style="{
-                transform: keyboardInset > 0 ? `translateY(-${keyboardInset}px)` : undefined,
-                paddingBottom: keyboardInset > 0
-                    ? '0.5rem'
-                    : 'max(var(--inset-bottom, 0px), env(safe-area-inset-bottom, 0px), 1.25rem)',
-            }"
-        >
-            <div class="flex items-center justify-between gap-3 px-4 py-3">
-                <button
-                    type="button"
-                    class="rounded-full px-5 py-2.5 text-sm font-medium text-sand-700 transition active:bg-sand-100 dark:text-sand-200 dark:active:bg-sand-800"
-                    @click="goBack"
-                >
-                    {{ currentStep === 0 ? t('Cancel') : t('Back') }}
-                </button>
-                <button
-                    type="button"
-                    class="rounded-full bg-teal px-7 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-light disabled:cursor-not-allowed disabled:opacity-40"
-                    :disabled="!canAdvance || form.processing"
-                    @click="goNext"
-                >
-                    {{ primaryLabel }}
-                </button>
+            <div
+                class="sticky bottom-0 z-30 border-t border-sand-200 bg-white/95 backdrop-blur-md dark:border-sand-800 dark:bg-sand-900/95"
+                :style="{ paddingBottom: 'max(var(--inset-bottom, 0px), env(safe-area-inset-bottom, 0px), 1.25rem)' }"
+            >
+                <div class="flex items-center justify-between gap-3 px-4 pt-3">
+                    <button
+                        type="button"
+                        class="rounded-full px-5 py-2.5 text-sm font-medium text-sand-700 transition active:bg-sand-100 dark:text-sand-200 dark:active:bg-sand-800"
+                        @click="goBack"
+                    >
+                        {{ currentStep === 0 ? t('Cancel') : t('Back') }}
+                    </button>
+                    <button
+                        type="button"
+                        class="rounded-full bg-teal px-7 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-light disabled:cursor-not-allowed disabled:opacity-40"
+                        :disabled="!canAdvance || form.processing"
+                        @click="goNext"
+                    >
+                        {{ primaryLabel }}
+                    </button>
+                </div>
             </div>
         </div>
 
