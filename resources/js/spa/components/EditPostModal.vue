@@ -30,6 +30,7 @@ interface Person {
     avatar?: string | null;
     avatar_thumbnail?: string | null;
     user_id?: number | null;
+    circle_ids?: number[];
 }
 
 const props = withDefaults(
@@ -72,7 +73,41 @@ const form = useApiForm({
 
 const availableCircles = computed<Circle[]>(() => props.availableCircles ?? []);
 const availableTags = computed<Tag[]>(() => props.availableTags ?? []);
-const availablePersons = computed<Person[]>(() => props.availablePersons ?? []);
+const allPersons = computed<Person[]>(() => props.availablePersons ?? []);
+const availablePersons = computed<Person[]>(() => {
+    const selected = form.data.circle_ids;
+    if (selected.length === 0) return [];
+    // Persons currently tagged on the post must remain visible (and selected)
+    // even if they no longer overlap with the chosen circles, so the user can
+    // explicitly deselect them.
+    const visible = allPersons.value.filter((person) =>
+        (person.circle_ids ?? []).some((id) => selected.includes(id)),
+    );
+    const visibleIds = new Set(visible.map((p) => p.id));
+    const stillSelected = (props.persons ?? []).filter(
+        (person) => form.data.person_ids.includes(person.id) && !visibleIds.has(person.id),
+    );
+    return [...visible, ...stillSelected];
+});
+
+watch(
+    () => form.data.circle_ids,
+    () => {
+        if (form.data.person_ids.length === 0) return;
+        const visibleIds = new Set(
+            allPersons.value
+                .filter((person) =>
+                    (person.circle_ids ?? []).some((id) => form.data.circle_ids.includes(id)),
+                )
+                .map((p) => p.id),
+        );
+        // Keep originally-tagged persons selectable; drop only persons that
+        // were just added in this session and lost their circle.
+        form.data.person_ids = form.data.person_ids.filter(
+            (id) => visibleIds.has(id) || initialPersonIds.includes(id),
+        );
+    },
+);
 
 function sameIds(a: number[], b: number[]): boolean {
     if (a.length !== b.length) return false;

@@ -27,6 +27,7 @@ interface Person {
     avatar: string | null;
     avatar_thumbnail: string | null;
     usage_count: number;
+    user_id?: number | null;
     circle_ids?: number[];
 }
 
@@ -43,7 +44,7 @@ const router = useRouter();
 const circlesStore = useCirclesStore();
 const personsStore = usePersonsStore();
 
-const persons = computed<Person[]>(() => personsStore.items ?? []);
+const persons = computed<Person[]>(() => (personsStore.items ?? []).filter((p) => !p.user_id));
 const circles = computed<Circle[]>(() => (circlesStore.items ?? []).filter(
     (circle) => circle.is_owner === true || circle.members_can_invite === true,
 ));
@@ -249,6 +250,10 @@ async function createPerson(): Promise<void> {
 let pendingDeletePersonId: number | null = null;
 
 async function confirmDelete(person: Person): Promise<void> {
+    if (person.user_id) {
+        return;
+    }
+
     pendingDeletePersonId = person.id;
 
     const message = person.usage_count > 0
@@ -423,6 +428,10 @@ function iconMaskStyle(url: string) {
             <PullToRefreshIndicator :pull-distance="pullDistance" :is-refreshing="isRefreshing" />
 
             <div class="relative space-y-4 px-4 pt-4 pb-24">
+                <p class="text-sm text-sand-600 dark:text-sand-400">
+                    {{ t('Add people here who don\'t have an Innerr account so you can still tag them in your photos. Members of your circles are automatically taggable and don\'t need to be added.') }}
+                </p>
+
                 <ul v-if="isLoading && persons.length === 0" class="space-y-2">
                     <li v-for="n in 5" :key="n">
                         <SurfaceCard>
@@ -584,7 +593,13 @@ function iconMaskStyle(url: string) {
 
             <template #footer>
                 <div class="flex items-center justify-between gap-3 px-4 py-3">
-                    <Button v-if="editingPerson" type="button" variant="danger" size="md" @click="confirmDelete(editingPerson)">
+                    <Button
+                        v-if="editingPerson && !editingPerson.user_id"
+                        type="button"
+                        variant="danger"
+                        size="md"
+                        @click="confirmDelete(editingPerson)"
+                    >
                         {{ t('Remove') }}
                     </Button>
                     <span v-else />

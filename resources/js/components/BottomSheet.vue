@@ -204,13 +204,28 @@ function handleKeydown(event: KeyboardEvent) {
     }
 }
 
+let savedMainOverflow = '';
+let savedMainTouchAction = '';
+
 watch(
     () => props.open,
     (isOpen) => {
         const scrollContainer = document.querySelector('main') as HTMLElement | null;
 
         if (scrollContainer) {
-            scrollContainer.style.overflow = isOpen ? 'hidden' : '';
+            if (isOpen) {
+                savedMainOverflow = scrollContainer.style.overflow;
+                savedMainTouchAction = scrollContainer.style.touchAction;
+                // iOS WKWebView negeert `overflow: hidden` op een momentum-
+                // scrollend element. `touch-action: none` blokkeert wel
+                // betrouwbaar alle touch-gestuurde scroll en stopt ook lopende
+                // momentum-scroll, zodat de feed niet doorlekt onder de sheet.
+                scrollContainer.style.overflow = 'hidden';
+                scrollContainer.style.touchAction = 'none';
+            } else {
+                scrollContainer.style.overflow = savedMainOverflow;
+                scrollContainer.style.touchAction = savedMainTouchAction;
+            }
         }
 
         if (isOpen) {
@@ -252,7 +267,8 @@ onUnmounted(() => {
     const scrollContainer = document.querySelector('main') as HTMLElement | null;
 
     if (scrollContainer) {
-        scrollContainer.style.overflow = '';
+        scrollContainer.style.overflow = savedMainOverflow;
+        scrollContainer.style.touchAction = savedMainTouchAction;
     }
 
     if (props.open) {

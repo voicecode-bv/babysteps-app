@@ -61,7 +61,11 @@ class EdgeController extends Controller
             str_starts_with($path, '/circles') => 'circles',
             $path === '/posts/create' => 'add',
             str_starts_with($path, '/profiles/') => 'profile',
-            default => 'home',
+            // Pages without a matching tab (notifications, settings, post detail,
+            // etc.) leave every tab inactive so tapping any tab — including Home
+            // — still navigates instead of being treated as a no-op tap on an
+            // already-active item.
+            default => '',
         };
     }
 

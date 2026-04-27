@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Camera, Events, Off, On } from '@nativephp/mobile';
-import { computed, defineAsyncComponent, onMounted, onUnmounted, ref } from 'vue';
+import { computed, defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import CirclePicker from '@/components/CirclePicker.vue';
 import PersonPicker from '@/components/PersonPicker.vue';
@@ -44,6 +44,8 @@ interface Person {
     name: string;
     avatar?: string | null;
     avatar_thumbnail?: string | null;
+    user_id?: number | null;
+    circle_ids?: number[];
 }
 
 const { t } = useTranslations();
@@ -58,7 +60,14 @@ const defaultCirclesStore = useDefaultCirclesStore();
 const circles = computed<Circle[]>(() => circlesStore.items ?? []);
 const defaultCircleIds = computed<number[]>(() => defaultCirclesStore.ids ?? []);
 const availableTags = computed<Tag[]>(() => tagsStore.items ?? []);
-const availablePersons = computed<Person[]>(() => personsStore.items ?? []);
+const allPersons = computed<Person[]>(() => personsStore.items ?? []);
+const availablePersons = computed<Person[]>(() => {
+    const selected = form.data.circle_ids;
+    if (selected.length === 0) return [];
+    return allPersons.value.filter((person) =>
+        (person.circle_ids ?? []).some((id) => selected.includes(id)),
+    );
+});
 
 async function loadFormData(): Promise<void> {
     try {
@@ -89,7 +98,7 @@ const mediaIsVideo = ref(false);
 const showSourcePicker = ref(false);
 const showCropModal = ref(false);
 
-// Wizard-stappen: 0=media, 1=caption, 2=tags & personen, 3=cirkels.
+// Wizard-stappen: 0=media, 1=caption, 2=cirkels, 3=tags & personen.
 const TOTAL_STEPS = 4;
 const currentStep = ref(0);
 
@@ -104,9 +113,9 @@ const canAdvance = computed(() => {
         case 0:
             return hasMedia.value;
         case 1:
-        case 2:
-            return true;
         case 3:
+            return true;
+        case 2:
             return hasCircles.value;
         default:
             return false;
@@ -120,9 +129,9 @@ const stepHeading = computed(() => {
         case 1:
             return t('Tell your story');
         case 2:
-            return t('Tag people and topics');
+            return t('Choose your circles');
         case 3:
-            return t('Almost there');
+            return t('Tag people and topics');
         default:
             return '';
     }
@@ -135,9 +144,9 @@ const stepSubtitle = computed(() => {
         case 1:
             return t('Add a caption to give context');
         case 2:
-            return t('Help others find this moment');
-        case 3:
             return t('Choose who you want to share with');
+        case 3:
+            return t('Help others find this moment');
         default:
             return '';
     }
@@ -150,11 +159,21 @@ const primaryLabel = computed(() => {
     if (currentStep.value === 1 && !form.data.caption.trim()) {
         return t('Skip');
     }
-    if (currentStep.value === 2 && !hasMetadata.value) {
+    if (currentStep.value === 3 && !hasMetadata.value) {
         return t('Skip');
     }
     return t('Next');
 });
+
+// Drop tagged persons that are no longer in any of the selected circles.
+watch(
+    () => form.data.circle_ids,
+    (ids) => {
+        if (form.data.person_ids.length === 0) return;
+        const stillVisible = new Set(availablePersons.value.map((p) => p.id));
+        form.data.person_ids = form.data.person_ids.filter((id) => stillVisible.has(id));
+    },
+);
 
 function goNext(): void {
     if (currentStep.value === TOTAL_STEPS - 1) {
@@ -438,7 +457,21 @@ function iconMaskStyle(url: string) {
                     <p v-if="form.errors.caption" class="mt-1 text-xs text-blush-500">{{ form.errors.caption }}</p>
                 </section>
 
-                <template v-if="currentStep === 2">
+                <section v-show="currentStep === 2" class="rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm dark:bg-sand-800/60">
+                    <CirclePicker
+                        v-if="circles.length > 0"
+                        :circles="circles"
+                        :selected-ids="form.data.circle_ids"
+                        :error="form.errors.circle_ids"
+                        layout="grid"
+                        @update:selected-ids="form.data.circle_ids = $event"
+                    />
+                    <p v-else class="text-sm text-sand-600 dark:text-sand-400">
+                        {{ t('Create a circle to set it as a default for new posts.') }}
+                    </p>
+                </section>
+
+                <template v-if="currentStep === 3">
                     <section class="relative z-20 rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm dark:bg-sand-800/60">
                         <PersonPicker
                             :persons="availablePersons"
@@ -457,20 +490,6 @@ function iconMaskStyle(url: string) {
                         />
                     </section>
                 </template>
-
-                <section v-show="currentStep === 3" class="rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm dark:bg-sand-800/60">
-                    <CirclePicker
-                        v-if="circles.length > 0"
-                        :circles="circles"
-                        :selected-ids="form.data.circle_ids"
-                        :error="form.errors.circle_ids"
-                        layout="grid"
-                        @update:selected-ids="form.data.circle_ids = $event"
-                    />
-                    <p v-else class="text-sm text-sand-600 dark:text-sand-400">
-                        {{ t('Create a circle to set it as a default for new posts.') }}
-                    </p>
-                </section>
             </div>
 
             <div
