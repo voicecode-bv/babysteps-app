@@ -11,20 +11,16 @@ import { useTranslations } from '@/spa/composables/useTranslations';
 import { useApiForm } from '@/spa/composables/useApiForm';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useToastsStore } from '@/spa/stores/toasts';
+import { useTagsStore, type Tag } from '@/spa/stores/tags';
 import { externalApi } from '@/spa/http/externalApi';
 import tagIcon from '../../../../svg/doodle-icons/tag.svg';
-
-interface Tag {
-    id: number;
-    name: string;
-    usage_count: number;
-}
 
 const { t } = useTranslations();
 const router = useRouter();
 const toasts = useToastsStore();
+const tagsStore = useTagsStore();
 
-const tags = ref<Tag[] | null>(null);
+const tags = computed<Tag[] | null>(() => tagsStore.items);
 
 function goBack(): void {
     router.push({ name: 'spa.settings' });
@@ -33,12 +29,12 @@ function goBack(): void {
 const layoutRef = useTemplateRef<InstanceType<typeof AppLayout>>('layout');
 const containerRef = computed(() => layoutRef.value?.mainRef ?? null);
 
-async function loadTags(): Promise<void> {
+async function loadTags(force = false): Promise<void> {
     try {
-        const data = await externalApi.get<{ data: Tag[] }>('/tags');
-        tags.value = data.data;
+        if (force) tagsStore.invalidate();
+        await tagsStore.ensureLoaded();
     } catch {
-        tags.value = [];
+        // negeren
     }
 }
 
@@ -49,7 +45,7 @@ async function refresh(): Promise<void> {
     editingTagId.value = null;
     createForm.reset();
     editForm.reset();
-    await loadTags();
+    await loadTags(true);
 }
 
 const { pullDistance, isRefreshing } = usePullToRefresh({
@@ -67,18 +63,16 @@ async function createTag(): Promise<void> {
     if (!name || createForm.processing) return;
 
     const optimistic: Tag = { id: -Date.now(), name, usage_count: 0 };
-    if (tags.value) tags.value = [optimistic, ...tags.value];
+    tagsStore.prepend(optimistic);
     showCreateForm.value = false;
     createForm.reset();
 
     try {
         const response = await externalApi.post<{ data: Tag }>('/tags', { name });
-        if (tags.value) {
-            tags.value = tags.value.map((tag) => (tag.id === optimistic.id ? response.data : tag));
-        }
+        tagsStore.update(optimistic.id, response.data);
         toasts.success(t('Tag created'));
     } catch {
-        if (tags.value) tags.value = tags.value.filter((tag) => tag.id !== optimistic.id);
+        tagsStore.remove(optimistic.id);
         toasts.error(t('Failed to create tag'));
     }
 }
@@ -102,9 +96,7 @@ async function saveEdit(tag: Tag): Promise<void> {
     if (!newName || editForm.processing) return;
 
     const previousName = tag.name;
-    if (tags.value) {
-        tags.value = tags.value.map((t) => (t.id === tag.id ? { ...t, name: newName } : t));
-    }
+    tagsStore.update(tag.id, { name: newName });
     editingTagId.value = null;
     editForm.reset();
 
@@ -112,9 +104,7 @@ async function saveEdit(tag: Tag): Promise<void> {
         await externalApi.put(`/tags/${tag.id}`, { name: newName });
         toasts.success(t('Tag updated'));
     } catch {
-        if (tags.value) {
-            tags.value = tags.value.map((t) => (t.id === tag.id ? { ...t, name: previousName } : t));
-        }
+        tagsStore.update(tag.id, { name: previousName });
         toasts.error(t('Failed to update tag'));
     }
 }
@@ -144,14 +134,14 @@ async function handleButtonPressed(payload: { index: number; id?: string | null 
     const tagId = pendingDeleteTagId;
     pendingDeleteTagId = null;
 
-    const previous = tags.value;
-    if (tags.value) tags.value = tags.value.filter((tag) => tag.id !== tagId);
+    const previous = tagsStore.items?.find((tag) => tag.id === tagId);
+    tagsStore.remove(tagId);
 
     try {
         await externalApi.delete(`/tags/${tagId}`);
         toasts.success(t('Tag deleted'));
     } catch {
-        tags.value = previous;
+        if (previous) tagsStore.prepend(previous);
         toasts.error(t('Failed to delete tag'));
     }
 }

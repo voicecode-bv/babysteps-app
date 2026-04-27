@@ -39,6 +39,10 @@ const props = defineProps<{
     post: PostData;
 }>();
 
+const emit = defineEmits<{
+    (e: 'openComments', postId: number): void;
+}>();
+
 const { t } = useTranslations();
 const router = useRouter();
 const auth = useAuthStore();
@@ -116,8 +120,12 @@ async function toggleLike(): Promise<void> {
 function openComments(event: Event): void {
     event.preventDefault();
     event.stopPropagation();
-    router.push({ name: 'spa.posts.show', params: { post: props.post.id } });
+    emit('openComments', props.post.id);
 }
+
+watch(() => props.post.comments_count, (next) => {
+    commentsCount.value = next;
+});
 
 function timeAgo(dateString: string): string {
     const date = new Date(dateString);
@@ -182,6 +190,7 @@ function timeAgo(dateString: string): string {
             <button class="block size-full" type="button" @click="navigateToPost">
                 <div v-if="!mediaLoaded" class="shimmer absolute inset-0" />
                 <img
+                    v-if="post.media_url"
                     :src="post.media_url"
                     :alt="post.caption ?? t('Photo')"
                     class="size-full object-cover transition-opacity duration-500"
@@ -189,6 +198,9 @@ function timeAgo(dateString: string): string {
                     loading="lazy"
                     @load="mediaLoaded = true"
                 />
+                <div v-if="post.media_status === 'processing'" class="absolute inset-0 flex items-center justify-center bg-black/15">
+                    <span class="rounded-full bg-black/55 px-3 py-1.5 text-xs font-medium text-white">{{ t('Uploading...') }}</span>
+                </div>
             </button>
             <div v-if="post.circles && post.circles.length > 0" class="absolute right-3 top-3 z-10 flex max-w-[70%] flex-wrap justify-end gap-1.5">
                 <RouterLink

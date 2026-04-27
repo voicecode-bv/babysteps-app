@@ -10,25 +10,39 @@ export interface PaginatedResponse<T> {
     };
 }
 
-interface Options {
+interface Options<T> {
     rootMargin?: string;
     immediate?: boolean;
+    initialItems?: T[];
+    initialLastPage?: number;
 }
 
 export function useInfiniteScroll<T>(
     fetcher: (page: number) => Promise<PaginatedResponse<T>>,
     sentinelRef: Ref<HTMLElement | null>,
-    options: Options = {},
+    options: Options<T> = {},
 ) {
-    const items = ref<T[]>([]) as Ref<T[]>;
-    const page = ref(1);
-    const lastPage = ref(1);
-    const loading = ref(false);
+    // Seed met optionele initial items uit een cache zodat de UI direct iets
+    // toont; bij `softRefresh()` swappen we 'm pas atomisch wanneer de verse
+    // data binnen is.
+    const initialItems = options.initialItems ?? [];
+    const items = ref<T[]>([...initialItems]) as Ref<T[]>;
+    const page = ref(initialItems.length > 0 ? 2 : 1);
+    const lastPage = ref(options.initialLastPage ?? 1);
+    // Bij `immediate=true` zonder seed-data: markeer direct loading=true zodat
+    // het allereerste render-frame al de skeleton toont in plaats van de
+    // "geen-posts" empty state te flashen.
+    const willAutoLoad = options.immediate !== false && initialItems.length === 0;
+    const loading = ref(willAutoLoad);
     const error = ref<Error | null>(null);
-    const finished = ref(false);
+    const finished = ref(initialItems.length > 0 && page.value > (options.initialLastPage ?? 1));
 
     let observer: IntersectionObserver | null = null;
     const seenIds = new Set<string | number>();
+    for (const item of initialItems) {
+        const id = (item as { id?: string | number }).id;
+        if (id !== undefined) seenIds.add(id);
+    }
 
     async function loadMore(): Promise<void> {
         if (loading.value || finished.value) {
@@ -72,6 +86,43 @@ export function useInfiniteScroll<T>(
         await loadMore();
     }
 
+    // Achtergrond-refresh die page 1 ophaalt en items pas swapt zodra de
+    // response binnen is — voorkomt een lege flits tussen "stale toon" en "verse".
+    async function softRefresh(): Promise<PaginatedResponse<T> | null> {
+        if (loading.value) return null;
+        loading.value = true;
+        error.value = null;
+
+        try {
+            const response = await fetcher(1);
+
+            const fresh: T[] = [];
+            const freshSeen = new Set<string | number>();
+            for (const item of response.data) {
+                const id = (item as { id?: string | number }).id;
+                if (id !== undefined) {
+                    if (freshSeen.has(id)) continue;
+                    freshSeen.add(id);
+                }
+                fresh.push(item);
+            }
+
+            items.value = fresh;
+            seenIds.clear();
+            for (const id of freshSeen) seenIds.add(id);
+            lastPage.value = response.meta.last_page;
+            page.value = response.meta.current_page + 1;
+            finished.value = page.value > lastPage.value;
+
+            return response;
+        } catch (e) {
+            error.value = e instanceof Error ? e : new Error(String(e));
+            return null;
+        } finally {
+            loading.value = false;
+        }
+    }
+
     function attachObserver(target: HTMLElement): void {
         observer?.disconnect();
         observer = new IntersectionObserver(
@@ -100,6 +151,9 @@ export function useInfiniteScroll<T>(
         );
 
         if (options.immediate !== false) {
+            // Loading was vooraf op true gezet voor de skeleton-render; reset
+            // hier zodat de loadMore-guard niet vroegtijdig uitstapt.
+            loading.value = false;
             loadMore();
         }
     });
@@ -118,5 +172,6 @@ export function useInfiniteScroll<T>(
         finished,
         loadMore,
         reset,
+        softRefresh,
     });
 }

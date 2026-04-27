@@ -13,6 +13,8 @@ import { useTranslations } from '@/spa/composables/useTranslations';
 import { useApiForm } from '@/spa/composables/useApiForm';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useToastsStore } from '@/spa/stores/toasts';
+import { useCirclesStore } from '@/spa/stores/circles';
+import { usePersonsStore } from '@/spa/stores/persons';
 import { api, ApiError } from '@/spa/http/apiClient';
 import { externalApi } from '@/spa/http/externalApi';
 import cakeIcon from '../../../../svg/doodle-icons/cake.svg';
@@ -40,9 +42,13 @@ interface Circle {
 const { t } = useTranslations();
 const router = useRouter();
 const toasts = useToastsStore();
+const circlesStore = useCirclesStore();
+const personsStore = usePersonsStore();
 
-const persons = ref<Person[]>([]);
-const circles = ref<Circle[]>([]);
+const persons = computed<Person[]>(() => personsStore.items ?? []);
+const circles = computed<Circle[]>(() => (circlesStore.items ?? []).filter(
+    (circle) => circle.is_owner === true || circle.members_can_invite === true,
+));
 const isLoading = ref(true);
 
 function goBack(): void {
@@ -52,16 +58,16 @@ function goBack(): void {
 const layoutRef = useTemplateRef<InstanceType<typeof AppLayout>>('layout');
 const containerRef = computed(() => layoutRef.value?.mainRef ?? null);
 
-async function loadData(): Promise<void> {
+async function loadData(force = false): Promise<void> {
     try {
-        const [personsResp, circlesResp] = await Promise.all([
-            externalApi.get<{ data: Person[] }>('/persons'),
-            externalApi.get<{ data: Circle[] }>('/circles'),
+        if (force) {
+            personsStore.invalidate();
+            circlesStore.invalidate();
+        }
+        await Promise.all([
+            personsStore.ensureLoaded(),
+            circlesStore.ensureLoaded(),
         ]);
-        persons.value = personsResp.data;
-        circles.value = circlesResp.data.filter(
-            (circle) => circle.is_owner === true || circle.members_can_invite === true,
-        );
     } catch {
         // ignore
     } finally {
@@ -72,7 +78,7 @@ async function loadData(): Promise<void> {
 async function refresh(): Promise<void> {
     // Sluit edit-sheet zodat we geen stale draft tonen na server-state-update.
     sheetOpen.value = false;
-    await loadData();
+    await loadData(true);
 }
 
 const { pullDistance, isRefreshing } = usePullToRefresh({
@@ -176,7 +182,7 @@ async function submit(): Promise<void> {
         });
         await syncCircleIds(personId, currentCircleIds, selectedCircleIds.value);
         sheetOpen.value = false;
-        await loadData();
+        await loadData(true);
         toasts.success(t('Person updated'));
     } catch (error) {
         if (error instanceof ApiError && error.status === 422) {
@@ -226,7 +232,7 @@ async function createPerson(): Promise<void> {
 
         editingPersonId.value = data.data.id;
         sheetOpen.value = false;
-        await loadData();
+        await loadData(true);
         toasts.success(t('Person added'));
     } catch (error) {
         if (error instanceof ApiError && error.status === 422) {
@@ -272,7 +278,7 @@ async function handleButtonPressed(payload: { index: number; id?: string | null 
         if (editingPersonId.value === personId) {
             sheetOpen.value = false;
         }
-        await loadData();
+        await loadData(true);
         toasts.success(t('Person removed'));
     } catch {
         toasts.error(t('Failed to remove person'));
@@ -293,7 +299,7 @@ async function deletePhoto(): Promise<void> {
 
     try {
         await externalApi.delete(`/persons/${editingPerson.value.id}/avatar`);
-        await loadData();
+        await loadData(true);
         toasts.success(t('Photo removed'));
     } catch {
         toasts.error(t('Failed to remove photo'));
@@ -332,20 +338,18 @@ async function handleMediaSelected(payload: { success: boolean; files: { path: s
     photoUploading.value = true;
 
     const personId = editingPerson.value.id;
-    const previous = persons.value.map((p) => ({ ...p }));
+    const previous = personsStore.items?.find((p) => p.id === personId);
     if (preview) {
-        persons.value = persons.value.map((p) =>
-            p.id === personId ? { ...p, avatar: preview, avatar_thumbnail: preview } : p,
-        );
+        personsStore.update(personId, { avatar: preview, avatar_thumbnail: preview });
     }
 
     try {
         await api.post(`/api/spa/settings/persons/${personId}/photo`, { photo_path: path });
-        await loadData();
+        await loadData(true);
         pendingPhotoPath.value = null;
         pendingPhotoPreview.value = null;
     } catch {
-        persons.value = previous;
+        if (previous) personsStore.update(personId, previous);
         toasts.error(t('Failed to upload photo'));
     } finally {
         photoUploading.value = false;

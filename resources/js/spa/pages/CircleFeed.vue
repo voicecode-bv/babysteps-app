@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, useTemplateRef } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
+import CommentsSheet from '@/spa/components/CommentsSheet.vue';
 import PostCard, { type PostData } from '@/spa/components/PostCard.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { useInfiniteScroll, type PaginatedResponse } from '@/spa/composables/useInfiniteScroll';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
+import { useFeedCacheStore } from '@/spa/stores/feedCache';
 import { externalApi } from '@/spa/http/externalApi';
 
 interface Circle {
@@ -18,8 +20,10 @@ interface Circle {
 const { t } = useTranslations();
 const route = useRoute();
 const router = useRouter();
+const feedCache = useFeedCacheStore();
 
 const circleId = computed(() => Number(route.params.circle));
+const feedKey = computed(() => `circle:${circleId.value}`);
 
 const layoutRef = useTemplateRef<InstanceType<typeof AppLayout>>('layout');
 const containerRef = computed(() => layoutRef.value?.mainRef ?? null);
@@ -36,19 +40,58 @@ async function loadCircle(): Promise<void> {
     }
 }
 
-const feed = useInfiniteScroll<PostData>(
-    (page) => externalApi.get<PaginatedResponse<PostData>>(`/circles/${circleId.value}/feed?page=${page}`),
-    sentinelRef,
-);
+const cached = feedCache.get<PostData>(feedKey.value);
+
+async function fetchCircleFeed(page: number): Promise<PaginatedResponse<PostData>> {
+    const response = await externalApi.get<PaginatedResponse<PostData>>(`/circles/${circleId.value}/feed?page=${page}`);
+    if (page === 1) {
+        feedCache.set(feedKey.value, response.data, response.meta.last_page);
+    }
+    return response;
+}
+
+const feed = useInfiniteScroll<PostData>(fetchCircleFeed, sentinelRef, {
+    immediate: !cached,
+    initialItems: cached?.items,
+    initialLastPage: cached?.lastPage,
+});
 
 const { pullDistance, isRefreshing } = usePullToRefresh({
     onRefresh: async () => {
+        feedCache.invalidate(feedKey.value);
         await Promise.all([loadCircle(), feed.reset()]);
     },
     containerRef,
 });
 
-onMounted(loadCircle);
+onMounted(() => {
+    void loadCircle();
+    if (cached && !feedCache.isFresh(feedKey.value)) {
+        void feed.softRefresh();
+    }
+});
+
+const commentsPostId = ref<number | null>(null);
+const isCommentsOpen = ref(false);
+
+function openCommentsForPost(postId: number): void {
+    commentsPostId.value = postId;
+    isCommentsOpen.value = true;
+}
+
+function activeCommentsCount(): number {
+    if (commentsPostId.value === null) return 0;
+    const target = feed.items.find((p) => p.id === commentsPostId.value);
+    return target?.comments_count ?? 0;
+}
+
+function bumpActivePostCommentsCount(delta: number): void {
+    if (commentsPostId.value === null) return;
+    const target = feed.items.find((p) => p.id === commentsPostId.value);
+    if (target) {
+        target.comments_count = Math.max(0, target.comments_count + delta);
+    }
+}
 
 function goBack(): void {
     if (window.history.length > 1) {
@@ -95,7 +138,12 @@ function goBack(): void {
                 </div>
             </template>
 
-            <PostCard v-for="post in feed.items" :key="post.id" :post="post" />
+            <PostCard
+                v-for="post in feed.items"
+                :key="post.id"
+                :post="post"
+                @open-comments="openCommentsForPost"
+            />
 
             <div v-if="feed.loading && feed.items.length > 0" class="flex items-center justify-center gap-2 py-6 text-sm text-sand-500 dark:text-sand-400">
                 {{ t('Loading more...') }}
@@ -114,5 +162,15 @@ function goBack(): void {
                 <p class="mt-2 text-sm text-sand-600 dark:text-sand-400">{{ t('Be the first to share something in this circle.') }}</p>
             </div>
         </div>
+
+        <CommentsSheet
+            v-if="commentsPostId !== null"
+            :open="isCommentsOpen"
+            :post-id="commentsPostId"
+            :comments-count="activeCommentsCount()"
+            @update:open="isCommentsOpen = $event"
+            @comment-added="bumpActivePostCommentsCount(1)"
+            @comment-deleted="bumpActivePostCommentsCount(-1)"
+        />
     </AppLayout>
 </template>

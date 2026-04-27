@@ -11,6 +11,11 @@ import { useTranslations } from '@/spa/composables/useTranslations';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useVideoFullscreen } from '@/spa/composables/useVideoFullscreen';
 import { useAuthStore } from '@/spa/stores/auth';
+import { useCirclesStore } from '@/spa/stores/circles';
+import { usePersonsStore } from '@/spa/stores/persons';
+import { useFeedCacheStore } from '@/spa/stores/feedCache';
+import { usePostCacheStore } from '@/spa/stores/postCache';
+import { useTagsStore } from '@/spa/stores/tags';
 import { useToastsStore } from '@/spa/stores/toasts';
 import { externalApi } from '@/spa/http/externalApi';
 import heartFilledIcon from '../../../svg/doodle-icons/heart-filled.svg';
@@ -94,10 +99,22 @@ const containerRef = computed(() => layoutRef.value?.mainRef ?? null);
 
 const commentsSheetRef = useTemplateRef<{ reload: () => Promise<void> }>('commentsSheet');
 
+const postCache = usePostCacheStore();
+
+function seedPostFromCache(): boolean {
+    const cached = postCache.get<Post>(postId.value);
+    if (cached) {
+        post.value = cached;
+        return true;
+    }
+    return false;
+}
+
 async function loadPost(): Promise<void> {
     try {
         const data = await externalApi.get<{ data: Post }>(`/posts/${postId.value}`);
         post.value = data.data;
+        postCache.set(postId.value, data.data);
     } catch {
         router.push({ name: 'spa.home' });
     }
@@ -116,7 +133,9 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
 });
 
 onMounted(async () => {
-    isLoading.value = true;
+    // Stale-while-revalidate: render direct vanuit cache, fetch op de achtergrond.
+    const seeded = seedPostFromCache();
+    isLoading.value = !seeded;
     await refresh();
     isLoading.value = false;
 });
@@ -149,17 +168,21 @@ function openComments(): void {
     isCommentsSheetOpen.value = true;
 }
 
+const circlesStore = useCirclesStore();
+const personsStore = usePersonsStore();
+const tagsStore = useTagsStore();
+
 async function openEditModal(): Promise<void> {
     if (!post.value) return;
     try {
-        const [circlesResp, tagsResp, personsResp] = await Promise.all([
-            externalApi.get<{ data: AvailableCircle[] }>('/circles').catch(() => ({ data: [] as AvailableCircle[] })),
-            externalApi.get<{ data: TagOrPerson[] }>('/tags').catch(() => ({ data: [] as TagOrPerson[] })),
-            externalApi.get<{ data: TagOrPerson[] }>('/persons').catch(() => ({ data: [] as TagOrPerson[] })),
+        const [circles, tags, persons] = await Promise.all([
+            circlesStore.ensureLoaded().catch(() => [] as AvailableCircle[]),
+            tagsStore.ensureLoaded().catch(() => [] as TagOrPerson[]),
+            personsStore.ensureLoaded().catch(() => [] as TagOrPerson[]),
         ]);
-        editAvailableCircles.value = circlesResp.data;
-        editAvailableTags.value = tagsResp.data;
-        editAvailablePersons.value = personsResp.data;
+        editAvailableCircles.value = circles as AvailableCircle[];
+        editAvailableTags.value = tags as TagOrPerson[];
+        editAvailablePersons.value = persons as TagOrPerson[];
     } catch {
         // open anyway with empty available lists
     }
@@ -192,6 +215,10 @@ async function handleButtonPressed(payload: { index: number; id?: string | null 
         isDeleting.value = true;
         try {
             await externalApi.delete(`/posts/${postId.value}`);
+            postCache.invalidate(postId.value);
+            // Feed-caches zijn nu stale (post is weg) — wis 'm zodat de
+            // volgende feed-bezoek opnieuw fetcht.
+            useFeedCacheStore().clear();
             toasts.success(t('Post deleted'));
             router.push({ name: 'spa.home' });
         } catch {
@@ -255,7 +282,6 @@ watch(
     () => {
         if (route.name !== 'spa.posts.show') return;
         post.value = null;
-        isLoading.value = true;
         isLikesSheetOpen.value = false;
         isCommentsSheetOpen.value = false;
         isEditModalOpen.value = false;
@@ -265,6 +291,8 @@ watch(
         isFullscreen.value = false;
         isMuted.value = true;
         mediaLoaded.value = false;
+        const seeded = seedPostFromCache();
+        isLoading.value = !seeded;
         refresh().finally(() => {
             isLoading.value = false;
         });

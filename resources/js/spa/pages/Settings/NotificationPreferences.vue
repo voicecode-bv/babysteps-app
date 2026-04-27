@@ -8,26 +8,15 @@ import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useToastsStore } from '@/spa/stores/toasts';
-import { externalApi } from '@/spa/http/externalApi';
+import { useNotificationPreferencesStore, type NotificationPreferences as Preferences } from '@/spa/stores/notificationPreferences';
 import bellIcon from '../../../../svg/doodle-icons/bell.svg';
-
-interface Preferences {
-    post_liked: boolean;
-    post_commented: boolean;
-    comment_liked: boolean;
-    comment_replied: boolean;
-    new_circle_post: boolean;
-    circle_invitation_accepted: boolean;
-    circle_ownership_transfer_requested: boolean;
-    circle_ownership_transfer_accepted: boolean;
-    circle_ownership_transfer_declined: boolean;
-}
 
 const { t } = useTranslations();
 const router = useRouter();
 const toasts = useToastsStore();
+const prefsStore = useNotificationPreferencesStore();
 
-const preferences = ref<Preferences | null>(null);
+const preferences = computed<Preferences | null>(() => prefsStore.preferences);
 
 function goBack(): void {
     router.push({ name: 'spa.settings' });
@@ -36,17 +25,17 @@ function goBack(): void {
 const layoutRef = useTemplateRef<InstanceType<typeof AppLayout>>('layout');
 const containerRef = computed(() => layoutRef.value?.mainRef ?? null);
 
-async function loadPreferences(): Promise<void> {
+async function loadPreferences(force = false): Promise<void> {
     try {
-        const data = await externalApi.get<{ data: Preferences }>('/notification-preferences');
-        preferences.value = data.data;
+        if (force) prefsStore.invalidate();
+        await prefsStore.ensureLoaded();
     } catch {
-        preferences.value = null;
+        // negeren — UI valt terug op skeleton
     }
 }
 
 const { pullDistance, isRefreshing } = usePullToRefresh({
-    onRefresh: loadPreferences,
+    onRefresh: () => loadPreferences(true),
     containerRef,
 });
 
@@ -65,16 +54,9 @@ const labels = computed<Record<keyof Preferences, string>>(() => ({
 }));
 
 async function togglePreference(key: keyof Preferences): Promise<void> {
-    if (!preferences.value) {
-        return;
-    }
-
-    preferences.value[key] = !preferences.value[key];
-
     try {
-        await externalApi.put('/notification-preferences', preferences.value);
+        await prefsStore.toggle(key);
     } catch {
-        preferences.value[key] = !preferences.value[key];
         toasts.error(t('Failed to update preferences'));
     }
 }

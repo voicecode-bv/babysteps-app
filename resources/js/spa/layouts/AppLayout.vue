@@ -21,13 +21,6 @@ defineExpose({ mainRef });
 
 <template>
     <div class="flex min-h-dvh flex-col">
-        <div aria-hidden="true" class="pointer-events-none fixed inset-0 -z-10 bg-warmwhite dark:bg-sand-900" />
-        <div aria-hidden="true" class="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-            <div class="absolute -left-24 -top-16 size-72 rounded-full bg-sage-200/40 blur-3xl dark:bg-sage-700/20"></div>
-            <div class="absolute -right-24 top-1/3 size-80 rounded-full bg-accent-soft/30 blur-3xl dark:bg-accent/10"></div>
-            <div class="absolute -bottom-24 left-1/4 size-96 rounded-full bg-sand-200/40 blur-3xl dark:bg-sand-700/20"></div>
-        </div>
-
         <header
             v-if="props.showHeader"
             class="pt-[var(--inset-top,0)] left-[var(--inset-left,0)] right-[var(--inset-right,0)] fixed z-100 flex items-center justify-between border-b border-sand-200 bg-white px-4 py-3 dark:border-sand-800 dark:bg-sand-900"

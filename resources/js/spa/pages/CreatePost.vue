@@ -11,6 +11,14 @@ const TagSelector = defineAsyncComponent(() => import('@/spa/components/TagSelec
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { useApiForm } from '@/spa/composables/useApiForm';
+import { useAuthStore } from '@/spa/stores/auth';
+import { useCirclesStore } from '@/spa/stores/circles';
+import { useDefaultCirclesStore } from '@/spa/stores/defaultCircles';
+import { useFeedCacheStore } from '@/spa/stores/feedCache';
+import { usePersonsStore } from '@/spa/stores/persons';
+import { useTagsStore } from '@/spa/stores/tags';
+import { useToastsStore } from '@/spa/stores/toasts';
+import type { PostData } from '@/spa/components/PostCard.vue';
 import { api } from '@/spa/http/apiClient';
 import { externalApi } from '@/spa/http/externalApi';
 import cameraIcon from '../../../svg/doodle-icons/camera.svg';
@@ -42,24 +50,27 @@ interface Person {
 
 const { t } = useTranslations();
 const router = useRouter();
+const auth = useAuthStore();
+const toasts = useToastsStore();
+const feedCache = useFeedCacheStore();
+const circlesStore = useCirclesStore();
+const personsStore = usePersonsStore();
+const tagsStore = useTagsStore();
+const defaultCirclesStore = useDefaultCirclesStore();
 
-const circles = ref<Circle[]>([]);
-const defaultCircleIds = ref<number[]>([]);
-const availableTags = ref<Tag[]>([]);
-const availablePersons = ref<Person[]>([]);
+const circles = computed<Circle[]>(() => circlesStore.items ?? []);
+const defaultCircleIds = computed<number[]>(() => defaultCirclesStore.ids ?? []);
+const availableTags = computed<Tag[]>(() => tagsStore.items ?? []);
+const availablePersons = computed<Person[]>(() => personsStore.items ?? []);
 
 async function loadFormData(): Promise<void> {
     try {
-        const [circlesResp, defaultsResp, tagsResp, personsResp] = await Promise.all([
-            externalApi.get<{ data: Circle[] }>('/circles'),
-            externalApi.get<{ data: number[] }>('/default-circles').catch(() => ({ data: [] as number[] })),
-            externalApi.get<{ data: Tag[] }>('/tags').catch(() => ({ data: [] as Tag[] })),
-            externalApi.get<{ data: Person[] }>('/persons').catch(() => ({ data: [] as Person[] })),
+        await Promise.all([
+            circlesStore.ensureLoaded(),
+            defaultCirclesStore.ensureLoaded().catch(() => null),
+            tagsStore.ensureLoaded().catch(() => null),
+            personsStore.ensureLoaded().catch(() => null),
         ]);
-        circles.value = circlesResp.data;
-        defaultCircleIds.value = defaultsResp.data;
-        availableTags.value = tagsResp.data;
-        availablePersons.value = personsResp.data;
 
         // Pre-select default circles among available
         const availableIds = circles.value.map((c) => c.id);
@@ -189,13 +200,77 @@ onUnmounted(() => {
     Off(Events.Gallery.MediaSelected, handleMediaSelected);
 });
 
+function buildOptimisticPost(): PostData {
+    const tempId = -Date.now();
+    const isVideo = mediaIsVideo.value;
+    const previewUrl = mediaPreview.value ?? '';
+    const selectedCircles = circles.value
+        .filter((c) => form.data.circle_ids.includes(c.id))
+        .map((c) => ({ id: c.id, name: c.name, photo: c.photo ?? null }));
+
+    return {
+        id: tempId,
+        media_url: previewUrl,
+        media_type: isVideo ? 'video' : 'image',
+        thumbnail_url: isVideo ? previewUrl : null,
+        thumbnail_small_url: isVideo ? previewUrl : null,
+        media_status: 'processing',
+        caption: form.data.caption ?? null,
+        location: null,
+        created_at: new Date().toISOString(),
+        user: {
+            id: auth.user?.id ?? 0,
+            name: auth.user?.name ?? '',
+            username: auth.user?.username ?? '',
+            avatar: auth.user?.avatar ?? null,
+        },
+        circles: selectedCircles,
+        is_liked: false,
+        likes_count: 0,
+        comments_count: 0,
+    };
+}
+
 async function submit(): Promise<void> {
     uploadProgress.value = null;
-    await form.post('/api/spa/posts', {
-        onSuccess: () => {
-            router.push({ name: 'spa.home' });
-        },
-    });
+    if (form.processing) return;
+
+    // Alleen een optimistic prepend doen als we een renderbare preview
+    // hebben — anders eindigt PostCard met een leeg img-element wat een
+    // transparante ruimte in de feed achterlaat.
+    const hasPreview = !!mediaPreview.value;
+    const optimistic = hasPreview ? buildOptimisticPost() : null;
+    const targetCircleIds = [...form.data.circle_ids];
+
+    if (optimistic) {
+        feedCache.prepend('home', optimistic);
+        for (const circleId of targetCircleIds) {
+            feedCache.prepend(`circle:${circleId}`, optimistic);
+        }
+    }
+
+    // Direct terug naar Feed — upload draait op de achtergrond.
+    router.push({ name: 'spa.home' });
+    toasts.info(t('Posting...'));
+
+    try {
+        await form.post('/api/spa/posts');
+        // Server is klaar — wis caches zodat de volgende feed-mount/refresh
+        // de echte post (server-side ids/urls/status) ophaalt.
+        feedCache.invalidate('home');
+        for (const circleId of targetCircleIds) {
+            feedCache.invalidate(`circle:${circleId}`);
+        }
+        toasts.success(t('Post shared'));
+    } catch {
+        if (optimistic) {
+            feedCache.removeItem('home', optimistic.id);
+            for (const circleId of targetCircleIds) {
+                feedCache.removeItem(`circle:${circleId}`, optimistic.id);
+            }
+        }
+        toasts.error(t('Failed to share post'));
+    }
 }
 
 function iconMaskStyle(url: string) {

@@ -11,6 +11,7 @@ import { useTranslations } from '@/spa/composables/useTranslations';
 import { useApiForm } from '@/spa/composables/useApiForm';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useToastsStore } from '@/spa/stores/toasts';
+import { useCirclesStore } from '@/spa/stores/circles';
 import { externalApi } from '@/spa/http/externalApi';
 import { api } from '@/spa/http/apiClient';
 import crownIcon from '../../../../svg/doodle-icons/crown.svg';
@@ -50,6 +51,7 @@ const { t } = useTranslations();
 const route = useRoute();
 const router = useRouter();
 const toasts = useToastsStore();
+const circlesStore = useCirclesStore();
 
 const circleId = computed(() => Number(route.params.circle));
 
@@ -108,6 +110,7 @@ async function updateCircle(): Promise<void> {
             if (circle.value) {
                 circle.value.name = editForm.data.name;
             }
+            circlesStore.update(circleId.value, { name: editForm.data.name });
         },
     });
 }
@@ -214,6 +217,7 @@ async function handleButtonPressed(payload: { index: number; label: string; id?:
         isLeaving.value = true;
         try {
             await externalApi.post(`/circles/${circleId.value}/leave`);
+            circlesStore.remove(circleId.value);
             toasts.success(t('Left circle'));
             router.push({ name: 'spa.circles.index' });
         } catch {
@@ -226,6 +230,7 @@ async function handleButtonPressed(payload: { index: number; label: string; id?:
         isDeleting.value = true;
         try {
             await externalApi.delete(`/circles/${circleId.value}`);
+            circlesStore.remove(circleId.value);
             toasts.success(t('Circle deleted'));
             router.push({ name: 'spa.circles.index' });
         } catch {

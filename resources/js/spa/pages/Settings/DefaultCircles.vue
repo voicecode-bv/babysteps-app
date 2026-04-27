@@ -8,21 +8,18 @@ import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useToastsStore } from '@/spa/stores/toasts';
-import { externalApi } from '@/spa/http/externalApi';
+import { useCirclesStore } from '@/spa/stores/circles';
+import { useDefaultCirclesStore } from '@/spa/stores/defaultCircles';
 import usersIcon from '../../../../svg/doodle-icons/user.svg';
-
-interface Circle {
-    id: number;
-    name: string;
-    members_count: number;
-}
 
 const { t } = useTranslations();
 const router = useRouter();
 const toasts = useToastsStore();
+const circlesStore = useCirclesStore();
+const defaultCirclesStore = useDefaultCirclesStore();
 
-const circles = ref<Circle[]>([]);
-const selectedIds = ref<number[]>([]);
+const circles = computed(() => circlesStore.items ?? []);
+const selectedIds = computed(() => defaultCirclesStore.ids ?? []);
 const loaded = ref(false);
 
 function goBack(): void {
@@ -32,18 +29,16 @@ function goBack(): void {
 const layoutRef = useTemplateRef<InstanceType<typeof AppLayout>>('layout');
 const containerRef = computed(() => layoutRef.value?.mainRef ?? null);
 
-async function loadDefaults(): Promise<void> {
+async function loadDefaults(force = false): Promise<void> {
     try {
-        const [circlesResp, defaultsResp] = await Promise.all([
-            externalApi.get<{ data: Circle[] }>('/circles'),
-            externalApi.get<{ data: Array<number | { id: number }> }>('/default-circles'),
+        if (force) {
+            circlesStore.invalidate();
+            defaultCirclesStore.invalidate();
+        }
+        await Promise.all([
+            circlesStore.ensureLoaded(),
+            defaultCirclesStore.ensureLoaded(),
         ]);
-        circles.value = circlesResp.data;
-        // Externe API kan IDs als nummers OF als objecten met `id` retourneren —
-        // normaliseer naar nummers zodat de PUT-body altijd valide IDs bevat.
-        selectedIds.value = (defaultsResp.data ?? [])
-            .map((entry) => (typeof entry === 'object' ? entry.id : Number(entry)))
-            .filter((id): id is number => Number.isFinite(id));
     } catch {
         // ignore
     } finally {
@@ -52,35 +47,23 @@ async function loadDefaults(): Promise<void> {
 }
 
 const { pullDistance, isRefreshing } = usePullToRefresh({
-    onRefresh: loadDefaults,
+    onRefresh: () => loadDefaults(true),
     containerRef,
 });
 
-onMounted(loadDefaults);
+onMounted(() => loadDefaults());
 
 async function toggleCircle(circleId: number): Promise<void> {
-    const index = selectedIds.value.indexOf(circleId);
-
-    if (index === -1) {
-        selectedIds.value.push(circleId);
-    } else {
-        selectedIds.value.splice(index, 1);
-    }
+    const current = defaultCirclesStore.ids ?? [];
+    const next = current.includes(circleId)
+        ? current.filter((id) => id !== circleId)
+        : [...current, circleId];
 
     try {
-        // Stuur expliciet als integers — sommige API's nemen string-IDs niet aan.
-        await externalApi.put('/default-circles', {
-            circle_ids: selectedIds.value.map((id) => Number(id)),
-        });
+        await defaultCirclesStore.setIds(next);
         toasts.success(t('Default circles updated'));
     } catch {
         toasts.error(t('Failed to update default circles'));
-        // Roll back optimistic update
-        if (index === -1) {
-            selectedIds.value = selectedIds.value.filter((id) => id !== circleId);
-        } else {
-            selectedIds.value.splice(index, 0, circleId);
-        }
     }
 }
 </script>

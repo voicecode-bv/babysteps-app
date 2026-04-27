@@ -39,6 +39,11 @@ async function bootstrap(): Promise<void> {
     const initialLocale = inferInitialLocale();
     await i18n.load(initialLocale);
 
+    // Lees token uit Keychain (of localStorage-fallback) zodat externalApi al
+    // een Bearer kan sturen vóór de BFF bootstrap-call. Voorkomt uitloggen
+    // wanneer de Laravel-session verlopen is maar het token nog wél geldig is.
+    await auth.restoreToken();
+
     configureApiClient({
         auth: () => ({
             token: auth.token,
@@ -94,6 +99,18 @@ async function bootstrap(): Promise<void> {
 
     app.use(router);
     app.use(flareVue);
+
+    // NativePhp's Edge bottom-nav roept `window.router.visit(path)` aan voor
+    // SPA-style navigatie en valt anders terug op `window.location.href = path`,
+    // wat in createMemoryHistory-mode niets doet. Door deze shim worden taps op
+    // bottom-nav-tabs als vue-router pushes afgehandeld i.p.v. een full reload.
+    if (typeof window !== 'undefined') {
+        (window as unknown as { router: { visit: (path: string) => void } }).router = {
+            visit(path: string) {
+                router.push(path).catch(() => { /* navigatie geguard of dubbel */ });
+            },
+        };
+    }
 
     await router.isReady();
 

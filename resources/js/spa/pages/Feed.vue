@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, useTemplateRef } from 'vue';
 import { RouterLink } from 'vue-router';
+import CommentsSheet from '@/spa/components/CommentsSheet.vue';
 import PostCard, { type PostData } from '@/spa/components/PostCard.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
@@ -8,49 +9,86 @@ import { useTranslations } from '@/spa/composables/useTranslations';
 import { useInfiniteScroll, type PaginatedResponse } from '@/spa/composables/useInfiniteScroll';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { externalApi } from '@/spa/http/externalApi';
+import { useCirclesStore } from '@/spa/stores/circles';
+import { useFeedCacheStore } from '@/spa/stores/feedCache';
 import cameraIcon from '../../../svg/doodle-icons/camera.svg';
 import starIcon from '../../../svg/doodle-icons/star.svg';
 import userIcon from '../../../svg/doodle-icons/user.svg';
 
-interface Circle {
-    id: number;
-    name: string;
-    photo: string | null;
-    members_count: number;
-    members_can_invite: boolean;
-    is_owner: boolean;
-}
-
 const { t } = useTranslations();
+const circlesStore = useCirclesStore();
+const feedCache = useFeedCacheStore();
+const FEED_KEY = 'home';
 
 const layoutRef = useTemplateRef<InstanceType<typeof AppLayout>>('layout');
 const containerRef = computed(() => layoutRef.value?.mainRef ?? null);
 const sentinelRef = ref<HTMLElement | null>(null);
 
-const circles = ref<Circle[] | null>(null);
+const circles = computed(() => circlesStore.items);
 
 async function loadCircles(): Promise<void> {
     try {
-        const data = await externalApi.get<{ data: Circle[] }>('/circles');
-        circles.value = data.data;
+        await circlesStore.ensureLoaded();
     } catch {
-        circles.value = [];
+        // negeren — strip blijft leeg
     }
 }
 
-const feed = useInfiniteScroll<PostData>(
-    (page) => externalApi.get<PaginatedResponse<PostData>>(`/feed?page=${page}`),
-    sentinelRef,
-);
+const cached = feedCache.get<PostData>(FEED_KEY);
+
+async function fetchFeed(page: number): Promise<PaginatedResponse<PostData>> {
+    const response = await externalApi.get<PaginatedResponse<PostData>>(`/feed?page=${page}`);
+    if (page === 1) {
+        feedCache.set(FEED_KEY, response.data, response.meta.last_page);
+    }
+    return response;
+}
+
+const feed = useInfiniteScroll<PostData>(fetchFeed, sentinelRef, {
+    immediate: !cached,
+    initialItems: cached?.items,
+    initialLastPage: cached?.lastPage,
+});
+
+onMounted(() => {
+    // Cache toonbaar maar verlopen → fetch op de achtergrond zonder lege flits.
+    if (cached && !feedCache.isFresh(FEED_KEY)) {
+        void feed.softRefresh();
+    }
+});
 
 const { pullDistance, isRefreshing } = usePullToRefresh({
     onRefresh: async () => {
+        circlesStore.invalidate();
+        feedCache.invalidate(FEED_KEY);
         await Promise.all([loadCircles(), feed.reset()]);
     },
     containerRef,
 });
 
 onMounted(loadCircles);
+
+const commentsPostId = ref<number | null>(null);
+const isCommentsOpen = ref(false);
+
+function openCommentsForPost(postId: number): void {
+    commentsPostId.value = postId;
+    isCommentsOpen.value = true;
+}
+
+function activeCommentsCount(): number {
+    if (commentsPostId.value === null) return 0;
+    const target = feed.items.find((p) => p.id === commentsPostId.value);
+    return target?.comments_count ?? 0;
+}
+
+function bumpActivePostCommentsCount(delta: number): void {
+    if (commentsPostId.value === null) return;
+    const target = feed.items.find((p) => p.id === commentsPostId.value);
+    if (target) {
+        target.comments_count = Math.max(0, target.comments_count + delta);
+    }
+}
 
 function iconMaskStyle(url: string) {
     return {
@@ -130,7 +168,12 @@ function iconMaskStyle(url: string) {
                 </div>
             </template>
 
-            <PostCard v-for="post in feed.items" :key="post.id" :post="post" />
+            <PostCard
+                v-for="post in feed.items"
+                :key="post.id"
+                :post="post"
+                @open-comments="openCommentsForPost"
+            />
 
             <div v-if="feed.loading && feed.items.length > 0" class="flex items-center justify-center gap-2 py-6 text-sm text-sand-500 dark:text-sand-400">
                 <span class="flex items-center gap-1">
@@ -160,6 +203,16 @@ function iconMaskStyle(url: string) {
                 </p>
             </RouterLink>
         </div>
+
+        <CommentsSheet
+            v-if="commentsPostId !== null"
+            :open="isCommentsOpen"
+            :post-id="commentsPostId"
+            :comments-count="activeCommentsCount()"
+            @update:open="isCommentsOpen = $event"
+            @comment-added="bumpActivePostCommentsCount(1)"
+            @comment-deleted="bumpActivePostCommentsCount(-1)"
+        />
     </AppLayout>
 </template>
 

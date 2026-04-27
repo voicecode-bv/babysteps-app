@@ -10,22 +10,16 @@ import { useTranslations } from '@/spa/composables/useTranslations';
 import { useApiForm } from '@/spa/composables/useApiForm';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useToastsStore } from '@/spa/stores/toasts';
+import { useCirclesStore } from '@/spa/stores/circles';
 import { externalApi } from '@/spa/http/externalApi';
 import usersIcon from '../../../../svg/doodle-icons/user.svg';
-
-interface Circle {
-    id: number;
-    name: string;
-    photo: string | null;
-    members_count: number;
-    created_at: string;
-}
 
 const { t } = useTranslations();
 const router = useRouter();
 const toasts = useToastsStore();
+const circlesStore = useCirclesStore();
 
-const circles = ref<Circle[] | null>(null);
+const circles = computed(() => circlesStore.items);
 
 function goBack(): void {
     if (window.history.length > 1) {
@@ -38,21 +32,21 @@ function goBack(): void {
 const layoutRef = useTemplateRef<InstanceType<typeof AppLayout>>('layout');
 const containerRef = computed(() => layoutRef.value?.mainRef ?? null);
 
-async function loadCircles(): Promise<void> {
+async function loadCircles(force = false): Promise<void> {
     try {
-        const data = await externalApi.get<{ data: Circle[] }>('/circles');
-        circles.value = data.data;
+        if (force) circlesStore.invalidate();
+        await circlesStore.ensureLoaded();
     } catch {
-        circles.value = [];
+        // negeren
     }
 }
 
 const { pullDistance, isRefreshing } = usePullToRefresh({
-    onRefresh: loadCircles,
+    onRefresh: () => loadCircles(true),
     containerRef,
 });
 
-onMounted(loadCircles);
+onMounted(() => loadCircles());
 
 const showCreateForm = ref(false);
 const form = useApiForm({ name: '' }, externalApi);
@@ -62,7 +56,8 @@ async function createCircle(): Promise<void> {
         onSuccess: () => {
             form.reset();
             showCreateForm.value = false;
-            loadCircles();
+            circlesStore.invalidate();
+            void loadCircles();
             toasts.success(t('Circle created'));
         },
     });

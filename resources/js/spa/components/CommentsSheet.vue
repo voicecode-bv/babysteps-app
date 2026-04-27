@@ -5,11 +5,12 @@ import { RouterLink } from 'vue-router';
 import BottomSheet from '@/components/BottomSheet.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { useAuthStore } from '@/spa/stores/auth';
+import { useCommentsCacheStore } from '@/spa/stores/commentsCache';
 import { useToastsStore } from '@/spa/stores/toasts';
 import { externalApi } from '@/spa/http/externalApi';
 import heartIcon from '../../../svg/doodle-icons/heart.svg';
 import heartFilledIcon from '../../../svg/doodle-icons/heart-filled.svg';
-import message2Icon from '../../../svg/doodle-icons/message-2.svg';
+import messageIcon from '../../../svg/doodle-icons/message.svg';
 
 interface Comment {
     id: number;
@@ -57,6 +58,7 @@ const emit = defineEmits<{
 const { t } = useTranslations();
 const auth = useAuthStore();
 const toasts = useToastsStore();
+const commentsCache = useCommentsCacheStore();
 const authUserId = computed(() => auth.user?.id ?? null);
 
 const comments = ref<Comment[]>([]);
@@ -75,11 +77,37 @@ const sentinelRef = useTemplateRef<HTMLDivElement>('sentinel');
 let observer: IntersectionObserver | null = null;
 const seenIds = new Set<number>();
 
+function seedCommentsFromCache(): boolean {
+    const cached = commentsCache.getStale<Comment>(props.postId);
+    if (!cached) return false;
+    comments.value = cached.comments;
+    currentPage.value = cached.currentPage;
+    lastPage.value = cached.lastPage;
+    seenIds.clear();
+    for (const c of cached.comments) {
+        seenIds.add(c.id);
+        for (const reply of c.replies ?? []) {
+            seenIds.add(reply.id);
+        }
+    }
+    hasLoaded.value = true;
+    return true;
+}
+
 async function loadPage(page: number): Promise<void> {
     const isFirst = page === 1;
-    if (isFirst) {
+    // Eerste pagina + verse cache → skip de fetch volledig.
+    if (isFirst && commentsCache.get<Comment>(props.postId)) {
+        seedCommentsFromCache();
+        return;
+    }
+
+    // Eerste pagina + stale cache → toon eerst, vervang daarna.
+    const seededFromStale = isFirst && !hasLoaded.value && seedCommentsFromCache();
+
+    if (isFirst && !seededFromStale) {
         isLoading.value = true;
-    } else {
+    } else if (!isFirst) {
         isLoadingMore.value = true;
     }
     loadError.value = null;
@@ -89,21 +117,36 @@ async function loadPage(page: number): Promise<void> {
             `/posts/${props.postId}/comments?page=${page}`,
         );
 
-        const incoming = result.data.filter((c) => {
-            if (seenIds.has(c.id)) return false;
-            seenIds.add(c.id);
-            for (const reply of c.replies ?? []) {
-                seenIds.add(reply.id);
+        if (isFirst) {
+            // Volledige swap voor page 1 zodat verwijderde comments verdwijnen.
+            seenIds.clear();
+            comments.value = result.data;
+            for (const c of result.data) {
+                seenIds.add(c.id);
+                for (const reply of c.replies ?? []) {
+                    seenIds.add(reply.id);
+                }
             }
-            return true;
-        });
+            commentsCache.set<Comment>(props.postId, result.data, result.meta.current_page, result.meta.last_page);
+        } else {
+            const incoming = result.data.filter((c) => {
+                if (seenIds.has(c.id)) return false;
+                seenIds.add(c.id);
+                for (const reply of c.replies ?? []) {
+                    seenIds.add(reply.id);
+                }
+                return true;
+            });
+            comments.value = [...comments.value, ...incoming];
+        }
 
-        comments.value = isFirst ? incoming : [...comments.value, ...incoming];
         currentPage.value = result.meta.current_page;
         lastPage.value = result.meta.last_page;
         hasLoaded.value = true;
     } catch {
-        loadError.value = t('Failed to load comments');
+        if (!seededFromStale) {
+            loadError.value = t('Failed to load comments');
+        }
     } finally {
         isLoading.value = false;
         isLoadingMore.value = false;
@@ -145,7 +188,7 @@ watch(
             void loadPage(1);
         }
     },
-    { flush: 'sync' },
+    { flush: 'sync', immediate: true },
 );
 
 watch(sentinelRef, (el) => {
@@ -166,6 +209,12 @@ watch(
         currentPage.value = 0;
         lastPage.value = 1;
         swipedId.value = null;
+        // Sheet kan al open zijn (gebruiker klikt direct op een andere post),
+        // in welk geval de open-watcher hier niet opnieuw vuurt. Trigger zelf
+        // de fetch zodat we niet wachten op een tweede tap.
+        if (props.open) {
+            void loadPage(1);
+        }
     },
 );
 
@@ -393,6 +442,7 @@ async function deleteComment(comment: Comment): Promise<void> {
 
     try {
         await externalApi.delete(`/comments/${comment.id}`);
+        commentsCache.invalidate(props.postId);
         emit('commentDeleted', comment);
         toasts.success(t('Comment deleted'));
     } catch {
@@ -501,6 +551,7 @@ async function submitComment(): Promise<void> {
         }
         seenIds.add(created.id);
 
+        commentsCache.invalidate(props.postId);
         emit('commentAdded', created);
         toasts.success(parentId ? t('Reply posted') : t('Comment posted'));
     } catch {
@@ -555,6 +606,7 @@ function iconMaskStyle(url: string) {
 
 defineExpose({
     reload: async (): Promise<void> => {
+        commentsCache.invalidate(props.postId);
         comments.value = [];
         seenIds.clear();
         hasLoaded.value = false;
@@ -598,7 +650,7 @@ defineExpose({
 
         <div v-else-if="comments.length === 0" class="flex flex-col items-center justify-center px-8 py-16 text-center">
             <div aria-hidden="true" class="mb-4 flex size-16 items-center justify-center rounded-2xl bg-sage-100 text-teal dark:bg-sage-900/40">
-                <span class="inline-block size-8 bg-current" :style="iconMaskStyle(message2Icon)"></span>
+                <span class="inline-block size-8 bg-current" :style="iconMaskStyle(messageIcon)"></span>
             </div>
             <h3 class="font-display text-lg font-semibold text-sand-800 dark:text-sand-200">{{ t('No comments yet') }}</h3>
             <p class="mt-2 text-sm text-sand-600 dark:text-sand-400">{{ t('Share what you think!') }}</p>

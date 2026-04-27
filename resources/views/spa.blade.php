@@ -7,7 +7,7 @@
         <title>{{ config('app.name', 'Innerr') }} — SPA spike</title>
         @vite(['resources/css/app.css', 'resources/js/spa/main.ts'])
     </head>
-    <body class="relative bg-sand-50 text-sand-900 dark:bg-sand-900 dark:text-sand-100 font-sans antialiased">
+    <body class="relative bg-warmwhite text-sand-900 dark:bg-sand-900 dark:text-sand-100 font-sans antialiased">
         <div id="spa-app"></div>
     </body>
 </html>
