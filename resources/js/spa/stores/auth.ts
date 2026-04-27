@@ -6,6 +6,7 @@ import { useCommentsCacheStore } from '@/spa/stores/commentsCache';
 import { useDefaultCirclesStore } from '@/spa/stores/defaultCircles';
 import { useFeedCacheStore } from '@/spa/stores/feedCache';
 import { useNotificationPreferencesStore } from '@/spa/stores/notificationPreferences';
+import { useNotificationsStore } from '@/spa/stores/notifications';
 import { usePersonsStore } from '@/spa/stores/persons';
 import { usePostCacheStore } from '@/spa/stores/postCache';
 import { useTagsStore } from '@/spa/stores/tags';
@@ -109,6 +110,7 @@ export const useAuthStore = defineStore('spa-auth', {
             useTagsStore().clear();
             useDefaultCirclesStore().clear();
             useNotificationPreferencesStore().clear();
+            useNotificationsStore().clear();
             useFeedCacheStore().clear();
             usePostCacheStore().clear();
             useCommentsCacheStore().clear();

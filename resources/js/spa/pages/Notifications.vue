@@ -7,6 +7,7 @@ import SurfaceCard from '@/components/SurfaceCard.vue';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
+import { useNotificationsStore } from '@/spa/stores/notifications';
 import { useToastsStore } from '@/spa/stores/toasts';
 import { externalApi } from '@/spa/http/externalApi';
 import bellIcon from '../../../svg/doodle-icons/bell.svg';
@@ -71,6 +72,7 @@ interface Meta {
 const { t } = useTranslations();
 const router = useRouter();
 const toasts = useToastsStore();
+const notificationsStore = useNotificationsStore();
 
 const items = ref<Notification[]>([]);
 const circleInvitations = ref<CircleInvitation[]>([]);
@@ -153,11 +155,14 @@ async function loadMore(): Promise<void> {
 async function markAllAsRead(): Promise<void> {
     const unreadIds = items.value.filter((n) => !n.read_at).map((n) => n.id);
     unreadIds.forEach((id) => optimisticallyRead.value.add(id));
+    notificationsStore.markAllRead();
 
     try {
         await externalApi.post('/notifications/read', {});
     } catch {
         unreadIds.forEach((id) => optimisticallyRead.value.delete(id));
+        notificationsStore.invalidate();
+        void notificationsStore.refresh();
     }
 }
 
@@ -172,9 +177,12 @@ function goBack(): void {
 async function openNotification(notification: Notification): Promise<void> {
     if (!isRead(notification)) {
         optimisticallyRead.value.add(notification.id);
+        notificationsStore.decrement();
 
         externalApi.post('/notifications/read', { ids: [notification.id] }).catch(() => {
             optimisticallyRead.value.delete(notification.id);
+            notificationsStore.invalidate();
+            void notificationsStore.refresh();
         });
     }
 

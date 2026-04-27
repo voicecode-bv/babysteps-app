@@ -11,6 +11,7 @@ import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { externalApi } from '@/spa/http/externalApi';
 import { useCirclesStore } from '@/spa/stores/circles';
 import { useFeedCacheStore } from '@/spa/stores/feedCache';
+import { useNotificationsStore } from '@/spa/stores/notifications';
 import cameraIcon from '../../../svg/doodle-icons/camera.svg';
 import heartIcon from '../../../svg/doodle-icons/heart.svg';
 import starIcon from '../../../svg/doodle-icons/star.svg';
@@ -19,7 +20,11 @@ import userIcon from '../../../svg/doodle-icons/user.svg';
 const { t } = useTranslations();
 const circlesStore = useCirclesStore();
 const feedCache = useFeedCacheStore();
+const notificationsStore = useNotificationsStore();
 const FEED_KEY = 'home';
+
+const unreadNotifications = computed(() => notificationsStore.unreadCount);
+const unreadBadge = computed(() => (unreadNotifications.value > 99 ? '99+' : String(unreadNotifications.value)));
 
 const layoutRef = useTemplateRef<InstanceType<typeof AppLayout>>('layout');
 const containerRef = computed(() => layoutRef.value?.mainRef ?? null);
@@ -32,6 +37,14 @@ async function loadCircles(): Promise<void> {
         await circlesStore.ensureLoaded();
     } catch {
         // negeren — strip blijft leeg
+    }
+}
+
+async function loadUnreadCount(): Promise<void> {
+    try {
+        await notificationsStore.refresh();
+    } catch {
+        // negeren — badge blijft op laatst bekende waarde
     }
 }
 
@@ -62,12 +75,14 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
     onRefresh: async () => {
         circlesStore.invalidate();
         feedCache.invalidate(FEED_KEY);
-        await Promise.all([loadCircles(), feed.reset()]);
+        notificationsStore.invalidate();
+        await Promise.all([loadCircles(), loadUnreadCount(), feed.reset()]);
     },
     containerRef,
 });
 
 onMounted(loadCircles);
+onMounted(loadUnreadCount);
 
 const commentsPostId = ref<number | null>(null);
 const isCommentsOpen = ref(false);
@@ -112,10 +127,16 @@ function iconMaskStyle(url: string) {
                 <div class="flex items-center justify-end px-4 pt-2">
                     <RouterLink
                         :to="{ name: 'spa.notifications' }"
-                        :aria-label="t('Open notifications')"
-                        class="flex size-9 items-center justify-center rounded-full text-accent transition-colors hover:bg-sand-100 dark:hover:bg-sand-800"
+                        :aria-label="unreadNotifications > 0 ? t(':count unread notifications', { count: unreadNotifications }) : t('Open notifications')"
+                        class="relative flex size-9 items-center justify-center rounded-full text-accent transition-colors hover:bg-sand-100 dark:hover:bg-sand-800"
                     >
                         <span aria-hidden="true" class="inline-block size-6 bg-accent" :style="iconMaskStyle(heartIcon)"></span>
+                        <span
+                            v-if="unreadNotifications > 0"
+                            class="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 font-display text-[10px] font-semibold leading-none text-white shadow-sm ring-2 ring-white dark:ring-sand-900"
+                        >
+                            {{ unreadBadge }}
+                        </span>
                     </RouterLink>
                 </div>
                 <div class="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-3 pt-1">
