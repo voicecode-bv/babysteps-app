@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Camera, Events, Off, On } from '@nativephp/mobile';
+import { Camera, Edge, Events, Off, On } from '@nativephp/mobile';
 import { computed, defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import CirclePicker from '@/components/CirclePicker.vue';
@@ -284,6 +284,17 @@ async function handleCropped(blob: Blob, dataUrl: string, exif: ExifData): Promi
 }
 
 onMounted(() => {
+    // Native edge bottom-nav verbergen vóór de eerste paint: anders overlapt
+    // hij onze sticky wizard-footer tot de async EdgeController-call resolved
+    // is, en zijn de Back/Next-knoppen niet aan te tikken. Sync via de bridge,
+    // geen netwerkronde. afterEach in de router herstelt de bottom-nav weer
+    // bij navigatie naar een volgende route.
+    try {
+        Edge.clearSync();
+    } catch {
+        // Niet-native context (browser preview): geen edge-bar om te clearen.
+    }
+
     loadFormData();
     On(Events.Camera.PhotoTaken, handlePhotoTaken);
     On(Events.Camera.VideoRecorded, handleVideoRecorded);
