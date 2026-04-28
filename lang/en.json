@@ -155,6 +155,9 @@
     "Add one": "Add one",
     "Are you sure you want to delete this post?": "Are you sure you want to delete this post?",
     "Are you sure you want to delete this circle?": "Are you sure you want to delete this circle?",
+    "Remove tag": "Remove tag",
+    "Remove yourself from this post?": "Remove yourself from this post?",
+    "Remove yourself from this post": "Remove yourself from this post",
 
     ":name shared a new moment": ":name shared a new moment",
     ":name replied: :comment": ":name replied: :comment",

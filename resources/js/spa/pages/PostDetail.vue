@@ -146,6 +146,33 @@ onMounted(async () => {
 });
 
 const isOwner = computed(() => post.value?.user.id === auth.user?.id);
+
+const isUntaggingSelf = ref(false);
+
+async function untagSelf(): Promise<void> {
+    if (!post.value || isUntaggingSelf.value) return;
+    await Dialog.alert()
+        .confirm(t('Remove tag'), t('Remove yourself from this post?'))
+        .id('untag-self-confirm');
+}
+
+async function performUntagSelf(): Promise<void> {
+    if (!post.value) return;
+    isUntaggingSelf.value = true;
+    const postId = post.value.id;
+    try {
+        const response = await externalApi.delete<{ data: Post }>(`/posts/${postId}/tagged-self`);
+        post.value = response.data;
+        postCache.set(postId, response.data);
+        // Feed-caches kunnen nog de oude tag-lijst tonen — invalideren zodat
+        // ze bij volgende bezoek opnieuw fetchen.
+        useFeedCacheStore().clear();
+    } catch {
+        // ignore — gebruiker blijft op de post staan
+    } finally {
+        isUntaggingSelf.value = false;
+    }
+}
 const serviceKeys = useServiceKeysStore();
 
 const hasLocation = computed(
@@ -247,6 +274,11 @@ async function handleButtonPressed(payload: { index: number; id?: string | null 
         } finally {
             isDeleting.value = false;
         }
+        return;
+    }
+
+    if (payload.id === 'untag-self-confirm' && payload.index === 1) {
+        await performUntagSelf();
     }
 }
 
@@ -470,20 +502,46 @@ watch(
                     <section v-if="(post.persons ?? []).length > 0" class="space-y-3">
                         <h3 class="text-[11px] font-semibold uppercase tracking-[0.18em] text-sand-500 dark:text-sand-400">{{ t('Persons') }}</h3>
                         <div class="flex flex-wrap gap-2">
-                            <component
-                                :is="person.user_username ? RouterLink : 'span'"
-                                v-for="person in post.persons"
-                                :key="person.id"
-                                :to="person.user_username ? { name: 'spa.profiles.show', params: { username: person.user_username } } : undefined"
-                                class="inline-flex items-center gap-2 rounded-full bg-white py-1 pl-1 pr-3.5 text-xs font-semibold text-sand-800 shadow-sm ring-1 ring-sand-100 dark:bg-sand-800 dark:text-sand-100 dark:ring-sand-700/60"
-                                :class="person.user_username ? 'transition-colors hover:bg-sand-50 dark:hover:bg-sand-700' : ''"
-                            >
-                                <img v-if="person.avatar_thumbnail" :src="person.avatar_thumbnail" :alt="person.name" class="size-7 rounded-full object-cover" />
-                                <span v-else class="flex size-7 items-center justify-center rounded-full bg-sage-100 text-teal dark:bg-sage-900/40">
-                                    <span class="font-display text-xs font-semibold uppercase">{{ person.name.charAt(0) }}</span>
+                            <template v-for="person in post.persons" :key="person.id">
+                                <span
+                                    v-if="person.user_id === auth.user?.id"
+                                    class="inline-flex items-center gap-2 rounded-full bg-white py-1 pl-1 pr-1 text-xs font-semibold text-sand-800 shadow-sm ring-1 ring-sand-100 dark:bg-sand-800 dark:text-sand-100 dark:ring-sand-700/60"
+                                >
+                                    <img v-if="person.avatar_thumbnail" :src="person.avatar_thumbnail" :alt="person.name" class="size-7 rounded-full object-cover" />
+                                    <span v-else class="flex size-7 items-center justify-center rounded-full bg-sage-100 text-teal dark:bg-sage-900/40">
+                                        <span class="font-display text-xs font-semibold uppercase">{{ person.name.charAt(0) }}</span>
+                                    </span>
+                                    <span class="pl-1">{{ person.name }}</span>
+                                    <button
+                                        type="button"
+                                        class="flex size-6 items-center justify-center rounded-full bg-sand-100 text-sand-600 transition-colors hover:bg-blush-100 hover:text-blush-600 disabled:opacity-50 dark:bg-sand-700 dark:text-sand-300 dark:hover:bg-blush-900/40 dark:hover:text-blush-300"
+                                        :aria-label="t('Remove yourself from this post')"
+                                        :disabled="isUntaggingSelf"
+                                        @click="untagSelf"
+                                    >
+                                        <svg v-if="!isUntaggingSelf" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.25" stroke="currentColor" class="size-3.5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                        </svg>
+                                        <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="size-3.5 animate-spin">
+                                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-opacity="0.25" />
+                                            <path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+                                        </svg>
+                                    </button>
                                 </span>
-                                {{ person.name }}
-                            </component>
+                                <component
+                                    v-else
+                                    :is="person.user_username ? RouterLink : 'span'"
+                                    :to="person.user_username ? { name: 'spa.profiles.show', params: { username: person.user_username } } : undefined"
+                                    class="inline-flex items-center gap-2 rounded-full bg-white py-1 pl-1 pr-3.5 text-xs font-semibold text-sand-800 shadow-sm ring-1 ring-sand-100 dark:bg-sand-800 dark:text-sand-100 dark:ring-sand-700/60"
+                                    :class="person.user_username ? 'transition-colors hover:bg-sand-50 dark:hover:bg-sand-700' : ''"
+                                >
+                                    <img v-if="person.avatar_thumbnail" :src="person.avatar_thumbnail" :alt="person.name" class="size-7 rounded-full object-cover" />
+                                    <span v-else class="flex size-7 items-center justify-center rounded-full bg-sage-100 text-teal dark:bg-sage-900/40">
+                                        <span class="font-display text-xs font-semibold uppercase">{{ person.name.charAt(0) }}</span>
+                                    </span>
+                                    {{ person.name }}
+                                </component>
+                            </template>
                         </div>
                     </section>
 
