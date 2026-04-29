@@ -12,7 +12,7 @@ import { useApiForm } from '@/spa/composables/useApiForm';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useCirclesStore } from '@/spa/stores/circles';
 import { externalApi } from '@/spa/http/externalApi';
-import { api } from '@/spa/http/apiClient';
+import { api, ApiError } from '@/spa/http/apiClient';
 import crownIcon from '../../../../svg/doodle-icons/crown.svg';
 import mailIcon from '../../../../svg/doodle-icons/mail.svg';
 import sendIcon from '../../../../svg/doodle-icons/send.svg';
@@ -125,25 +125,60 @@ async function leaveCircle(): Promise<void> {
         .id('leave-circle-confirm');
 }
 
-async function addMember(): Promise<void> {
-    if (!memberForm.data.identifier.trim()) return;
+function friendlyInviteError(error: ApiError, field: 'email' | 'username'): string {
+    const apiMessage = error.errors[field]?.[0] ?? error.message;
 
-    await memberForm.post(`/circles/${circleId.value}/members`, {
-        onSuccess: async () => {
-            memberForm.reset();
-            inviteSent.value = true;
-            setTimeout(() => {
-                inviteSent.value = false;
-            }, 3000);
-            // Refetch alleen invitations — members + circle blijven onveranderd.
-            try {
-                const response = await externalApi.get<{ data: Invitation[] }>(`/circles/${circleId.value}/invitations`);
-                invitations.value = response.data;
-            } catch {
-                // ignore
-            }
-        },
-    });
+    if (!apiMessage) {
+        return t('Failed to invite member');
+    }
+
+    const normalized = apiMessage.toLowerCase();
+    if (normalized.includes('selected') && normalized.includes('invalid')) {
+        return field === 'email'
+            ? t('No account found for this email address.')
+            : t('No account found for this username.');
+    }
+    if (normalized.includes('already')) {
+        return t('This person is already in the circle.');
+    }
+    return t('Failed to invite member');
+}
+
+async function addMember(): Promise<void> {
+    const id = memberForm.data.identifier.trim();
+    if (!id) return;
+
+    const isEmail = id.includes('@');
+    const field: 'email' | 'username' = isEmail ? 'email' : 'username';
+
+    memberForm.processing = true;
+    memberForm.errors = {};
+
+    try {
+        await externalApi.post(`/circles/${circleId.value}/members`, { [field]: id });
+        memberForm.reset();
+        inviteSent.value = true;
+        setTimeout(() => {
+            inviteSent.value = false;
+        }, 3000);
+        // Refetch alleen invitations — members + circle blijven onveranderd.
+        try {
+            const response = await externalApi.get<{ data: Invitation[] }>(`/circles/${circleId.value}/invitations`);
+            invitations.value = response.data;
+        } catch {
+            // ignore
+        }
+    } catch (error) {
+        if (error instanceof ApiError && error.status === 429) {
+            memberForm.errors = { identifier: t('Too many invitations sent. Please try again later.') };
+        } else if (error instanceof ApiError) {
+            memberForm.errors = { identifier: friendlyInviteError(error, field) };
+        } else {
+            memberForm.errors = { identifier: t('Failed to invite member') };
+        }
+    } finally {
+        memberForm.processing = false;
+    }
 }
 
 async function pickPhoto(): Promise<void> {
