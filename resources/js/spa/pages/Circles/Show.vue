@@ -44,6 +44,7 @@ interface Circle {
     members_can_invite: boolean;
     is_owner: boolean;
     created_at: string;
+    pending_invitations?: Invitation[];
 }
 
 const { t } = useTranslations();
@@ -61,12 +62,9 @@ const containerRef = computed(() => layoutRef.value?.mainRef ?? null);
 
 async function loadData(): Promise<void> {
     try {
-        const [circleResp, invitationsResp] = await Promise.all([
-            externalApi.get<{ data: Circle }>(`/circles/${circleId.value}`),
-            externalApi.get<{ data: Invitation[] }>(`/circles/${circleId.value}/invitations`).catch(() => ({ data: [] as Invitation[] })),
-        ]);
+        const circleResp = await externalApi.get<{ data: Circle }>(`/circles/${circleId.value}`);
         circle.value = circleResp.data;
-        invitations.value = invitationsResp.data;
+        invitations.value = circleResp.data.pending_invitations ?? [];
     } catch {
         router.push({ name: 'spa.circles.index' });
     }
@@ -161,10 +159,10 @@ async function addMember(): Promise<void> {
         setTimeout(() => {
             inviteSent.value = false;
         }, 3000);
-        // Refetch alleen invitations — members + circle blijven onveranderd.
+        // Refetch circle om de bijgewerkte pending_invitations op te halen.
         try {
-            const response = await externalApi.get<{ data: Invitation[] }>(`/circles/${circleId.value}/invitations`);
-            invitations.value = response.data;
+            const response = await externalApi.get<{ data: Circle }>(`/circles/${circleId.value}`);
+            invitations.value = response.data.pending_invitations ?? [];
         } catch {
             // ignore
         }
@@ -510,9 +508,9 @@ function maskStyle(icon: string) {
 
                 <div class="space-y-3 pt-2">
                     <RouterLink
-                        v-if="circle.is_owner"
+                        v-if="circle.is_owner && members.length > 1"
                         :to="{ name: 'spa.circles.transfer-ownership', params: { circle: circle.id } }"
-                        class="inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-full border border-teal/20 bg-cream px-6 py-4 text-sm font-medium text-teal transition-all hover:-translate-y-0.5 hover:bg-warmwhite"
+                        class="inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-teal/20 bg-cream px-6 py-4 text-sm font-medium text-teal transition-all hover:-translate-y-0.5 hover:bg-warmwhite"
                     >
                         {{ t('Transfer ownership') }}
                     </RouterLink>

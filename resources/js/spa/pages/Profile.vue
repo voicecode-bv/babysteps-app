@@ -1,12 +1,16 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, useTemplateRef } from 'vue';
+import { Camera, Events, Off, On } from '@nativephp/mobile';
+import { computed, onMounted, onUnmounted, reactive, ref, useTemplateRef } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
+import Button from '@/components/Button.vue';
 import { type PostData } from '@/spa/components/PostCard.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
+import { useApiForm } from '@/spa/composables/useApiForm';
 import { useInfiniteScroll, type PaginatedResponse } from '@/spa/composables/useInfiniteScroll';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
+import { api } from '@/spa/http/apiClient';
 import { externalApi } from '@/spa/http/externalApi';
 import { useAuthStore } from '@/spa/stores/auth';
 import settingsIcon from '../../../svg/doodle-icons/setting-2.svg';
@@ -71,6 +75,72 @@ function goBack(): void {
         router.push({ name: 'spa.home' });
     }
 }
+
+const isEditingBio = ref(false);
+const bioForm = useApiForm({ bio: '' }, externalApi);
+const avatarUploading = ref(false);
+
+function startBioEdit(): void {
+    if (!profile.value) return;
+    bioForm.data.bio = profile.value.bio ?? '';
+    bioForm.errors = {};
+    isEditingBio.value = true;
+}
+
+async function saveBio(): Promise<void> {
+    const trimmed = bioForm.data.bio.trim();
+    bioForm.data.bio = trimmed;
+
+    await bioForm.put<{ data: { bio: string | null } }>('/profile', {
+        onSuccess: (response) => {
+            const nextBio = response.data.bio;
+            if (profile.value) {
+                profile.value.bio = nextBio;
+            }
+            if (auth.user) {
+                auth.user.bio = nextBio;
+            }
+            isEditingBio.value = false;
+        },
+    });
+}
+
+async function pickAvatar(): Promise<void> {
+    if (avatarUploading.value) return;
+    await Camera.pickImages().all();
+}
+
+async function handleMediaSelected(payload: { success: boolean; files: { path: string; mimeType: string }[]; cancelled: boolean }): Promise<void> {
+    if (!payload.success || payload.cancelled || !payload.files.length || !isOwnProfile.value || !profile.value) {
+        return;
+    }
+
+    avatarUploading.value = true;
+    try {
+        const response = await api.post<{ avatar: string | null }>('/api/spa/settings/profile/avatar', {
+            avatar_path: payload.files[0].path,
+        });
+        if (profile.value) {
+            profile.value.avatar = response.avatar;
+        }
+        if (auth.user) {
+            auth.user.avatar = response.avatar;
+        }
+    } catch {
+        // ignore — avatar blijft op huidige waarde
+    } finally {
+        avatarUploading.value = false;
+    }
+}
+
+onMounted(() => {
+    On(Events.Gallery.MediaSelected, handleMediaSelected);
+});
+
+onUnmounted(() => {
+    Off(Events.Gallery.MediaSelected, handleMediaSelected);
+});
+
 function markLoaded(url: string): void {
     loadedMedia[url] = true;
 }
@@ -120,12 +190,27 @@ function iconMaskStyle(url: string) {
             <div>
                 <div v-if="profile" class="bg-white px-4 py-6 dark:bg-sand-900">
                     <div class="flex items-center gap-4">
-                        <img
-                            :src="profile.avatar ?? `https://ui-avatars.com/api/?name=${profile.name}&background=f0dcc6&color=5c3f24&size=128`"
-                            :alt="profile.name"
-                            class="size-20 rounded-full object-cover ring-2 ring-sand-200 dark:ring-sand-700"
-                        />
-                        <div class="flex-1">
+                        <button
+                            type="button"
+                            class="relative shrink-0"
+                            :disabled="!isOwnProfile || avatarUploading"
+                            :aria-label="isOwnProfile ? t('Change photo') : undefined"
+                            @click="isOwnProfile && pickAvatar()"
+                        >
+                            <img
+                                :src="profile.avatar ?? `https://ui-avatars.com/api/?name=${profile.name}&background=f0dcc6&color=5c3f24&size=128`"
+                                :alt="profile.name"
+                                class="size-20 rounded-full object-cover ring-2 ring-sand-200 dark:ring-sand-700"
+                                :class="{ 'opacity-60': avatarUploading }"
+                            />
+                            <span v-if="isOwnProfile" class="absolute -bottom-1 -right-1 flex size-7 items-center justify-center rounded-full bg-teal shadow-md ring-4 ring-white dark:ring-sand-900">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5 text-white">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
+                                </svg>
+                            </span>
+                        </button>
+                        <div class="min-w-0 flex-1">
                             <h2 class="truncate font-sans text-xl font-bold text-teal">{{ profile.name }}</h2>
                             <p class="text-sm text-sand-500 dark:text-sand-400">@{{ profile.username }}</p>
                             <div class="mt-2">
@@ -135,21 +220,55 @@ function iconMaskStyle(url: string) {
                         </div>
                     </div>
 
-                    <p v-if="profile.bio" class="mt-3 text-sm text-sand-700 dark:text-sand-300">{{ profile.bio }}</p>
+                    <div v-if="isOwnProfile" class="mt-4">
+                        <form v-if="isEditingBio" class="space-y-3" @submit.prevent="saveBio">
+                            <textarea
+                                v-model="bioForm.data.bio"
+                                class="field-area"
+                                rows="3"
+                                maxlength="1000"
+                                :placeholder="t('Write something about yourself...')"
+                            />
+                            <p v-if="bioForm.errors.bio" class="text-xs text-accent">{{ bioForm.errors.bio }}</p>
+                            <div class="flex justify-end gap-2">
+                                <Button type="button" variant="ghost" size="sm" :disabled="bioForm.processing" @click="isEditingBio = false">
+                                    {{ t('Cancel') }}
+                                </Button>
+                                <Button type="submit" size="sm" :disabled="bioForm.processing">
+                                    {{ t('Save') }}
+                                </Button>
+                            </div>
+                        </form>
+                        <button
+                            v-else
+                            type="button"
+                            class="group flex w-full items-start gap-2 text-left"
+                            @click="startBioEdit"
+                        >
+                            <p v-if="profile.bio" class="flex-1 text-sm text-sand-700 dark:text-sand-300">{{ profile.bio }}</p>
+                            <p v-else class="flex-1 text-sm italic text-sand-400 dark:text-sand-500">{{ t('Add a bio...') }}</p>
+                            <span class="mt-0.5 shrink-0 text-sand-400 transition group-hover:text-teal dark:text-sand-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
+                                </svg>
+                            </span>
+                        </button>
+                    </div>
+                    <p v-else-if="profile.bio" class="mt-3 text-sm text-sand-700 dark:text-sand-300">{{ profile.bio }}</p>
                 </div>
 
-                <div class="h-2 bg-sand-100 dark:bg-sand-800" />
+                <div class="h-2 bg-warmwhite dark:bg-sand-900" />
 
-                <div v-if="feed.items.length === 0 && feed.loading" class="grid grid-cols-3 gap-0.5 bg-sand-100 dark:bg-sand-800">
+                <div v-if="feed.items.length === 0 && feed.loading" class="grid grid-cols-3 gap-0.5 bg-warmwhite dark:bg-sand-900">
                     <div v-for="n in 30" :key="n" class="aspect-square animate-pulse bg-sand-200 dark:bg-sand-700" />
                 </div>
 
-                <div id="profile-posts-grid" class="grid grid-cols-3 gap-0.5 bg-sand-100 dark:bg-sand-800">
+                <div id="profile-posts-grid" class="grid grid-cols-3 gap-0.5 bg-warmwhite dark:bg-sand-900">
                     <RouterLink
                         v-for="post in feed.items"
                         :key="post.id"
                         :to="{ name: 'spa.posts.show', params: { post: post.id } }"
-                        class="relative block aspect-square overflow-hidden bg-sand-100 dark:bg-sand-800"
+                        class="relative block aspect-square overflow-hidden bg-warmwhite dark:bg-sand-900"
                     >
                         <div v-if="!loadedMedia[mediaKey(post)] && post.media_type !== 'unknown'" class="absolute inset-0 animate-pulse bg-sand-200 dark:bg-sand-700" />
                         <img

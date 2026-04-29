@@ -9,6 +9,7 @@ import IconTile from '@/components/IconTile.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import SurfaceCard from '@/components/SurfaceCard.vue';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
+import ListItem from '@/spa/components/ListItem.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { useApiForm } from '@/spa/composables/useApiForm';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
@@ -432,51 +433,44 @@ function iconMaskStyle(url: string) {
                     {{ t('Add people here who don\'t have an Innerr account so you can still tag them in your photos. Members of your circles are automatically taggable and don\'t need to be added.') }}
                 </p>
 
-                <ul v-if="isLoading && persons.length === 0" class="space-y-2">
-                    <li v-for="n in 5" :key="n">
-                        <SurfaceCard>
-                            <div class="flex animate-pulse items-center gap-3">
-                                <div class="size-12 shrink-0 rounded-full bg-sand-200 dark:bg-sand-700" />
-                                <div class="flex-1 space-y-2">
-                                    <div class="h-3 w-32 rounded bg-sand-200 dark:bg-sand-700" />
-                                    <div class="h-2 w-20 rounded bg-sand-200 dark:bg-sand-700" />
-                                </div>
-                                <div class="size-9 rounded-lg bg-sand-200 dark:bg-sand-700" />
-                            </div>
-                        </SurfaceCard>
+                <ul v-if="isLoading && persons.length === 0" class="divide-y divide-sand-100 overflow-hidden rounded-lg bg-white/70 backdrop-blur-sm dark:divide-sand-700/60 dark:bg-sand-800/60">
+                    <li v-for="n in 5" :key="n" class="flex animate-pulse items-center gap-4 px-4 py-4">
+                        <div class="size-12 shrink-0 rounded-full bg-sand-200 dark:bg-sand-700" />
+                        <div class="flex-1 space-y-2">
+                            <div class="h-3 w-32 rounded bg-sand-200 dark:bg-sand-700" />
+                            <div class="h-2 w-20 rounded bg-sand-200 dark:bg-sand-700" />
+                        </div>
                     </li>
                 </ul>
 
-                <ul v-else-if="persons.length > 0" class="space-y-2">
+                <ul v-else-if="persons.length > 0" class="divide-y divide-sand-100 overflow-hidden rounded-lg dark:divide-sand-700/60">
                     <li v-for="person in persons" :key="person.id">
-                        <SurfaceCard>
-                            <div class="flex items-center gap-3">
-                                <button class="shrink-0" :aria-label="t('Edit person')" @click="openEdit(person)">
-                                    <img
-                                        v-if="person.avatar_thumbnail"
-                                        :src="person.avatar_thumbnail"
-                                        :alt="person.name"
-                                        class="size-12 rounded-full object-cover"
-                                    />
-                                    <span
-                                        v-else
-                                        class="flex size-12 items-center justify-center rounded-full bg-sage-100 text-teal dark:bg-sage-900/40"
-                                    >
-                                        <span aria-hidden="true" class="inline-block size-7 bg-current" :style="iconMaskStyle(userIcon)"></span>
-                                    </span>
-                                </button>
-                                <button class="min-w-0 flex-1 text-left" @click="openEdit(person)">
-                                    <p class="truncate text-base font-semibold text-sand-900 dark:text-sand-100">{{ person.name }}</p>
-                                    <p v-if="person.birthdate" class="flex items-center gap-1.5 text-xs text-sand-500 dark:text-sand-400">
-                                        <span aria-hidden="true" class="inline-block size-3.5 bg-current" :style="iconMaskStyle(cakeIcon)"></span>
-                                        {{ formatBirthdate(person.birthdate) }}
-                                    </p>
-                                    <p v-else class="text-xs text-sand-500 dark:text-sand-400">
-                                        {{ person.usage_count === 1 ? t(':count post', { count: person.usage_count }) : t(':count posts', { count: person.usage_count }) }}
-                                    </p>
-                                </button>
-                            </div>
-                        </SurfaceCard>
+                        <ListItem :show-chevron="false" @click="openEdit(person)">
+                            <template #leading>
+                                <img
+                                    v-if="person.avatar_thumbnail"
+                                    :src="person.avatar_thumbnail"
+                                    :alt="person.name"
+                                    class="size-12 shrink-0 rounded-full object-cover"
+                                />
+                                <span
+                                    v-else
+                                    class="flex size-12 shrink-0 items-center justify-center rounded-full bg-sage-100 text-teal dark:bg-sage-900/40"
+                                >
+                                    <span aria-hidden="true" class="inline-block size-7 bg-current" :style="iconMaskStyle(userIcon)"></span>
+                                </span>
+                            </template>
+                            {{ person.name }}
+                            <template #subtitle>
+                                <span v-if="person.birthdate" class="inline-flex items-center gap-1.5">
+                                    <span aria-hidden="true" class="inline-block size-3.5 bg-current" :style="iconMaskStyle(cakeIcon)"></span>
+                                    {{ formatBirthdate(person.birthdate) }}
+                                </span>
+                                <template v-else>
+                                    {{ person.usage_count === 1 ? t(':count post', { count: person.usage_count }) : t(':count posts', { count: person.usage_count }) }}
+                                </template>
+                            </template>
+                        </ListItem>
                     </li>
                 </ul>
 

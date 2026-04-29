@@ -510,14 +510,14 @@ function iconMaskStyle(url: string) {
                 <div class="flex items-center justify-between gap-3 px-4 pt-3">
                     <button
                         type="button"
-                        class="rounded-full px-5 py-2.5 text-sm font-medium text-sand-700 transition active:bg-sand-100 dark:text-sand-200 dark:active:bg-sand-800"
+                        class="rounded-lg px-5 py-2.5 text-sm font-medium text-sand-700 transition active:bg-sand-100 dark:text-sand-200 dark:active:bg-sand-800"
                         @click="goBack"
                     >
                         {{ currentStep === 0 ? t('Cancel') : t('Back') }}
                     </button>
                     <button
                         type="button"
-                        class="rounded-full bg-teal px-7 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-light disabled:cursor-not-allowed disabled:opacity-40"
+                        class="rounded-lg bg-teal px-7 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-light disabled:cursor-not-allowed disabled:opacity-40"
                         :disabled="!canAdvance || form.processing"
                         @click="goNext"
                     >

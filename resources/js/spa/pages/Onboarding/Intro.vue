@@ -87,7 +87,7 @@ function continueOnboarding(): void {
 
         <div class="relative pb-8 pt-2">
             <button
-                class="w-full rounded-full bg-teal py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-light"
+                class="w-full rounded-lg bg-teal py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-light"
                 @click="continueOnboarding"
             >
                 {{ t('Continue') }}

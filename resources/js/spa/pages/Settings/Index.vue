@@ -4,13 +4,14 @@ import { computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
 import IconTile from '@/components/IconTile.vue';
-import SurfaceCard from '@/components/SurfaceCard.vue';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
+import ListItem from '@/spa/components/ListItem.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useI18nStore } from '@/spa/stores/i18n';
 import { externalApi } from '@/spa/http/externalApi';
 import bellIcon from '../../../../svg/doodle-icons/bell.svg';
+import circleIcon from '../../../../svg/doodle-icons/circle.svg';
 import globeIcon from '../../../../svg/doodle-icons/globe.svg';
 import lockIcon from '../../../../svg/doodle-icons/lock.svg';
 import tagIcon from '../../../../svg/doodle-icons/tag.svg';
@@ -90,75 +91,44 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
                     </div>
                 </div>
 
-                <RouterLink :to="{ name: 'spa.settings.default-circles' }" class="block">
-                    <SurfaceCard>
-                        <div class="flex items-center justify-between gap-3">
-                            <span class="flex items-center gap-3 text-sm font-semibold text-sand-900 dark:text-sand-100">
-                                <IconTile :icon="usersIcon" size="sm" tone="sage" />
-                                {{ t('Default circles') }}
-                            </span>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5 text-sand-500 dark:text-sand-400">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                            </svg>
-                        </div>
-                    </SurfaceCard>
-                </RouterLink>
-
-                <RouterLink :to="{ name: 'spa.settings.persons' }" class="block">
-                    <SurfaceCard>
-                        <div class="flex items-center justify-between gap-3">
-                            <span class="flex items-center gap-3 text-sm font-semibold text-sand-900 dark:text-sand-100">
-                                <IconTile :icon="usersIcon" size="sm" tone="sage" />
-                                {{ t('Persons') }}
-                            </span>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5 text-sand-500 dark:text-sand-400">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                            </svg>
-                        </div>
-                    </SurfaceCard>
-                </RouterLink>
-
-                <RouterLink :to="{ name: 'spa.settings.tags' }" class="block">
-                    <SurfaceCard>
-                        <div class="flex items-center justify-between gap-3">
-                            <span class="flex items-center gap-3 text-sm font-semibold text-sand-900 dark:text-sand-100">
-                                <IconTile :icon="tagIcon" size="sm" tone="sage" />
-                                {{ t('Tags') }}
-                            </span>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5 text-sand-500 dark:text-sand-400">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                            </svg>
-                        </div>
-                    </SurfaceCard>
-                </RouterLink>
-
-                <RouterLink :to="{ name: 'spa.settings.notifications' }" class="block">
-                    <SurfaceCard>
-                        <div class="flex items-center justify-between gap-3">
-                            <span class="flex items-center gap-3 text-sm font-semibold text-sand-900 dark:text-sand-100">
-                                <IconTile :icon="bellIcon" size="sm" tone="sage" />
-                                {{ t('Push notifications') }}
-                            </span>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5 text-sand-500 dark:text-sand-400">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                            </svg>
-                        </div>
-                    </SurfaceCard>
-                </RouterLink>
-
-                <RouterLink :to="{ name: 'spa.settings.account' }" class="block">
-                    <SurfaceCard>
-                        <div class="flex items-center justify-between gap-3">
-                            <span class="flex items-center gap-3 text-sm font-semibold text-sand-900 dark:text-sand-100">
-                                <IconTile :icon="lockIcon" size="sm" tone="sage" />
-                                {{ t('Account') }}
-                            </span>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5 text-sand-500 dark:text-sand-400">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                            </svg>
-                        </div>
-                    </SurfaceCard>
-                </RouterLink>
+                <ul class="divide-y divide-sand-100 overflow-hidden rounded-lg dark:divide-sand-700/60">
+                    <li>
+                        <ListItem :to="{ name: 'spa.settings.edit-profile' }">
+                            <template #leading><IconTile :icon="userIcon" size="sm" tone="sage" /></template>
+                            {{ t('Edit profile') }}
+                        </ListItem>
+                    </li>
+                    <li>
+                        <ListItem :to="{ name: 'spa.settings.default-circles' }">
+                            <template #leading><IconTile :icon="circleIcon" size="sm" tone="sage" /></template>
+                            {{ t('Default circles') }}
+                        </ListItem>
+                    </li>
+                    <li>
+                        <ListItem :to="{ name: 'spa.settings.persons' }">
+                            <template #leading><IconTile :icon="usersIcon" size="sm" tone="sage" /></template>
+                            {{ t('Persons') }}
+                        </ListItem>
+                    </li>
+                    <li>
+                        <ListItem :to="{ name: 'spa.settings.tags' }">
+                            <template #leading><IconTile :icon="tagIcon" size="sm" tone="sage" /></template>
+                            {{ t('Tags') }}
+                        </ListItem>
+                    </li>
+                    <li>
+                        <ListItem :to="{ name: 'spa.settings.notifications' }">
+                            <template #leading><IconTile :icon="bellIcon" size="sm" tone="sage" /></template>
+                            {{ t('Push notifications') }}
+                        </ListItem>
+                    </li>
+                    <li>
+                        <ListItem :to="{ name: 'spa.settings.account' }">
+                            <template #leading><IconTile :icon="lockIcon" size="sm" tone="sage" /></template>
+                            {{ t('Account') }}
+                        </ListItem>
+                    </li>
+                </ul>
 
                 <Button variant="danger" size="lg" block @click="logout">
                     {{ t('Log out') }}

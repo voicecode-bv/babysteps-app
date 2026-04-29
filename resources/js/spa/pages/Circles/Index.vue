@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, useTemplateRef } from 'vue';
-import { RouterLink, useRouter } from 'vue-router';
+import { useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
 import IconTile from '@/components/IconTile.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import SurfaceCard from '@/components/SurfaceCard.vue';
+import CircleListItem from '@/spa/components/CircleListItem.vue';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { useApiForm } from '@/spa/composables/useApiForm';
@@ -120,8 +121,8 @@ async function createCircle(): Promise<void> {
                     </SurfaceCard>
                 </Transition>
 
-                <ul v-if="circles === null" class="space-y-3">
-                    <li v-for="n in 3" :key="n" class="flex items-center gap-4 rounded-lg bg-white/70 p-4 shadow-sm backdrop-blur-sm dark:bg-sand-800/60">
+                <ul v-if="circles === null" class="divide-y divide-sand-100 overflow-hidden rounded-lg bg-white/70 backdrop-blur-sm dark:divide-sand-700/60 dark:bg-sand-800/60">
+                    <li v-for="n in 3" :key="n" class="flex items-center gap-4 px-4 py-4">
                         <div class="size-12 shrink-0 animate-pulse rounded-full bg-sand-200 dark:bg-sand-700" />
                         <div class="flex-1 space-y-2">
                             <div class="h-4 w-32 animate-pulse rounded bg-sand-200 dark:bg-sand-700" />
@@ -130,29 +131,9 @@ async function createCircle(): Promise<void> {
                     </li>
                 </ul>
 
-                <ul v-else-if="circles.length > 0" class="space-y-3">
+                <ul v-else-if="circles.length > 0" class="divide-y divide-sand-100 overflow-hidden rounded-lg dark:divide-sand-700/60">
                     <li v-for="circle in circles" :key="circle.id">
-                        <RouterLink
-                            :to="{ name: 'spa.circles.show', params: { circle: circle.id } }"
-                            class="flex items-center gap-4 rounded-lg bg-white/70 p-4 shadow-sm backdrop-blur-sm transition hover:bg-white active:scale-[0.99] dark:border-sand-700/50 dark:bg-sand-800/60 dark:hover:bg-sand-800"
-                        >
-                            <img
-                                v-if="circle.photo"
-                                :src="circle.photo"
-                                :alt="circle.name"
-                                class="size-12 shrink-0 rounded-full object-cover"
-                            />
-                            <IconTile v-else :icon="usersIcon" size="md" tone="sage" class="!rounded-full" />
-                            <div class="min-w-0 flex-1">
-                                <p class="truncate font-sans text-base font-semibold text-teal dark:text-sand-100">{{ circle.name }}</p>
-                                <p class="text-sm text-sand-600 dark:text-sand-400">
-                                    {{ circle.members_count === 1 ? t(':count member', { count: circle.members_count }) : t(':count members', { count: circle.members_count }) }}
-                                </p>
-                            </div>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5 text-sand-400 dark:text-sand-500">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-                            </svg>
-                        </RouterLink>
+                        <CircleListItem :circle="circle" avatar-shape="circle" />
                     </li>
                 </ul>
 

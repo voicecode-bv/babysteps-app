@@ -240,7 +240,7 @@ async function submit(): Promise<void> {
             <div class="px-4 py-3">
                 <button
                     :disabled="!canSave"
-                    class="flex w-full items-center justify-center gap-2 rounded-full bg-teal py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-light disabled:opacity-40"
+                    class="flex w-full items-center justify-center gap-2 rounded-lg bg-teal py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-light disabled:opacity-40"
                     @click="submit"
                 >
                     <svg v-if="form.processing" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="size-4 animate-spin">

@@ -22,7 +22,7 @@ const props = withDefaults(
 );
 
 const base =
-    'inline-flex items-center justify-center gap-2 rounded-full font-medium whitespace-nowrap transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal/40';
+    'inline-flex items-center justify-center gap-2 rounded-lg font-medium whitespace-nowrap transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal/40';
 
 const variants: Record<Variant, string> = {
     primary: 'bg-teal text-white hover:bg-teal-light shadow-sm',

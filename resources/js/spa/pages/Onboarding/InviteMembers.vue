@@ -178,7 +178,7 @@ function continueOnboarding(): void {
 
         <div class="relative pb-8 pt-2">
             <button
-                class="flex w-full items-center justify-center gap-2 rounded-full bg-teal py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-light"
+                class="flex w-full items-center justify-center gap-2 rounded-lg bg-teal py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-light"
                 @click="continueOnboarding"
             >
                 <span>{{ invited.length > 0 ? t('Continue') : t('Invite later') }}</span>

@@ -165,14 +165,14 @@ const ratios: { value: Ratio; label: string }[] = [
         <template #footer>
             <div class="flex gap-3 px-4 py-3">
                 <button
-                    class="flex-1 rounded-full bg-sand-100 py-3 text-sm font-semibold text-sand-700 transition-colors dark:bg-sand-800 dark:text-sand-200"
+                    class="flex-1 rounded-lg bg-sand-100 py-3 text-sm font-semibold text-sand-700 transition-colors dark:bg-sand-800 dark:text-sand-200"
                     :disabled="processing"
                     @click="close"
                 >
                     {{ t('Cancel') }}
                 </button>
                 <button
-                    class="flex-1 rounded-full bg-teal py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-light disabled:opacity-40"
+                    class="flex-1 rounded-lg bg-teal py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-light disabled:opacity-40"
                     :disabled="processing || !src"
                     @click="confirm"
                 >

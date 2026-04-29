@@ -74,7 +74,7 @@
 }
 
 @utility field {
-    @apply w-full rounded-full border-[1.5px] border-sand-200 bg-white px-5 py-4 text-sm font-light text-night placeholder-sand-400 outline-none transition-colors focus:border-teal dark:border-sand-700 dark:bg-sand-800 dark:text-sand-100 dark:placeholder-sand-500;
+    @apply w-full rounded-lg border-[1.5px] border-sand-200 bg-white px-5 py-4 text-sm font-light text-night placeholder-sand-400 outline-none transition-colors focus:border-teal dark:border-sand-700 dark:bg-sand-800 dark:text-sand-100 dark:placeholder-sand-500;
 }
 
 @utility field-area {

@@ -7,6 +7,7 @@ import IconTile from '@/components/IconTile.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import SurfaceCard from '@/components/SurfaceCard.vue';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
+import ListItem from '@/spa/components/ListItem.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { useApiForm } from '@/spa/composables/useApiForm';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
@@ -220,59 +221,53 @@ function lowercase(event: Event, target: { name: string }): void {
                     </SurfaceCard>
                 </Transition>
 
-                <ul v-if="tags === null" class="space-y-2">
-                    <li v-for="n in 4" :key="n">
-                        <SurfaceCard>
-                            <div class="flex items-center gap-3">
-                                <div class="size-9 shrink-0 animate-pulse rounded-lg bg-sand-200 dark:bg-sand-700" />
-                                <div class="flex-1 space-y-2">
-                                    <div class="h-4 w-24 animate-pulse rounded bg-sand-200 dark:bg-sand-700" />
-                                    <div class="h-3 w-16 animate-pulse rounded bg-sand-200/70 dark:bg-sand-700/70" />
-                                </div>
-                            </div>
-                        </SurfaceCard>
+                <ul v-if="tags === null" class="divide-y divide-sand-100 overflow-hidden rounded-lg bg-white/70 backdrop-blur-sm dark:divide-sand-700/60 dark:bg-sand-800/60">
+                    <li v-for="n in 4" :key="n" class="flex items-center gap-4 px-4 py-4">
+                        <div class="size-9 shrink-0 animate-pulse rounded-lg bg-sand-200 dark:bg-sand-700" />
+                        <div class="flex-1 space-y-2">
+                            <div class="h-4 w-24 animate-pulse rounded bg-sand-200 dark:bg-sand-700" />
+                            <div class="h-3 w-16 animate-pulse rounded bg-sand-200/70 dark:bg-sand-700/70" />
+                        </div>
                     </li>
                 </ul>
 
-                <ul v-else-if="tags.length > 0" class="space-y-2">
+                <ul v-else-if="tags.length > 0" class="divide-y divide-sand-100 overflow-hidden rounded-lg dark:divide-sand-700/60">
                     <li v-for="tag in tags" :key="tag.id">
-                        <SurfaceCard>
-                            <template v-if="editingTagId === tag.id">
-                                <form class="space-y-3" @submit.prevent="saveEdit(tag)">
-                                    <input
-                                        :value="editForm.data.name"
-                                        type="text"
-                                        class="field"
-                                        maxlength="50"
-                                        autofocus
-                                        @input="lowercase($event, editForm.data)"
-                                    />
-                                    <p v-if="editForm.errors.name" class="text-xs text-accent">{{ editForm.errors.name }}</p>
-                                    <div class="flex items-center justify-between gap-2">
-                                        <Button type="button" variant="danger" size="md" @click="confirmDelete(tag)">
-                                            {{ t('Delete') }}
-                                        </Button>
-                                        <div class="flex gap-2">
-                                            <Button type="button" variant="ghost" size="md" @click="cancelEdit">
-                                                {{ t('Cancel') }}
-                                            </Button>
-                                            <Button type="submit" size="md" :disabled="editForm.processing || !editForm.data.name.trim()">
-                                                {{ t('Save') }}
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </form>
-                            </template>
-                            <button v-else class="flex w-full items-center gap-3 text-left" :aria-label="t('Edit tag')" @click="startEdit(tag)">
-                                <IconTile :icon="tagIcon" size="sm" tone="sage" />
-                                <div class="min-w-0 flex-1">
-                                    <p class="truncate text-base font-semibold text-sand-900 dark:text-sand-100">{{ tag.name }}</p>
-                                    <p class="text-xs text-sand-500 dark:text-sand-400">
-                                        {{ tag.usage_count === 1 ? t(':count post', { count: tag.usage_count }) : t(':count posts', { count: tag.usage_count }) }}
-                                    </p>
+                        <form
+                            v-if="editingTagId === tag.id"
+                            class="space-y-3 bg-white/70 px-4 py-4 backdrop-blur-sm dark:bg-sand-800/60"
+                            @submit.prevent="saveEdit(tag)"
+                        >
+                            <input
+                                :value="editForm.data.name"
+                                type="text"
+                                class="field"
+                                maxlength="50"
+                                autofocus
+                                @input="lowercase($event, editForm.data)"
+                            />
+                            <p v-if="editForm.errors.name" class="text-xs text-accent">{{ editForm.errors.name }}</p>
+                            <div class="flex items-center justify-between gap-2">
+                                <Button type="button" variant="danger" size="md" @click="confirmDelete(tag)">
+                                    {{ t('Delete') }}
+                                </Button>
+                                <div class="flex gap-2">
+                                    <Button type="button" variant="ghost" size="md" @click="cancelEdit">
+                                        {{ t('Cancel') }}
+                                    </Button>
+                                    <Button type="submit" size="md" :disabled="editForm.processing || !editForm.data.name.trim()">
+                                        {{ t('Save') }}
+                                    </Button>
                                 </div>
-                            </button>
-                        </SurfaceCard>
+                            </div>
+                        </form>
+                        <ListItem v-else :show-chevron="false" @click="startEdit(tag)">
+                            <template #leading><IconTile :icon="tagIcon" size="sm" tone="sage" /></template>
+                            {{ tag.name }}
+                            <template #subtitle>
+                                {{ tag.usage_count === 1 ? t(':count post', { count: tag.usage_count }) : t(':count posts', { count: tag.usage_count }) }}
+                            </template>
+                        </ListItem>
                     </li>
                 </ul>
 

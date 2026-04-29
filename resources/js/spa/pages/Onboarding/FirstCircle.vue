@@ -113,7 +113,7 @@ function skip(): void {
 
         <div class="relative pb-8 pt-2">
             <button
-                class="w-full rounded-full bg-teal py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-light disabled:opacity-40"
+                class="w-full rounded-lg bg-teal py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-light disabled:opacity-40"
                 :disabled="!form.data.name.trim() || form.processing"
                 @click="submit"
             >

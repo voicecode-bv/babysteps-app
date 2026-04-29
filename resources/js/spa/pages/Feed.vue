@@ -235,7 +235,7 @@ function iconMaskStyle(url: string) {
 
             <div ref="sentinelRef" class="h-1" />
 
-            <RouterLink v-if="!feed.loading && feed.items.length === 0" :to="{ name: 'spa.posts.create' }" class="relative flex min-h-[calc(100dvh-6rem-var(--inset-top))] flex-col items-center justify-center overflow-hidden px-8 py-20">
+            <RouterLink v-if="!feed.loading && feed.items.length === 0" :to="{ name: 'spa.posts.create' }" class="relative flex min-h-[calc(100dvh-15rem-var(--inset-top))] flex-col items-center justify-center overflow-hidden px-8 py-12">
                 <div aria-hidden="true" class="pointer-events-none absolute inset-0">
                     <div class="absolute -left-16 top-4 size-56 rounded-full bg-sage-200/50 blur-3xl dark:bg-sage-700/20"></div>
                     <div class="absolute -right-16 bottom-0 size-64 rounded-full bg-accent-soft/30 blur-3xl dark:bg-accent/10"></div>

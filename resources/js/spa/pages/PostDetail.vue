@@ -47,6 +47,7 @@ interface Person {
     avatar_thumbnail?: string | null;
     user_id?: number | null;
     user_username?: string | null;
+    birthdate?: string | null;
 }
 
 interface AvailableCircle extends Circle {
@@ -80,6 +81,7 @@ interface Post {
     latitude: number | null;
     longitude: number | null;
     created_at: string;
+    taken_at: string | null;
     user: User;
     is_liked: boolean;
     likes_count: number;
@@ -306,6 +308,46 @@ function iconMaskStyle(url: string) {
     };
 }
 
+function ageAt(birthdate: string | null | undefined, atDateString: string): string | null {
+    if (!birthdate) return null;
+    const birth = new Date(birthdate);
+    const at = new Date(atDateString);
+    if (isNaN(birth.getTime()) || isNaN(at.getTime()) || at < birth) return null;
+
+    const totalDays = Math.floor((at.getTime() - birth.getTime()) / 86_400_000);
+
+    if (totalDays < 7) {
+        return t(totalDays === 1 ? ':count day' : ':count days', { count: totalDays });
+    }
+
+    let years = at.getFullYear() - birth.getFullYear();
+    let months = at.getMonth() - birth.getMonth();
+    if (at.getDate() < birth.getDate()) {
+        months -= 1;
+    }
+    if (months < 0) {
+        years -= 1;
+        months += 12;
+    }
+
+    if (years === 0 && months === 0) {
+        const weeks = Math.floor(totalDays / 7);
+        return t(weeks === 1 ? ':count week' : ':count weeks', { count: weeks });
+    }
+
+    if (years === 0) {
+        return t(months === 1 ? ':count month' : ':count months', { count: months });
+    }
+
+    if (years < 5 && months > 0) {
+        const yearPart = t(years === 1 ? ':count year' : ':count years', { count: years });
+        const monthPart = t(months === 1 ? ':count month' : ':count months', { count: months });
+        return `${yearPart} ${monthPart}`;
+    }
+
+    return t(years === 1 ? ':count year' : ':count years', { count: years });
+}
+
 function timeAgo(dateString: string): string {
     const date = new Date(dateString);
     const now = new Date();
@@ -511,7 +553,12 @@ watch(
                                     <span v-else class="flex size-7 items-center justify-center rounded-full bg-sage-100 text-teal dark:bg-sage-900/40">
                                         <span class="font-display text-xs font-semibold uppercase">{{ person.name.charAt(0) }}</span>
                                     </span>
-                                    <span class="pl-1">{{ person.name }}</span>
+                                    <span class="pl-1">
+                                        {{ person.name }}
+                                        <span v-if="ageAt(person.birthdate, post.taken_at ?? post.created_at)" class="font-normal text-sand-500 dark:text-sand-400">
+                                            · {{ ageAt(person.birthdate, post.taken_at ?? post.created_at) }}
+                                        </span>
+                                    </span>
                                     <button
                                         type="button"
                                         class="flex size-6 items-center justify-center rounded-full bg-sand-100 text-sand-600 transition-colors hover:bg-blush-100 hover:text-blush-600 disabled:opacity-50 dark:bg-sand-700 dark:text-sand-300 dark:hover:bg-blush-900/40 dark:hover:text-blush-300"
@@ -540,6 +587,9 @@ watch(
                                         <span class="font-display text-xs font-semibold uppercase">{{ person.name.charAt(0) }}</span>
                                     </span>
                                     {{ person.name }}
+                                    <span v-if="ageAt(person.birthdate, post.taken_at ?? post.created_at)" class="font-normal text-sand-500 dark:text-sand-400">
+                                        · {{ ageAt(person.birthdate, post.taken_at ?? post.created_at) }}
+                                    </span>
                                 </component>
                             </template>
                         </div>
