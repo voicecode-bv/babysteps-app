@@ -168,7 +168,7 @@
     "Remove member": "Lid verwijderen",
     "Are you sure you want to remove this member?": "Weet je zeker dat je dit lid wilt verwijderen?",
     "Leave circle": "Kring verlaten",
-    "Are you sure you want to leave this circle?": "Weet je zeker dat je deze kring wilt verlaten?",
+    "If you leave this circle, your posts will no longer be visible to its members. Are you sure you want to leave?": "Als je deze kring verlaat, zijn jouw berichten niet meer zichtbaar voor de leden. Weet je zeker dat je wilt vertrekken?",
     "Failed to leave circle": "Kring verlaten mislukt",
     "Failed to delete circle": "Kring verwijderen mislukt",
     "Leaving...": "Verlaten...",

@@ -10,7 +10,6 @@ import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { useApiForm } from '@/spa/composables/useApiForm';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
-import { useAuthStore } from '@/spa/stores/auth';
 import { useCirclesStore } from '@/spa/stores/circles';
 import { externalApi } from '@/spa/http/externalApi';
 import { api } from '@/spa/http/apiClient';
@@ -50,7 +49,6 @@ interface Circle {
 const { t } = useTranslations();
 const route = useRoute();
 const router = useRouter();
-const auth = useAuthStore();
 const circlesStore = useCirclesStore();
 
 const circleId = computed(() => Number(route.params.circle));
@@ -123,7 +121,7 @@ async function deleteCircle(): Promise<void> {
 
 async function leaveCircle(): Promise<void> {
     await Dialog.alert()
-        .confirm(t('Leave circle'), t('Are you sure you want to leave this circle?'))
+        .confirm(t('Leave circle'), t('If you leave this circle, your posts will no longer be visible to its members. Are you sure you want to leave?'))
         .id('leave-circle-confirm');
 }
 
@@ -214,13 +212,9 @@ async function handleButtonPressed(payload: { index: number; label: string; id?:
         }
     }
     if (payload.id === 'leave-circle-confirm' && payload.index === 1) {
-        const userId = auth.user?.id;
-        if (!userId) return;
         isLeaving.value = true;
         try {
-            // Verlaten = je eigen lidmaatschap verwijderen via dezelfde route
-            // die ook eigenaren gebruiken om members te verwijderen.
-            await externalApi.delete(`/circles/${circleId.value}/members/${userId}`);
+            await externalApi.post(`/circles/${circleId.value}/leave`);
             circlesStore.remove(circleId.value);
             router.push({ name: 'spa.circles.index' });
         } catch {
