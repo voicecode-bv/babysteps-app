@@ -108,7 +108,7 @@ class EdgeController extends Controller
 
         Edge::add('bottom_nav_item', [
             'id' => 'circles',
-            'icon' => 'person.2',
+            'icon' => 'person.2.fill',
             'label' => __('Circles'),
             'url' => url('/circles'),
             'active' => $activeTab === 'circles',
