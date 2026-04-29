@@ -119,7 +119,7 @@ class EdgeController extends Controller
 
         Edge::add('bottom_nav_item', [
             'id' => 'add',
-            'icon' => 'plus.circle',
+            'icon' => 'camera',
             'label' => __('New'),
             'url' => url('/posts/create'),
             'active' => $activeTab === 'add',
