@@ -10,6 +10,7 @@ import { useAuthStore } from '@/spa/stores/auth';
 import { useI18nStore } from '@/spa/stores/i18n';
 import { ApiError } from '@/spa/http/apiClient';
 import handIcon from '../../../../svg/doodle-icons/hand.svg';
+import innerrLogo from '../../../../svg/innerr-logo.svg';
 
 function iconMaskStyle(url: string) {
     return {
@@ -120,8 +121,8 @@ async function submit(): Promise<void> {
                     {{ t('welcome back') }}
                     <span aria-hidden="true" class="inline-block size-4 bg-current animate-[wave_2s_ease-in-out_infinite] origin-[70%_70%]" :style="iconMaskStyle(handIcon)"></span>
                 </span>
-                <h1 class="mt-4 font-display text-6xl font-black tracking-tight text-teal">
-                    innerr
+                <h1 class="mt-4">
+                    <img :src="innerrLogo" alt="innerr" class="mx-auto h-16 w-auto" />
                 </h1>
                 <p class="mt-3 text-sm text-sand-600 dark:text-sand-400">
                     {{ t('Safely share with those who matter') }}

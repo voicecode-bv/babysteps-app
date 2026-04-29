@@ -14,6 +14,7 @@ import bellIcon from '../../../../svg/doodle-icons/bell.svg';
 import circleIcon from '../../../../svg/doodle-icons/circle.svg';
 import globeIcon from '../../../../svg/doodle-icons/globe.svg';
 import lockIcon from '../../../../svg/doodle-icons/lock.svg';
+import pencilIcon from '../../../../svg/doodle-icons/pencil-3.svg';
 import tagIcon from '../../../../svg/doodle-icons/tag.svg';
 import usersIcon from '../../../../svg/doodle-icons/user.svg';
 
@@ -94,7 +95,7 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
                 <ul class="divide-y divide-sand-100 overflow-hidden rounded-lg dark:divide-sand-700/60">
                     <li>
                         <ListItem :to="{ name: 'spa.settings.edit-profile' }">
-                            <template #leading><IconTile :icon="userIcon" size="sm" tone="sage" /></template>
+                            <template #leading><IconTile :icon="pencilIcon" size="sm" tone="sage" /></template>
                             {{ t('Edit profile') }}
                         </ListItem>
                     </li>
