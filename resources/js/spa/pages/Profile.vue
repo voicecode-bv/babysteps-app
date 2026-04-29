@@ -2,12 +2,10 @@
 import { Camera, Events, Off, On } from '@nativephp/mobile';
 import { computed, onMounted, onUnmounted, reactive, ref, useTemplateRef } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
-import Button from '@/components/Button.vue';
 import { type PostData } from '@/spa/components/PostCard.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
-import { useApiForm } from '@/spa/composables/useApiForm';
 import { useInfiniteScroll, type PaginatedResponse } from '@/spa/composables/useInfiniteScroll';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { api } from '@/spa/http/apiClient';
@@ -76,34 +74,7 @@ function goBack(): void {
     }
 }
 
-const isEditingBio = ref(false);
-const bioForm = useApiForm({ bio: '' }, externalApi);
 const avatarUploading = ref(false);
-
-function startBioEdit(): void {
-    if (!profile.value) return;
-    bioForm.data.bio = profile.value.bio ?? '';
-    bioForm.errors = {};
-    isEditingBio.value = true;
-}
-
-async function saveBio(): Promise<void> {
-    const trimmed = bioForm.data.bio.trim();
-    bioForm.data.bio = trimmed;
-
-    await bioForm.put<{ data: { bio: string | null } }>('/profile', {
-        onSuccess: (response) => {
-            const nextBio = response.data.bio;
-            if (profile.value) {
-                profile.value.bio = nextBio;
-            }
-            if (auth.user) {
-                auth.user.bio = nextBio;
-            }
-            isEditingBio.value = false;
-        },
-    });
-}
 
 async function pickAvatar(): Promise<void> {
     if (avatarUploading.value) return;
@@ -220,41 +191,15 @@ function iconMaskStyle(url: string) {
                         </div>
                     </div>
 
-                    <div v-if="isOwnProfile" class="mt-4">
-                        <form v-if="isEditingBio" class="space-y-3" @submit.prevent="saveBio">
-                            <textarea
-                                v-model="bioForm.data.bio"
-                                class="field-area"
-                                rows="3"
-                                maxlength="1000"
-                                :placeholder="t('Write something about yourself...')"
-                            />
-                            <p v-if="bioForm.errors.bio" class="text-xs text-accent">{{ bioForm.errors.bio }}</p>
-                            <div class="flex justify-end gap-2">
-                                <Button type="button" variant="ghost" size="sm" :disabled="bioForm.processing" @click="isEditingBio = false">
-                                    {{ t('Cancel') }}
-                                </Button>
-                                <Button type="submit" size="sm" :disabled="bioForm.processing">
-                                    {{ t('Save') }}
-                                </Button>
-                            </div>
-                        </form>
-                        <button
-                            v-else
-                            type="button"
-                            class="group flex w-full items-start gap-2 text-left"
-                            @click="startBioEdit"
-                        >
-                            <p v-if="profile.bio" class="flex-1 text-sm text-sand-700 dark:text-sand-300">{{ profile.bio }}</p>
-                            <p v-else class="flex-1 text-sm italic text-sand-400 dark:text-sand-500">{{ t('Add a bio...') }}</p>
-                            <span class="mt-0.5 shrink-0 text-sand-400 transition group-hover:text-teal dark:text-sand-500">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
-                                </svg>
-                            </span>
-                        </button>
-                    </div>
-                    <p v-else-if="profile.bio" class="mt-3 text-sm text-sand-700 dark:text-sand-300">{{ profile.bio }}</p>
+                    <p v-if="profile.bio" class="mt-4 text-sm text-sand-700 dark:text-sand-300">{{ profile.bio }}</p>
+
+                    <RouterLink
+                        v-if="isOwnProfile"
+                        :to="{ name: 'spa.settings.edit-profile' }"
+                        class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-teal/20 bg-cream px-6 py-3 text-sm font-medium text-teal transition-all hover:-translate-y-0.5 hover:bg-warmwhite"
+                    >
+                        {{ t('Edit profile') }}
+                    </RouterLink>
                 </div>
 
                 <div class="h-2 bg-warmwhite dark:bg-sand-900" />

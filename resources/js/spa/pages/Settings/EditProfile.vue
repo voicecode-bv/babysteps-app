@@ -3,14 +3,12 @@ import { Camera, Events, Off, On } from '@nativephp/mobile';
 import { onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
-import IconTile from '@/components/IconTile.vue';
 import SurfaceCard from '@/components/SurfaceCard.vue';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { api, ApiError } from '@/spa/http/apiClient';
 import { externalApi } from '@/spa/http/externalApi';
 import { useAuthStore } from '@/spa/stores/auth';
-import cakeIcon from '../../../../svg/doodle-icons/cake.svg';
 import pencilIcon from '../../../../svg/doodle-icons/pencil-3.svg';
 import userIcon from '../../../../svg/doodle-icons/user.svg';
 
@@ -179,15 +177,14 @@ async function save(): Promise<void> {
                         </div>
 
                         <div>
-                            <label for="birthdate" class="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-sand-500 dark:text-sand-400">
-                                <IconTile :icon="cakeIcon" size="sm" tone="sage" class="!size-6" />
+                            <label for="birthdate" class="text-xs font-medium uppercase tracking-wider text-sand-500 dark:text-sand-400">
                                 {{ t('Birthdate') }}
                             </label>
                             <input
                                 id="birthdate"
                                 v-model="birthdate"
                                 type="date"
-                                class="field mt-2"
+                                class="field mt-2 block w-full min-w-0 max-w-full appearance-none box-border"
                             />
                             <p v-if="errors.birthdate" class="mt-1 text-xs text-accent">{{ errors.birthdate }}</p>
                             <p class="mt-2 text-xs text-sand-500 dark:text-sand-400">
