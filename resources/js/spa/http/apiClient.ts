@@ -7,6 +7,8 @@ export class ApiError extends Error {
         message: string,
         public retryAfterSeconds: number | null = null,
         public url: string | null = null,
+        /** Machine-readable `error_code` from the response body, if any. */
+        public code: string | null = null,
     ) {
         super(message);
     }
@@ -128,6 +130,9 @@ async function performCall<T>(
             422,
             data.errors ?? {},
             data.message ?? 'Validation failed',
+            null,
+            url,
+            data.error_code ?? null,
         );
     }
 
@@ -150,6 +155,9 @@ async function performCall<T>(
             response.status,
             {},
             data.message ?? `HTTP ${response.status}`,
+            null,
+            url,
+            data.error_code ?? null,
         );
     }
 

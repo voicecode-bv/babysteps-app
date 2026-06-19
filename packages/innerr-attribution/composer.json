@@ -1,0 +1,34 @@
+{
+    "name": "innerr/attribution",
+    "description": "Privacy-first mobile attribution for NativePHP Mobile via the Singular SDK (SKAdNetwork-only, no IDFA/ATT). Reports install + funnel events for paid user-acquisition measurement.",
+    "type": "nativephp-plugin",
+    "version": "1.0.0",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Innerr"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "nativephp/mobile": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Innerr\\Attribution\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Innerr\\Attribution\\AttributionServiceProvider"
+            ],
+            "aliases": {
+                "Attribution": "Innerr\\Attribution\\Facades\\Attribution"
+            }
+        },
+        "nativephp": {
+            "manifest": "nativephp.json"
+        }
+    }
+}

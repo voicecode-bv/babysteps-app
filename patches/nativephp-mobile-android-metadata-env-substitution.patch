@@ -1,0 +1,12 @@
+--- a/src/Plugins/Compilers/AndroidPluginCompiler.php
++++ b/src/Plugins/Compilers/AndroidPluginCompiler.php
+@@ -496,6 +496,9 @@ protected function buildMetaDataEntry(array $metaData): string
+         // Handle different value types
+         if (is_bool($value)) {
+             $value = $value ? 'true' : 'false';
++        } elseif (is_string($value)) {
++            // Substitute ${ENV_VAR} placeholders, mirroring iOS info_plist handling
++            $value = $this->substituteEnvPlaceholders($value);
+         }
+
+         return "<meta-data android:name=\"{$name}\" android:value=\"{$value}\" />";

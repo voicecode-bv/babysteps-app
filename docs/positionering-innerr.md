@@ -54,6 +54,14 @@ Het delen met familie ver weg is de emotionele kern: opa en oma die de kleinkind
 - Drempelloze uitnodiging voor minder digitale familieleden — een eenvoudige link, geen verplichte accountdrempel om te kijken (`InviteLanding`, `ShareInviteLinkSection` zijn er al).
 - Reacties en hartjes houden het rustig en warm, zonder de prestatiedruk van likes-tellingen in het openbaar.
 
+### 4. Tastbare herinneringen
+
+De print shop (later toegevoegd) sluit de cirkel: van een digitaal moment naar iets dat je echt vasthoudt — prints, ingelijste foto's en puzzels. Voor een ouder is dit de emotionele afronding van het vastleggen: de mooiste momenten verdienen een plek buiten het scherm.
+
+- Positioneer dit niet als webshop, maar als natuurlijk vervolg op de tijdlijn: "bewaar dit moment echt".
+- Het is geen acquisitie-wig op zichzelf — de kindtijdlijn blijft de reden om binnen te komen — maar het verdiept de band en is de duidelijkste betaalbereidheid in de app.
+- Sterke gifting-hoek: een puzzel of print van het kleinkind als cadeau voor opa en oma, wat naadloos aansluit op pijler 3 (familie samen).
+
 ## Concrete aanpassingen, per scherm
 
 Hieronder de bestaande schermen en hoe de copy verschuift van generiek naar ouder-specifiek.

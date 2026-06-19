@@ -60,6 +60,17 @@ export function feedSegment(): TourSegment {
                     align: 'end',
                 },
             },
+            {
+                element: '[data-tour="feed.order-print"]',
+                popover: {
+                    title: t('Order a print'),
+                    description: t(
+                        'Turn a favourite moment into a real keepsake: tap the basket on a photo to order it as a puzzle or canvas, delivered to your door.',
+                    ),
+                    side: 'left',
+                    align: 'start',
+                },
+            },
         ],
     };
 }

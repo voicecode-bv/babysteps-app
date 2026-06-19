@@ -9,6 +9,7 @@ export default defineConfig({
     resolve: {
         alias: {
             '@nativephp/mobile': path.resolve(__dirname, 'vendor/nativephp/mobile/resources/dist/native.js'),
+            '@innerr/attribution': path.resolve(__dirname, 'packages/innerr-attribution/resources/js/index.ts'),
             '@innerr/haptics': path.resolve(__dirname, 'packages/innerr-haptics/resources/js/index.ts'),
             '@innerr/native-media': path.resolve(__dirname, 'packages/innerr-native-media/resources/js/index.ts'),
             '@voicecode-bv/nativephp-badge': path.resolve(__dirname, 'vendor/voicecode-bv/nativephp-badge/resources/js/index.ts'),

@@ -30,3 +30,6 @@ yarn-error.log
 /credentials/
 /service-account.json
 .DS_Store
+/ad-assets
+/brand-profile.json
+/campaign-brief.md

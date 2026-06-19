@@ -1,4 +1,5 @@
 import { externalApi } from '@/spa/http/externalApi';
+import { attribution } from '@/spa/services/attribution';
 
 export interface InviteLinkCircleSummary {
     id: string;
@@ -81,6 +82,9 @@ export async function createInviteLink(
         `/circles/${circleId}/invite-links`,
         options,
     );
+
+    // Sharing an invite is a key family-growth signal. No-op off native.
+    attribution.trackInviteSent();
 
     return resp.data;
 }

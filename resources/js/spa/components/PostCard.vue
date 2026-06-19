@@ -17,8 +17,10 @@ import { useAuthStore } from '@/spa/stores/auth';
 import { useCirclesStore } from '@/spa/stores/circles';
 import { usePersonsStore } from '@/spa/stores/persons';
 import { usePostCacheStore } from '@/spa/stores/postCache';
+import { printablePhotos, usePrintShopStore } from '@/spa/stores/printShop';
 import { useTagsStore } from '@/spa/stores/tags';
 import { BridgeCall, Dialog } from '@nativephp/mobile';
+import cartAddIcon from '../../../svg/doodle-icons/cart-add.svg';
 import downloadIcon from '../../../svg/doodle-icons/download.svg';
 import heartFilledIcon from '../../../svg/doodle-icons/heart-filled.svg';
 import heartIcon from '../../../svg/doodle-icons/heart.svg';
@@ -185,6 +187,19 @@ const canDownload = computed(() => {
 
     return props.post.is_downloadable === true;
 });
+
+const printShop = usePrintShopStore();
+
+// Order a print of this post: any post with at least one ready photo can go
+// straight to the shop with its photos preselected (replacing single-post
+// photo selection in the feed).
+const canOrderPrint = computed(() => printablePhotos(props.post).length > 0);
+
+function orderPrint(): void {
+    haptics.impactLight();
+    printShop.setPhotosFromPosts([props.post]);
+    void router.push({ name: 'spa.print.shop' });
+}
 
 const isDownloading = ref(false);
 
@@ -684,20 +699,36 @@ watch(
                 ></span>
             </div>
 
-            <button
-                v-if="canDownload"
-                type="button"
-                class="absolute top-3 right-3 z-10 flex size-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm disabled:opacity-60"
-                :aria-label="t('Save to photos')"
-                :disabled="isDownloading"
-                @click.stop="downloadMedia"
-            >
-                <span
-                    aria-hidden="true"
-                    class="inline-block size-4 bg-current"
-                    :style="iconMaskStyle(downloadIcon)"
-                ></span>
-            </button>
+            <div class="absolute top-3 right-3 z-10 flex items-center gap-2">
+                <button
+                    v-if="canOrderPrint"
+                    type="button"
+                    data-tour="feed.order-print"
+                    class="flex size-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm"
+                    :aria-label="t('Order a print')"
+                    @click.stop="orderPrint"
+                >
+                    <span
+                        aria-hidden="true"
+                        class="inline-block size-4 bg-current"
+                        :style="iconMaskStyle(cartAddIcon)"
+                    ></span>
+                </button>
+                <button
+                    v-if="canDownload"
+                    type="button"
+                    class="flex size-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm disabled:opacity-60"
+                    :aria-label="t('Save to photos')"
+                    :disabled="isDownloading"
+                    @click.stop="downloadMedia"
+                >
+                    <span
+                        aria-hidden="true"
+                        class="inline-block size-4 bg-current"
+                        :style="iconMaskStyle(downloadIcon)"
+                    ></span>
+                </button>
+            </div>
 
             <div
                 class="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex items-center gap-4 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-4 pt-12 pb-3"
@@ -829,20 +860,36 @@ watch(
                     @animationend="showHeartBurst = false"
                 ></span>
             </div>
-            <button
-                v-if="canDownload"
-                type="button"
-                class="absolute top-3 right-3 z-10 flex size-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm disabled:opacity-60"
-                :aria-label="t('Save to photos')"
-                :disabled="isDownloading"
-                @click.stop="downloadMedia"
-            >
-                <span
-                    aria-hidden="true"
-                    class="inline-block size-4 bg-current"
-                    :style="iconMaskStyle(downloadIcon)"
-                ></span>
-            </button>
+            <div class="absolute top-3 right-3 z-10 flex items-center gap-2">
+                <button
+                    v-if="canOrderPrint"
+                    type="button"
+                    data-tour="feed.order-print"
+                    class="flex size-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm"
+                    :aria-label="t('Order a print')"
+                    @click.stop="orderPrint"
+                >
+                    <span
+                        aria-hidden="true"
+                        class="inline-block size-4 bg-current"
+                        :style="iconMaskStyle(cartAddIcon)"
+                    ></span>
+                </button>
+                <button
+                    v-if="canDownload"
+                    type="button"
+                    class="flex size-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm disabled:opacity-60"
+                    :aria-label="t('Save to photos')"
+                    :disabled="isDownloading"
+                    @click.stop="downloadMedia"
+                >
+                    <span
+                        aria-hidden="true"
+                        class="inline-block size-4 bg-current"
+                        :style="iconMaskStyle(downloadIcon)"
+                    ></span>
+                </button>
+            </div>
             <div
                 class="absolute inset-x-0 bottom-0 z-10 flex items-center gap-4 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-4 pt-12 pb-3"
             >

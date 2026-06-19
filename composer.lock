@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "7730f8510b49dc7767177422b4606888",
+    "content-hash": "7e792b100a03b78feb082ca82a615bcb",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -1560,6 +1560,51 @@
                 }
             ],
             "time": "2026-05-23T22:00:21+00:00"
+        },
+        {
+            "name": "innerr/attribution",
+            "version": "1.0.0",
+            "dist": {
+                "type": "path",
+                "url": "packages/innerr-attribution",
+                "reference": "b89a1f409fc6ea978b5266e9d71e1f1edf50c641"
+            },
+            "require": {
+                "nativephp/mobile": "^3.0",
+                "php": "^8.2"
+            },
+            "type": "nativephp-plugin",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Innerr\\Attribution\\AttributionServiceProvider"
+                    ],
+                    "aliases": {
+                        "Attribution": "Innerr\\Attribution\\Facades\\Attribution"
+                    }
+                },
+                "nativephp": {
+                    "manifest": "nativephp.json"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Innerr\\Attribution\\": "src/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Innerr"
+                }
+            ],
+            "description": "Privacy-first mobile attribution for NativePHP Mobile via the Singular SDK (SKAdNetwork-only, no IDFA/ATT). Reports install + funnel events for paid user-acquisition measurement.",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
         },
         {
             "name": "innerr/haptics",

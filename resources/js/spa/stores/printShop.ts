@@ -1,6 +1,34 @@
 import { defineStore } from 'pinia';
 import type { PostData } from '@/spa/components/PostCard.vue';
+import { ApiError, NetworkError } from '@/spa/http/apiClient';
 import { externalApi } from '@/spa/http/externalApi';
+
+/**
+ * Flatten an unknown thrown value into a plain object for console logging, so
+ * the real cause of a failed order (HTTP status, validation errors, API
+ * message) is visible while debugging instead of a generic "[object Object]".
+ */
+function describeRequestError(error: unknown): Record<string, unknown> {
+    if (error instanceof ApiError) {
+        return {
+            kind: 'ApiError',
+            status: error.status,
+            message: error.message,
+            errors: error.errors,
+            url: error.url,
+        };
+    }
+
+    if (error instanceof NetworkError) {
+        return { kind: 'NetworkError', message: error.message };
+    }
+
+    if (error instanceof Error) {
+        return { kind: error.name, message: error.message };
+    }
+
+    return { kind: 'unknown', error };
+}
 
 /** A single printable photo, snapshotted from a feed post's media. */
 export interface PrintPhoto {
@@ -33,6 +61,21 @@ export interface PrintUserOption {
 }
 
 /**
+ * Admin-configured artwork sizing: the PDF page size (mm) per chosen size,
+ * and an optional frame whose depth wraps around every edge. Mirrors
+ * PrintdealProduct::artworkDimensions on the API; used to size the print and
+ * to judge whether a photo has enough resolution for it.
+ */
+export interface PrintArtwork {
+    sizeAttribute: string | null;
+    sizes: { value: string | null; width: number; height: number }[];
+    frameAttribute: string | null;
+    frames: { value: string | null; depth: number }[];
+    /** Size value to flag as "most chosen", or null/absent for none. */
+    popularValue?: string | null;
+}
+
+/**
  * The artwork's trim size (mm) and orientation policy, straight from the API
  * so a mockup matches the printed result. 'auto' products (canvas, puzzle)
  * follow the photo's orientation; 'fixed' ones keep the size as written.
@@ -59,6 +102,8 @@ export interface PrintOffering {
     userOptions: PrintUserOption[];
     available: boolean;
     format: PrintFormat;
+    /** Admin-configured artwork sizing, or null to use the trim format. */
+    artwork: PrintArtwork | null;
 }
 
 /** A product added to the order: photos + offering + chosen options. */
@@ -84,6 +129,37 @@ export interface PrintShippingAddress {
     postalCode: string;
     city: string;
     country: string;
+}
+
+/**
+ * Trim a (possibly partial) address form into the submit payload. Each field
+ * is coerced to a string first so a value that became `undefined` (e.g. the
+ * optional house-number addition prefilled from a previously saved address)
+ * never throws on `.trim()`. The addition collapses to `undefined` when empty.
+ */
+export function trimShippingAddress(raw: {
+    firstName?: string | null;
+    lastName?: string | null;
+    street?: string | null;
+    houseNumber?: string | null;
+    houseNumberAddition?: string | null;
+    postalCode?: string | null;
+    city?: string | null;
+    country?: string | null;
+}): PrintShippingAddress {
+    const trimmed = (value: string | null | undefined): string =>
+        (value ?? '').trim();
+
+    return {
+        firstName: trimmed(raw.firstName),
+        lastName: trimmed(raw.lastName),
+        street: trimmed(raw.street),
+        houseNumber: trimmed(raw.houseNumber),
+        houseNumberAddition: trimmed(raw.houseNumberAddition) || undefined,
+        postalCode: trimmed(raw.postalCode),
+        city: trimmed(raw.city),
+        country: raw.country ?? 'NL',
+    };
 }
 
 /** Order payload as the API returns it (snake_case, matching the backend). */
@@ -121,6 +197,13 @@ interface CatalogResponse {
         user_options: PrintUserOption[];
         available: boolean;
         format: PrintFormat;
+        artwork?: {
+            size_attribute?: string | null;
+            sizes?: { value: string | null; width: number; height: number }[];
+            frame_attribute?: string | null;
+            frames?: { value: string | null; depth: number }[];
+            popular?: string | null;
+        } | null;
     }[];
     shipping_countries: string[];
     return_url: string;
@@ -179,6 +262,192 @@ export function printablePhotos(post: PostData): PrintPhoto[] {
             width: item.width ?? null,
             height: item.height ?? null,
         }));
+}
+
+const MM_PER_INCH = 25.4;
+
+/**
+ * The real PDF page size (mm) for an offering given the chosen options. Uses
+ * the admin-configured artwork sizing when present (the chosen size plus, for
+ * a canvas, twice the frame depth on every edge); otherwise the trim format.
+ * Null when an artwork size has not been chosen yet, so nothing warns early.
+ */
+export function printDimensionsMm(
+    offering: PrintOffering,
+    options: Record<string, string>,
+): { width: number; height: number } | null {
+    const artwork = offering.artwork;
+
+    if (artwork && artwork.sizes.length > 0) {
+        const size = artwork.sizeAttribute
+            ? artwork.sizes.find(
+                  (entry) => entry.value === options[artwork.sizeAttribute!],
+              )
+            : artwork.sizes[0];
+
+        if (!size) {
+            return null;
+        }
+
+        let width = size.width;
+        let height = size.height;
+
+        if (artwork.frameAttribute) {
+            const frame = artwork.frames.find(
+                (entry) => entry.value === options[artwork.frameAttribute!],
+            );
+
+            if (frame) {
+                width += 2 * frame.depth;
+                height += 2 * frame.depth;
+            }
+        }
+
+        return { width, height };
+    }
+
+    return offering.format
+        ? { width: offering.format.width, height: offering.format.height }
+        : null;
+}
+
+/**
+ * The print resolution we expect for a physical size. Small keepsakes are
+ * viewed up close so they want the full 300 DPI; large pieces (a big puzzle or
+ * canvas) are viewed from further away, so the target eases down to 150 DPI.
+ * Driven by the longest edge in mm.
+ */
+export function targetPrintDpi(longestEdgeMm: number): number {
+    const FULL_DPI = 300;
+    const LARGE_DPI = 150;
+    const FULL_UP_TO_MM = 300; // up to 30 cm: full detail
+    const LARGE_FROM_MM = 900; // from 90 cm: large-format viewing distance
+
+    if (longestEdgeMm <= FULL_UP_TO_MM) {
+        return FULL_DPI;
+    }
+
+    if (longestEdgeMm >= LARGE_FROM_MM) {
+        return LARGE_DPI;
+    }
+
+    const t = (longestEdgeMm - FULL_UP_TO_MM) / (LARGE_FROM_MM - FULL_UP_TO_MM);
+
+    return FULL_DPI - t * (FULL_DPI - LARGE_DPI);
+}
+
+/**
+ * Whether any picked photo is too low-resolution for the offering at the
+ * chosen options: filling the print would enlarge it below the
+ * size-appropriate target DPI. Orientation-independent (the artwork rotates to
+ * the photo). Photos without known dimensions never trigger a warning.
+ */
+export function isLowResolutionForPrint(
+    offering: PrintOffering,
+    options: Record<string, string>,
+    photos: PrintPhoto[],
+): boolean {
+    const mm = printDimensionsMm(offering, options);
+
+    if (!mm) {
+        return false;
+    }
+
+    const longMm = Math.max(mm.width, mm.height);
+    const shortMm = Math.min(mm.width, mm.height);
+    const target = targetPrintDpi(longMm);
+
+    return photos.some((photo) => {
+        if (photo.width === null || photo.height === null) {
+            return false;
+        }
+
+        const photoLong = Math.max(photo.width, photo.height);
+        const photoShort = Math.min(photo.width, photo.height);
+
+        const effectiveDpi = Math.min(
+            photoLong / (longMm / MM_PER_INCH),
+            photoShort / (shortMm / MM_PER_INCH),
+        );
+
+        return effectiveDpi < target;
+    });
+}
+
+/**
+ * Parse a size option value like '60 x 40 cm' (or '54 x 40 cm (500 pcs)') into
+ * width and height. The first number is the width, matching the printed
+ * 'width x height' convention. Null when the value is not a size.
+ */
+export function parseSizeValue(
+    value: string,
+): { width: number; height: number } | null {
+    const match = value.match(/(\d+(?:[.,]\d+)?)\s*[x×]\s*(\d+(?:[.,]\d+)?)/i);
+
+    if (!match) {
+        return null;
+    }
+
+    return {
+        width: parseFloat(match[1].replace(',', '.')),
+        height: parseFloat(match[2].replace(',', '.')),
+    };
+}
+
+/**
+ * Whether every value of an option reads as a width x height size, so it can
+ * be shown as proportional thumbnails instead of a plain dropdown.
+ */
+export function isSizeOption(values: string[]): boolean {
+    return values.length > 0 && values.every((v) => parseSizeValue(v) !== null);
+}
+
+/**
+ * The frame depth in cm from a thickness value like 'Classic Thickness
+ * (2 Cm)' or 'Premium Thickness (4.5Cm)'. Null when the value is a size or
+ * carries no single cm measurement.
+ */
+export function parseThicknessCm(value: string): number | null {
+    if (parseSizeValue(value) !== null) {
+        return null;
+    }
+
+    const match = value.match(/(\d+(?:[.,]\d+)?)\s*cm/i);
+
+    return match ? parseFloat(match[1].replace(',', '.')) : null;
+}
+
+/**
+ * Whether every value is a single thickness measurement (a canvas frame
+ * depth), so it can be shown as illustrated cards instead of a dropdown.
+ */
+export function isThicknessOption(values: string[]): boolean {
+    return (
+        values.length > 0 && values.every((v) => parseThicknessCm(v) !== null)
+    );
+}
+
+/** Thickness option values ordered thinnest first. */
+export function sortThicknessOptionValues(values: string[]): string[] {
+    return [...values].sort(
+        (a, b) => (parseThicknessCm(a) ?? 0) - (parseThicknessCm(b) ?? 0),
+    );
+}
+
+/**
+ * Option values ordered smallest first. Values that read as physical
+ * dimensions ('90 x 60 cm', '54 x 40 cm (500 pcs)') sort by area; values
+ * without a parseable size keep their original order (stable sort, unparseable
+ * last). Display-only: the stored value is unchanged.
+ */
+export function sortSizeOptionValues(values: string[]): string[] {
+    const area = (value: string): number => {
+        const size = parseSizeValue(value);
+
+        return size ? size.width * size.height : Number.POSITIVE_INFINITY;
+    };
+
+    return [...values].sort((a, b) => area(a) - area(b));
 }
 
 /**
@@ -261,6 +530,16 @@ export const usePrintShopStore = defineStore('spa-print-shop', {
                 userOptions: offering.user_options ?? [],
                 available: offering.available,
                 format: offering.format,
+                artwork: offering.artwork
+                    ? {
+                          sizeAttribute: offering.artwork.size_attribute ?? null,
+                          sizes: offering.artwork.sizes ?? [],
+                          frameAttribute:
+                              offering.artwork.frame_attribute ?? null,
+                          frames: offering.artwork.frames ?? [],
+                          popularValue: offering.artwork.popular ?? null,
+                      }
+                    : null,
             }));
             this.shippingCountries = response.shipping_countries;
             this.returnUrl = response.return_url;
@@ -358,31 +637,55 @@ export const usePrintShopStore = defineStore('spa-print-shop', {
             saveAddress = false,
         ): Promise<string> {
             if (this.cart.length === 0 || this.submitting) {
+                // eslint-disable-next-line no-console
+                console.warn('[print] submitOrder skipped', {
+                    cartCount: this.cart.length,
+                    submitting: this.submitting,
+                });
+
                 throw new Error('The order is empty.');
             }
+
+            const requestBody = {
+                items: this.cart.map((item) => ({
+                    offering_id: item.offeringId,
+                    photos: item.photos.map((photo) => ({
+                        post_id: photo.postId,
+                        media_id: photo.mediaId,
+                    })),
+                    options:
+                        Object.keys(item.options).length > 0
+                            ? item.options
+                            : undefined,
+                })),
+                shipping_address: address,
+                save_address: saveAddress,
+                redirect_url: this.returnUrl,
+            };
+
+            // eslint-disable-next-line no-console
+            console.info('[print] submitOrder →', {
+                cartCount: this.cart.length,
+                cartItemIds: this.cart.map((item) => item.id),
+                items: requestBody.items,
+                redirectUrl: this.returnUrl,
+            });
 
             this.submitting = true;
 
             try {
                 const response = await externalApi.post<CreateOrderResponse>(
                     '/print/orders',
-                    {
-                        items: this.cart.map((item) => ({
-                            offering_id: item.offeringId,
-                            photos: item.photos.map((photo) => ({
-                                post_id: photo.postId,
-                                media_id: photo.mediaId,
-                            })),
-                            options:
-                                Object.keys(item.options).length > 0
-                                    ? item.options
-                                    : undefined,
-                        })),
-                        shipping_address: address,
-                        save_address: saveAddress,
-                        redirect_url: this.returnUrl,
-                    },
+                    requestBody,
                 );
+
+                // eslint-disable-next-line no-console
+                console.info('[print] submitOrder ✓', {
+                    orderId: response.data.id,
+                    number: response.data.number,
+                    status: response.data.status,
+                    checkoutUrl: response.checkout_url,
+                });
 
                 // Reflect the opt-in locally so a follow-up order in the same
                 // session prefills without waiting for a catalog refresh.
@@ -398,6 +701,14 @@ export const usePrintShopStore = defineStore('spa-print-shop', {
                 this.selectedOfferingId = null;
 
                 return response.checkout_url;
+            } catch (error) {
+                // eslint-disable-next-line no-console
+                console.error(
+                    '[print] submitOrder ✗',
+                    describeRequestError(error),
+                );
+
+                throw error;
             } finally {
                 this.submitting = false;
             }

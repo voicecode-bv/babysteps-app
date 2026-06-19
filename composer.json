@@ -14,6 +14,7 @@
         "codingwithrk/package-info": "^1.0",
         "developernauts/nativephp-inapp-purchases": "*",
         "developernauts/nativephp-mobile-locales": "*",
+        "innerr/attribution": "*",
         "innerr/haptics": "*",
         "innerr/native-media": "^1.0",
         "laravel/framework": "^13.0",
@@ -116,7 +117,8 @@
         "composer-exit-on-patch-failure": true,
         "patches": {
             "nativephp/mobile": {
-                "Atomic iOS app extraction: self-heal partial/interrupted bundle unzip": "patches/nativephp-mobile-atomic-app-extraction.patch"
+                "Atomic iOS app extraction: self-heal partial/interrupted bundle unzip": "patches/nativephp-mobile-atomic-app-extraction.patch",
+                "Android plugin meta_data: substitute ${ENV_VAR} placeholders (parity with iOS info_plist)": "patches/nativephp-mobile-android-metadata-env-substitution.patch"
             }
         }
     },
@@ -135,6 +137,13 @@
         {
             "type": "path",
             "url": "packages/innerr-native-media",
+            "options": {
+                "symlink": true
+            }
+        },
+        {
+            "type": "path",
+            "url": "packages/innerr-attribution",
             "options": {
                 "symlink": true
             }

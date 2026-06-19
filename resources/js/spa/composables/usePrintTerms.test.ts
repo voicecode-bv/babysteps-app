@@ -32,6 +32,23 @@ describe('usePrintTerms', () => {
         );
     });
 
+    it('matches a term despite different casing or spacing from the API', () => {
+        useI18nStore().translations = {
+            'Premium Thickness (4.5Cm)': 'Premium dikte (4,5 cm)',
+            'Classic Thickness (2 Cm)': 'Klassieke dikte (2 cm)',
+        };
+
+        const { printTerm } = usePrintTerms();
+
+        // Printdeal may send these with other casing/spacing than the key.
+        expect(printTerm('Premium thickness (4.5 cm)')).toBe(
+            'Premium dikte (4,5 cm)',
+        );
+        expect(printTerm('CLASSIC THICKNESS (2CM)')).toBe(
+            'Klassieke dikte (2 cm)',
+        );
+    });
+
     it('falls back to the original for unknown terms', () => {
         const { printTerm } = usePrintTerms();
 

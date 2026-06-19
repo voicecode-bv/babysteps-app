@@ -5,16 +5,34 @@ import BottomSheet from '@/components/BottomSheet.vue';
 import Button from '@/components/Button.vue';
 import LoadingSpinner from '@/components/LoadingSpinner.vue';
 import SheetHeader from '@/components/SheetHeader.vue';
+import FrameThicknessIllustration from '@/spa/components/FrameThicknessIllustration.vue';
 import ProductMockup from '@/spa/components/ProductMockup.vue';
 import TextField from '@/spa/components/TextField.vue';
+import { checkoutErrorContent } from './printCheckoutError';
 import { usePrintTerms } from '@/spa/composables/usePrintTerms';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { haptics } from '@/spa/services/haptics';
 import { useFeedSelectionStore } from '@/spa/stores/feedSelection';
-import { printOrderStatusKey, usePrintShopStore } from '@/spa/stores/printShop';
-import type { AppProductId, PrintOffering } from '@/spa/stores/printShop';
+import {
+    isLowResolutionForPrint,
+    isSizeOption,
+    isThicknessOption,
+    parseSizeValue,
+    parseThicknessCm,
+    printOrderStatusKey,
+    sortSizeOptionValues,
+    sortThicknessOptionValues,
+    trimShippingAddress,
+    usePrintShopStore,
+} from '@/spa/stores/printShop';
+import type {
+    AppProductId,
+    PrintOffering,
+    PrintUserOption,
+} from '@/spa/stores/printShop';
 import { Browser, Dialog } from '@nativephp/mobile';
 import calendarIcon from '../../../svg/doodle-icons/calendar.svg';
+import cautionIcon from '../../../svg/doodle-icons/caution.svg';
 import coffeeCupIcon from '../../../svg/doodle-icons/coffee-cup-1.svg';
 import crossIcon from '../../../svg/doodle-icons/cross.svg';
 import frameIcon from '../../../svg/doodle-icons/frame.svg';
@@ -82,14 +100,9 @@ const categoryMeta: Record<
     },
 };
 
-const categoryOrder: AppProductId[] = [
-    'calendar',
-    'album',
-    'mug',
-    'tshirt',
-    'puzzle',
-    'canvas',
-];
+// For now the shop only offers puzzles and canvases; the other categories
+// stay defined (used by placed orders and fallbacks) but are not shown.
+const categoryOrder: AppProductId[] = ['puzzle', 'canvas'];
 
 function displayName(
     name: Record<string, string> | null,
@@ -171,12 +184,6 @@ function formatPrice(amountMinor: number): string {
         currency: 'EUR',
     }).format(amountMinor / 100);
 }
-
-const photoCountLabel = computed(() =>
-    printShop.photoCount === 1
-        ? t('1 photo selected')
-        : t(':count photos selected', { count: printShop.photoCount }),
-);
 
 // Scrapbook treatment: each polaroid leans a little, alternating sides.
 function photoRotation(index: number): string {
@@ -270,6 +277,12 @@ function pickOffering(offering: PrintOffering): void {
         return;
     }
 
+    // Re-tapping the already selected product must not wipe the options the
+    // user already chose.
+    if (printShop.selectedOfferingId === offering.id) {
+        return;
+    }
+
     haptics.impactLight();
     printShop.selectOffering(offering.id);
     resetChosenOptions();
@@ -279,6 +292,55 @@ const allOptionsChosen = computed(() =>
     (printShop.selectedOffering?.userOptions ?? []).every(
         (option) => (chosenOptions[option.attribute] ?? '') !== '',
     ),
+);
+
+// Largest single edge across the option's sizes; the shared reference so every
+// thumbnail is drawn to the same scale (a 20x20 looks small next to 150x100).
+function optionMaxDimension(option: PrintUserOption): number {
+    return Math.max(
+        1,
+        ...option.values.flatMap((value) => {
+            const size = parseSizeValue(value);
+
+            return size ? [size.width, size.height] : [];
+        }),
+    );
+}
+
+// Width/height of the proportional rectangle as a percentage of the square
+// reference box, so the thumbnail shows both the real aspect and relative size.
+function sizeRectStyle(
+    value: string,
+    maxDimension: number,
+): Record<string, string> {
+    const size = parseSizeValue(value);
+
+    if (!size) {
+        return {};
+    }
+
+    return {
+        width: `${(size.width / maxDimension) * 100}%`,
+        height: `${(size.height / maxDimension) * 100}%`,
+    };
+}
+
+// The thicker frame is the premium upsell; flagged with a badge like the
+// reference, detected on the original (English) value.
+function isPremiumFrame(value: string): boolean {
+    return /premium/i.test(value);
+}
+
+// Low-resolution warning for the real PDF size of the chosen options (size +
+// frame), judged against a size-appropriate target DPI.
+const selectionLowResolution = computed(() =>
+    printShop.selectedOffering
+        ? isLowResolutionForPrint(
+              printShop.selectedOffering,
+              { ...chosenOptions },
+              printShop.photos,
+          )
+        : false,
 );
 
 // Options such as a puzzle's size change the price, so a complete choice is
@@ -418,8 +480,10 @@ watch(
 
         if (saved && pristine) {
             Object.assign(address, {
-                houseNumberAddition: '',
                 ...saved,
+                // A saved address may carry an undefined addition; keep the
+                // field a string so the bound input and later trims never break.
+                houseNumberAddition: saved.houseNumberAddition ?? '',
             });
             saveAddress.value = true;
         }
@@ -430,7 +494,10 @@ watch(
 async function openExternal(url: string): Promise<void> {
     try {
         await Browser.open(url);
-    } catch {
+    } catch (error) {
+        // eslint-disable-next-line no-console
+        console.warn('[print] Browser.open failed, falling back to window.open', error);
+
         if (typeof window !== 'undefined') {
             window.open(url, '_blank');
         }
@@ -438,33 +505,39 @@ async function openExternal(url: string): Promise<void> {
 }
 
 async function submitCheckout(): Promise<void> {
+    // eslint-disable-next-line no-console
+    console.info('[print] checkout tapped', {
+        canSubmit: canSubmit.value,
+        submitting: printShop.submitting,
+        cartCount: printShop.cart.length,
+        placedOrderId: printShop.placedOrder?.id ?? null,
+    });
+
     if (!canSubmit.value || printShop.submitting) {
+        // eslint-disable-next-line no-console
+        console.warn('[print] checkout blocked before submit', {
+            canSubmit: canSubmit.value,
+            submitting: printShop.submitting,
+        });
+
         return;
     }
 
     try {
         const checkoutUrl = await printShop.submitOrder(
-            {
-                firstName: address.firstName.trim(),
-                lastName: address.lastName.trim(),
-                street: address.street.trim(),
-                houseNumber: address.houseNumber.trim(),
-                houseNumberAddition:
-                    address.houseNumberAddition.trim() || undefined,
-                postalCode: address.postalCode.trim(),
-                city: address.city.trim(),
-                country: address.country,
-            },
+            trimShippingAddress(address),
             saveAddress.value,
         );
 
         checkoutOpen.value = false;
+        // eslint-disable-next-line no-console
+        console.info('[print] opening checkout url', { checkoutUrl });
         await openExternal(checkoutUrl);
-    } catch {
-        await Dialog.alert(
-            t('Something went wrong'),
-            t('Could not start the payment. Please try again.'),
-        );
+    } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('[print] checkout failed', error);
+        const { titleKey, bodyKey } = checkoutErrorContent(error);
+        await Dialog.alert(t(titleKey), t(bodyKey));
     }
 }
 
@@ -793,20 +866,56 @@ function iconMaskStyle(url: string) {
 
                 <template v-if="printShop.photoCount > 0">
                     <div class="mt-7">
-                        <div class="flex items-baseline justify-between px-6">
-                            <h2
-                                class="text-xs font-semibold tracking-widest text-ink-muted uppercase"
+                        <h2
+                            class="px-6 text-xs font-semibold tracking-widest text-ink-muted uppercase"
+                        >
+                            {{
+                                printShop.photoCount === 1
+                                    ? t('Your photo')
+                                    : t('Your photos')
+                            }}
+                        </h2>
+
+                        <!-- Single photo (the only case today): shown large and
+                             centered so the chosen moment stands out. -->
+                        <div
+                            v-if="printShop.photoCount === 1 && printShop.photos[0]"
+                            class="mt-3 flex justify-center px-6"
+                        >
+                            <div
+                                class="rise-in relative w-fit rounded-xl bg-white p-2 pb-6 shadow-md ring-1 ring-sand-200/60"
+                                style="transform: rotate(-1.5deg)"
                             >
-                                {{ t('Your photos') }}
-                            </h2>
-                            <span class="text-xs text-ink-muted">{{
-                                photoCountLabel
-                            }}</span>
+                                <img
+                                    :src="printShop.photos[0].previewUrl"
+                                    :alt="t('Photo')"
+                                    class="max-h-80 w-auto max-w-full rounded-sm object-cover"
+                                    loading="lazy"
+                                />
+                                <button
+                                    type="button"
+                                    class="absolute -top-2.5 -right-2.5 flex size-7 items-center justify-center rounded-full bg-ink text-white shadow-sm transition-transform hover:scale-110"
+                                    :aria-label="t('Remove photo')"
+                                    @click="
+                                        printShop.removePhoto(
+                                            printShop.photos[0].id,
+                                        )
+                                    "
+                                >
+                                    <span
+                                        aria-hidden="true"
+                                        class="inline-block size-3.5 bg-current"
+                                        :style="iconMaskStyle(crossIcon)"
+                                    ></span>
+                                </button>
+                            </div>
                         </div>
-                        <!-- Scrapbook strip: polaroid frames that lean a
+
+                        <!-- Multiple photos: scrapbook strip that leans a
                              little, scrolling off the page edge. -->
                         <div
-                            class="mt-3 flex gap-3 overflow-x-auto px-6 pt-2 pb-4 [-webkit-overflow-scrolling:touch]"
+                            v-else
+                            class="mt-3 flex gap-3 overflow-x-auto px-6 pt-4 pb-4 [-webkit-overflow-scrolling:touch]"
                         >
                             <div
                                 v-for="(photo, index) in printShop.photos"
@@ -1111,6 +1220,31 @@ function iconMaskStyle(url: string) {
                     </button>
                 </div>
 
+                <!-- Soft quality warning: the photo is below the resolution
+                     that fills the artwork at 300 DPI, so it will be enlarged
+                     and may look less sharp. Ordering stays allowed. -->
+                <div
+                    v-if="selectionLowResolution"
+                    class="flex items-start gap-3 rounded-2xl bg-brand-yellow/15 p-3 ring-1 ring-brand-yellow/40"
+                >
+                    <span
+                        aria-hidden="true"
+                        class="mt-0.5 inline-block size-5 shrink-0 bg-brand-orange"
+                        :style="iconMaskStyle(cautionIcon)"
+                    ></span>
+                    <p class="text-sm text-ink">
+                        {{
+                            printShop.photoCount === 1
+                                ? t(
+                                      'This photo is a bit low resolution for this product. It can still be printed, but may look less sharp.',
+                                  )
+                                : t(
+                                      'One or more photos are a bit low resolution for this product. They can still be printed, but may look less sharp.',
+                                  )
+                        }}
+                    </p>
+                </div>
+
                 <div
                     v-for="option in printShop.selectedOffering?.userOptions ??
                     []"
@@ -1122,7 +1256,110 @@ function iconMaskStyle(url: string) {
                     >
                         {{ printTerm(option.attribute) }}
                     </label>
-                    <div class="relative">
+
+                    <!-- Size options show proportional thumbnails (drawn to
+                         scale, width x height) so the real shape and relative
+                         size are obvious; other options stay a dropdown. -->
+                    <template v-if="isSizeOption(option.values)">
+                        <div class="grid grid-cols-3 gap-2">
+                            <button
+                                v-for="value in sortSizeOptionValues(
+                                    option.values,
+                                )"
+                                :key="value"
+                                type="button"
+                                class="flex flex-col items-start gap-2 rounded-2xl bg-surface p-2.5 text-left transition-all"
+                                :class="
+                                    chosenOptions[option.attribute] === value
+                                        ? 'ring-2 ring-action'
+                                        : 'ring-1 ring-sand-100'
+                                "
+                                :aria-pressed="
+                                    chosenOptions[option.attribute] === value
+                                "
+                                @click="
+                                    chosenOptions[option.attribute] = value
+                                "
+                            >
+                                <span
+                                    aria-hidden="true"
+                                    class="block aspect-square w-full rounded-md bg-sand-100 p-2"
+                                >
+                                    <span class="relative block h-full w-full">
+                                        <span
+                                            class="absolute top-0 left-0 block border border-ink/45 bg-white"
+                                            :style="
+                                                sizeRectStyle(
+                                                    value,
+                                                    optionMaxDimension(option),
+                                                )
+                                            "
+                                        ></span>
+                                    </span>
+                                </span>
+                                <span
+                                    class="text-xs font-semibold text-ink"
+                                >
+                                    {{ printTerm(value) }}
+                                </span>
+                                <span
+                                    v-if="
+                                        value ===
+                                        printShop.selectedOffering?.artwork
+                                            ?.popularValue
+                                    "
+                                    class="rounded-full px-2 py-0.5 text-[0.65rem] font-bold text-brand-blue ring-1 ring-brand-blue"
+                                >
+                                    {{ t('Most chosen') }}
+                                </span>
+                            </button>
+                        </div>
+                    </template>
+
+                    <!-- Frame thickness: illustrated corners (thin vs chunky)
+                         so the depth difference is obvious. -->
+                    <template v-else-if="isThicknessOption(option.values)">
+                        <div class="grid grid-cols-2 gap-2">
+                            <button
+                                v-for="value in sortThicknessOptionValues(
+                                    option.values,
+                                )"
+                                :key="value"
+                                type="button"
+                                class="flex flex-col items-start gap-2 rounded-2xl bg-surface p-3 text-left transition-all"
+                                :class="
+                                    chosenOptions[option.attribute] === value
+                                        ? 'ring-2 ring-action'
+                                        : 'ring-1 ring-sand-100'
+                                "
+                                :aria-pressed="
+                                    chosenOptions[option.attribute] === value
+                                "
+                                @click="
+                                    chosenOptions[option.attribute] = value
+                                "
+                            >
+                                <span
+                                    class="block h-20 w-full rounded-md bg-sand-100/60 p-2"
+                                >
+                                    <FrameThicknessIllustration
+                                        :depth-cm="parseThicknessCm(value) ?? 2"
+                                    />
+                                </span>
+                                <span class="text-sm font-semibold text-ink">
+                                    {{ printTerm(value) }}
+                                </span>
+                                <span
+                                    v-if="isPremiumFrame(value)"
+                                    class="rounded-full bg-brand-orange px-2.5 py-0.5 text-xs font-bold text-white"
+                                >
+                                    {{ t('Premium') }}
+                                </span>
+                            </button>
+                        </div>
+                    </template>
+
+                    <div v-else class="relative">
                         <select
                             :id="`print-option-${option.attribute}`"
                             v-model="chosenOptions[option.attribute]"
@@ -1132,7 +1369,9 @@ function iconMaskStyle(url: string) {
                                 {{ t('Choose...') }}
                             </option>
                             <option
-                                v-for="value in option.values"
+                                v-for="value in sortSizeOptionValues(
+                                    option.values,
+                                )"
                                 :key="value"
                                 :value="value"
                             >

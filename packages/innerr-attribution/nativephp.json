@@ -1,0 +1,72 @@
+{
+    "namespace": "Attribution",
+    "bridge_functions": [
+        {
+            "name": "Attribution.Init",
+            "android": "app.innerr.attribution.AttributionFunctions.Init",
+            "ios": "AttributionFunctions.Init",
+            "description": "Initialise the Singular SDK (SKAdNetwork-only, no IDFA/ATT). Safe to call once at app start."
+        },
+        {
+            "name": "Attribution.Event",
+            "android": "app.innerr.attribution.AttributionFunctions.Event",
+            "ios": "AttributionFunctions.Event",
+            "description": "Track a conversion event (name, optional value/currency/attributes)."
+        },
+        {
+            "name": "Attribution.SetUserId",
+            "android": "app.innerr.attribution.AttributionFunctions.SetUserId",
+            "ios": "AttributionFunctions.SetUserId",
+            "description": "Associate a hashed first-party user id for cross-device stitching (never PII)."
+        }
+    ],
+    "android": {
+        "min_version": 26,
+        "permissions": [],
+        "dependencies": {
+            "implementation": [
+                "com.singular.sdk:singular_sdk:12.11.0",
+                "com.android.installreferrer:installreferrer:2.2"
+            ]
+        },
+        "repositories": [
+            {
+                "url": "https://maven.singular.net/"
+            }
+        ],
+        "meta_data": [
+            {
+                "name": "app.innerr.attribution.SINGULAR_API_KEY",
+                "value": "${SINGULAR_API_KEY}"
+            },
+            {
+                "name": "app.innerr.attribution.SINGULAR_SECRET",
+                "value": "${SINGULAR_SECRET}"
+            }
+        ]
+    },
+    "ios": {
+        "min_version": "18.2",
+        "info_plist": {
+            "SingularApiKey": "${SINGULAR_API_KEY}",
+            "SingularSecret": "${SINGULAR_SECRET}"
+        },
+        "dependencies": {
+            "swift_packages": [],
+            "pods": [
+                "Singular-SDK"
+            ]
+        }
+    },
+    "secrets": {
+        "SINGULAR_API_KEY": {
+            "description": "Singular SDK key (client-side, from the Singular dashboard). Required for attribution init.",
+            "required": true
+        },
+        "SINGULAR_SECRET": {
+            "description": "Singular SDK secret (client-side, from the Singular dashboard). Required for attribution init.",
+            "required": true
+        }
+    },
+    "events": []
+}

@@ -17,6 +17,7 @@ import EditPostModal from '@/spa/components/EditPostModal.vue';
 import LikesSheet from '@/spa/components/LikesSheet.vue';
 import MediaCarousel from '@/spa/components/MediaCarousel.vue';
 import type {
+    PostData,
     PostFirstVisibleLiker,
     PostMediaItem,
 } from '@/spa/components/PostCard.vue';
@@ -37,10 +38,12 @@ import { useCirclesStore } from '@/spa/stores/circles';
 import { useFeedCacheStore } from '@/spa/stores/feedCache';
 import { usePersonsStore } from '@/spa/stores/persons';
 import { usePostCacheStore } from '@/spa/stores/postCache';
+import { printablePhotos, usePrintShopStore } from '@/spa/stores/printShop';
 import { useServiceKeysStore } from '@/spa/stores/serviceKeys';
 import { useTagsStore } from '@/spa/stores/tags';
 import { BridgeCall, Dialog, Events, Off, On } from '@nativephp/mobile';
 import calendarIcon from '../../../svg/doodle-icons/calendar.svg';
+import cartAddIcon from '../../../svg/doodle-icons/cart-add.svg';
 import downloadIcon from '../../../svg/doodle-icons/download.svg';
 import heartFilledIcon from '../../../svg/doodle-icons/heart-filled.svg';
 import heartIcon from '../../../svg/doodle-icons/heart.svg';
@@ -370,6 +373,26 @@ const canDownload = computed(() => {
 
     return post.value.is_downloadable === true;
 });
+
+const printShop = usePrintShopStore();
+
+// Order a print of this post straight from the detail page: its photos are
+// preselected and the shop opens.
+const canOrderPrint = computed(
+    () =>
+        post.value !== null &&
+        printablePhotos(post.value as unknown as PostData).length > 0,
+);
+
+function orderPrint(): void {
+    if (!post.value) {
+        return;
+    }
+
+    haptics.impactLight();
+    printShop.setPhotosFromPosts([post.value as unknown as PostData]);
+    void router.push({ name: 'spa.print.shop' });
+}
 
 const isDownloading = ref(false);
 
@@ -974,24 +997,38 @@ watch(
                         </div>
                     </template>
 
-                    <button
-                        v-if="
-                            canDownload &&
-                            post.media_type === 'image' &&
-                            !isFullscreen
-                        "
-                        type="button"
-                        class="absolute top-[calc(var(--inset-top,0px)+0.75rem)] right-3 z-10 flex size-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm disabled:opacity-60"
-                        :aria-label="t('Save to photos')"
-                        :disabled="isDownloading"
-                        @click.stop="downloadMedia"
+                    <div
+                        v-if="post.media_type === 'image' && !isFullscreen"
+                        class="absolute top-[calc(var(--inset-top,0px)+0.75rem)] right-3 z-10 flex items-center gap-2"
                     >
-                        <span
-                            aria-hidden="true"
-                            class="inline-block size-4 bg-current"
-                            :style="iconMaskStyle(downloadIcon)"
-                        ></span>
-                    </button>
+                        <button
+                            v-if="canOrderPrint"
+                            type="button"
+                            class="flex size-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm"
+                            :aria-label="t('Order a print')"
+                            @click.stop="orderPrint"
+                        >
+                            <span
+                                aria-hidden="true"
+                                class="inline-block size-4 bg-current"
+                                :style="iconMaskStyle(cartAddIcon)"
+                            ></span>
+                        </button>
+                        <button
+                            v-if="canDownload"
+                            type="button"
+                            class="flex size-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm disabled:opacity-60"
+                            :aria-label="t('Save to photos')"
+                            :disabled="isDownloading"
+                            @click.stop="downloadMedia"
+                        >
+                            <span
+                                aria-hidden="true"
+                                class="inline-block size-4 bg-current"
+                                :style="iconMaskStyle(downloadIcon)"
+                            ></span>
+                        </button>
+                    </div>
 
                     <div
                         v-if="

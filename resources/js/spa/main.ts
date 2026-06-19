@@ -11,6 +11,7 @@ import {
 import { configureExternalApi } from '@/spa/http/externalApi';
 import { router } from '@/spa/router';
 import { installNativeRouterBridge } from '@/spa/router/nativeBridge';
+import { attribution } from '@/spa/services/attribution';
 import { useAppearanceStore } from '@/spa/stores/appearance';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useI18nStore } from '@/spa/stores/i18n';
@@ -124,6 +125,10 @@ async function bootstrap(): Promise<void> {
     usePlatform()
         .ensureDetected()
         .catch(() => null);
+
+    // Register install + session with the attribution SDK as early as possible
+    // so the SKAdNetwork install window opens promptly. No-op off native.
+    attribution.init();
 
     // Read the token from the Keychain (or localStorage fallback) so
     // externalApi can already send a Bearer before the BFF bootstrap call.
