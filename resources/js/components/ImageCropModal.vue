@@ -65,7 +65,14 @@ function onSheetUpdate(value: boolean) {
     }
 }
 
-const MAX_OUTPUT_DIMENSION = 2048;
+// Cap the cropped canvas by total area, not longest edge. The cropped blob
+// becomes the stored original the canvas print is generated from, so it must
+// keep as many pixels as possible: the old 2048px edge cap (~4 MP) left large
+// prints below the 150 DPI floor. An area cap keeps both dimensions large for
+// any aspect ratio while staying under WKWebView's ~16.7 MP (4096²) canvas
+// limit, above which it silently renders blank. 12 MP matches a typical phone
+// photo, so most crops now upload at full resolution.
+const MAX_OUTPUT_PIXELS = 12_000_000;
 
 async function confirm() {
     const instance = cropperRef.value;
@@ -81,9 +88,8 @@ async function confirm() {
         return;
     }
 
-    const longest = Math.max(sourceCanvas.width, sourceCanvas.height);
-    const scale =
-        longest > MAX_OUTPUT_DIMENSION ? MAX_OUTPUT_DIMENSION / longest : 1;
+    const area = sourceCanvas.width * sourceCanvas.height;
+    const scale = area > MAX_OUTPUT_PIXELS ? Math.sqrt(MAX_OUTPUT_PIXELS / area) : 1;
 
     let canvas: HTMLCanvasElement;
 
@@ -122,7 +128,9 @@ async function confirm() {
             emit('cropped', blob, dataUrl, exif);
         },
         'image/jpeg',
-        0.85,
+        // The cropped blob is archived as the print original, so favour
+        // fidelity: 0.92 keeps JPEG artefacts off a large canvas print.
+        0.92,
     );
 }
 
