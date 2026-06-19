@@ -372,6 +372,87 @@ it('requires quote_text when type is quote', function () {
         ->assertJsonValidationErrors('quote_text');
 });
 
+it('chunk-uploads the uncropped source and forwards source tokens + crops', function () {
+    $user = User::factory()->create();
+
+    $sentData = null;
+    $postedUrls = [];
+
+    $pending = Mockery::mock(PendingRequest::class);
+    $pending->shouldReceive('timeout')->andReturnSelf();
+    $pending->shouldReceive('attach')->andReturnSelf();
+    $pending->shouldReceive('post')->andReturnUsing(function ($url, $data = []) use (&$sentData, &$postedUrls) {
+        $postedUrls[] = $url;
+
+        if ($url === '/uploads') {
+            return new Response(Http::response([
+                'upload_id' => 'src-session-1',
+                'chunk_size' => 1048576,
+                'max_chunks' => 50,
+                'max_total_bytes' => 20971520,
+            ], 200)->wait());
+        }
+
+        if (str_starts_with($url, '/uploads/')) {
+            return new Response(Http::response(['upload_token' => 'source-token-1'], 200)->wait());
+        }
+
+        $sentData = $data;
+
+        return new Response(Http::response(['data' => ['id' => POST_ID]], 201)->wait());
+    });
+
+    $client = Mockery::mock(ApiClient::class);
+    $client->shouldReceive('authenticated')->andReturn($pending);
+    $client->shouldReceive('proxyMediaUrls')->andReturn(['id' => POST_ID]);
+    $this->app->instance(ApiClient::class, $client);
+
+    $this->actingAs($user)
+        ->postJson('/api/spa/posts', [
+            'media_paths' => [$this->tempPath],
+            'media_source_paths' => [$this->tempPathB],
+            'media_crops' => [['x' => 5, 'y' => 6, 'width' => 50, 'height' => 40]],
+            'circle_ids' => [CIRCLE_ID_A],
+        ])
+        ->assertStatus(201);
+
+    // The source was chunk-uploaded (init + chunk) before /posts.
+    expect($postedUrls)->toContain('/uploads')
+        ->and(collect($postedUrls)->contains(fn ($u) => str_starts_with($u, '/uploads/')))->toBeTrue();
+
+    // And its token + crop reached the external API, JSON-encoded.
+    expect(json_decode($sentData['media_source_tokens'], true))->toBe(['source-token-1'])
+        ->and(json_decode($sentData['media_crops'], true)[0]['width'])->toBe(50);
+});
+
+it('omits source fields when no photo was cropped', function () {
+    $user = User::factory()->create();
+
+    $sentData = null;
+    $pending = Mockery::mock(PendingRequest::class);
+    $pending->shouldReceive('attach')->andReturnSelf();
+    $pending->shouldReceive('post')->once()->with('/posts', Mockery::on(function ($data) use (&$sentData) {
+        $sentData = $data;
+
+        return true;
+    }))->andReturn(new Response(Http::response(['data' => ['id' => POST_ID]], 201)->wait()));
+
+    $client = Mockery::mock(ApiClient::class);
+    $client->shouldReceive('authenticated')->andReturn($pending);
+    $client->shouldReceive('proxyMediaUrls')->andReturn(['id' => POST_ID]);
+    $this->app->instance(ApiClient::class, $client);
+
+    $this->actingAs($user)
+        ->postJson('/api/spa/posts', [
+            'media_paths' => [$this->tempPath],
+            'circle_ids' => [CIRCLE_ID_A],
+        ])
+        ->assertStatus(201);
+
+    expect($sentData)->not->toHaveKey('media_source_tokens')
+        ->and($sentData)->not->toHaveKey('media_crops');
+});
+
 it('flattens external media.{i} errors to media_paths.{i}', function () {
     $user = User::factory()->create();
 

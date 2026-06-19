@@ -9,6 +9,7 @@ import {
 } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import CirclePicker from '@/components/CirclePicker.vue';
+import type { CropRect } from '@/components/ImageCropModal.vue';
 import PersonPicker from '@/components/PersonPicker.vue';
 import Spinner from '@/components/Spinner.vue';
 import { readExif } from '@/composables/useExif';
@@ -85,6 +86,14 @@ interface MediaItem {
     exif: ExifData;
     /** Token from NativeMedia.stage so we can release the staged copy. */
     stagedToken?: string;
+    /**
+     * The uncropped original (native path), kept when the photo was cropped so
+     * the server can archive it. Captured once, before `path` is replaced with
+     * the cropped upload.
+     */
+    sourcePath?: string;
+    /** Crop rectangle applied to the source, archived for re-cropping. */
+    crop?: CropRect | null;
 }
 
 /**
@@ -164,6 +173,8 @@ const activeIndex = ref(0);
 const form = useApiForm({
     media_paths: [] as string[],
     media_metadata: [] as ExifData[],
+    media_source_paths: [] as (string | null)[],
+    media_crops: [] as (CropRect | null)[],
     caption: '',
     location: '' as string,
     latitude: null as number | null,
@@ -389,6 +400,8 @@ watch(
     (next) => {
         form.data.media_paths = next.map((i) => i.path);
         form.data.media_metadata = next.map((i) => i.exif);
+        form.data.media_source_paths = next.map((i) => i.sourcePath ?? null);
+        form.data.media_crops = next.map((i) => i.crop ?? null);
 
         if (activeIndex.value >= next.length) {
             activeIndex.value = Math.max(0, next.length - 1);
@@ -853,6 +866,7 @@ async function handleCropped(
     blob: Blob,
     dataUrl: string,
     exif: ExifData,
+    crop: CropRect | null,
 ): Promise<void> {
     const target = items.value[cropTargetIndex.value];
 
@@ -877,9 +891,19 @@ async function handleCropped(
     try {
         const path = await uploadInChunks(blob, mergedExif);
 
-        // The original staged copy no longer matches the visible image; throw
-        // it away. The cropped data URL is small enough to use as a preview
-        // without a new stage call.
+        // Keep the uncropped original (the untouched native file at `path`) so
+        // the server can archive it and the crop can be redone later. Captured
+        // once: a re-crop must still point at the true original, not the
+        // previous crop. The crop rectangle is refreshed each time.
+        if (!target.sourcePath) {
+            target.sourcePath = target.path;
+        }
+
+        target.crop = crop;
+
+        // The staged display copy no longer matches the visible image; release
+        // it (the source upload reads `sourcePath`, not this copy). The cropped
+        // data URL is small enough to use as a preview without a new stage call.
         if (target.stagedToken) {
             void NativeMedia.release(target.stagedToken);
             target.stagedToken = undefined;

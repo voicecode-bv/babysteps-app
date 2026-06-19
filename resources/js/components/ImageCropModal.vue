@@ -9,6 +9,14 @@ import 'vue-advanced-cropper/dist/style.css';
 
 type Ratio = '1:1' | '5:4';
 
+/** Crop rectangle in the source image's pixels, for archiving + re-cropping. */
+export interface CropRect {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
+
 const props = withDefaults(
     defineProps<{
         open: boolean;
@@ -22,7 +30,13 @@ const props = withDefaults(
 
 const emit = defineEmits<{
     (e: 'update:open', value: boolean): void;
-    (e: 'cropped', blob: Blob, dataUrl: string, exif: ExifData): void;
+    (
+        e: 'cropped',
+        blob: Blob,
+        dataUrl: string,
+        exif: ExifData,
+        crop: CropRect | null,
+    ): void;
 }>();
 
 const { t } = useTranslations();
@@ -88,8 +102,20 @@ async function confirm() {
         return;
     }
 
+    // The crop rectangle in the source image's own pixels, so the uncropped
+    // original archived server-side can be re-cropped to the same framing.
+    const crop: CropRect | null = result.coordinates
+        ? {
+              x: Math.round(result.coordinates.left),
+              y: Math.round(result.coordinates.top),
+              width: Math.round(result.coordinates.width),
+              height: Math.round(result.coordinates.height),
+          }
+        : null;
+
     const area = sourceCanvas.width * sourceCanvas.height;
-    const scale = area > MAX_OUTPUT_PIXELS ? Math.sqrt(MAX_OUTPUT_PIXELS / area) : 1;
+    const scale =
+        area > MAX_OUTPUT_PIXELS ? Math.sqrt(MAX_OUTPUT_PIXELS / area) : 1;
 
     let canvas: HTMLCanvasElement;
 
@@ -125,7 +151,7 @@ async function confirm() {
             }
 
             const dataUrl = URL.createObjectURL(blob);
-            emit('cropped', blob, dataUrl, exif);
+            emit('cropped', blob, dataUrl, exif, crop);
         },
         'image/jpeg',
         // The cropped blob is archived as the print original, so favour

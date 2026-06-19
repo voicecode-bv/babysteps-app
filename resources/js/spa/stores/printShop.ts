@@ -207,6 +207,8 @@ interface CatalogResponse {
     }[];
     shipping_countries: string[];
     return_url: string;
+    /** The hard DPI floor the checkout refuses below; mirrors the API config. */
+    min_dpi?: number;
     /** The user's saved address, if they opted to store one before. */
     saved_address?: PrintShippingAddress | null;
 }
@@ -337,10 +339,36 @@ export function targetPrintDpi(longestEdgeMm: number): number {
 }
 
 /**
+ * The DPI a photo resolves to when enlarged to fill the print at the chosen
+ * size: the binding edge that needs the most upscaling, so it matches the
+ * artwork generator's cover-crop. Orientation-independent (the artwork rotates
+ * to the photo). Null when no size is chosen yet or the photo carries no
+ * dimensions.
+ */
+export function effectivePrintDpi(
+    offering: PrintOffering,
+    options: Record<string, string>,
+    photo: PrintPhoto,
+): number | null {
+    const mm = printDimensionsMm(offering, options);
+
+    if (!mm || photo.width === null || photo.height === null) {
+        return null;
+    }
+
+    const photoLong = Math.max(photo.width, photo.height);
+    const photoShort = Math.min(photo.width, photo.height);
+
+    return Math.min(
+        photoLong / (Math.max(mm.width, mm.height) / MM_PER_INCH),
+        photoShort / (Math.min(mm.width, mm.height) / MM_PER_INCH),
+    );
+}
+
+/**
  * Whether any picked photo is too low-resolution for the offering at the
  * chosen options: filling the print would enlarge it below the
- * size-appropriate target DPI. Orientation-independent (the artwork rotates to
- * the photo). Photos without known dimensions never trigger a warning.
+ * size-appropriate target DPI. Photos without known dimensions never warn.
  */
 export function isLowResolutionForPrint(
     offering: PrintOffering,
@@ -353,24 +381,12 @@ export function isLowResolutionForPrint(
         return false;
     }
 
-    const longMm = Math.max(mm.width, mm.height);
-    const shortMm = Math.min(mm.width, mm.height);
-    const target = targetPrintDpi(longMm);
+    const target = targetPrintDpi(Math.max(mm.width, mm.height));
 
     return photos.some((photo) => {
-        if (photo.width === null || photo.height === null) {
-            return false;
-        }
+        const dpi = effectivePrintDpi(offering, options, photo);
 
-        const photoLong = Math.max(photo.width, photo.height);
-        const photoShort = Math.min(photo.width, photo.height);
-
-        const effectiveDpi = Math.min(
-            photoLong / (longMm / MM_PER_INCH),
-            photoShort / (shortMm / MM_PER_INCH),
-        );
-
-        return effectiveDpi < target;
+        return dpi !== null && dpi < target;
     });
 }
 
@@ -466,6 +482,10 @@ export const usePrintShopStore = defineStore('spa-print-shop', {
         catalog: null as PrintOffering[] | null,
         shippingCountries: ['NL', 'BE'] as string[],
         returnUrl: 'https://innerr.app',
+        // The checkout's hard resolution floor (DPI); below it an order is
+        // refused, so the shop blocks rather than soft-warns. Kept in sync with
+        // the catalog response, which carries the API's config('print.min_dpi').
+        minDpi: 150,
         submitting: false,
         placedOrder: null as PrintOrderSummary | null,
         // What was just ordered, snapshotted before the cart clears so the
@@ -532,7 +552,8 @@ export const usePrintShopStore = defineStore('spa-print-shop', {
                 format: offering.format,
                 artwork: offering.artwork
                     ? {
-                          sizeAttribute: offering.artwork.size_attribute ?? null,
+                          sizeAttribute:
+                              offering.artwork.size_attribute ?? null,
                           sizes: offering.artwork.sizes ?? [],
                           frameAttribute:
                               offering.artwork.frame_attribute ?? null,
@@ -543,6 +564,7 @@ export const usePrintShopStore = defineStore('spa-print-shop', {
             }));
             this.shippingCountries = response.shipping_countries;
             this.returnUrl = response.return_url;
+            this.minDpi = response.min_dpi ?? 150;
             this.savedAddress = response.saved_address ?? null;
         },
         /** Starts a new photo pick; the cart is intentionally left alone. */

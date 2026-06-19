@@ -177,6 +177,17 @@ describe('print shop store', () => {
         expect(store.returnUrl).toBe('https://innerr.app/print');
     });
 
+    it('reads the checkout DPI floor from the catalog, defaulting to 150', async () => {
+        const store = await makeLoadedStore();
+        expect(store.minDpi).toBe(150);
+
+        const withFloor = { ...catalogResponse(), min_dpi: 200 };
+        apiGet.mockResolvedValue(withFloor);
+        await store.ensureCatalog();
+
+        expect(store.minDpi).toBe(200);
+    });
+
     it('maps the artwork format for each offering', async () => {
         const store = await makeLoadedStore();
 
@@ -541,9 +552,9 @@ describe('isLowResolutionForPrint', () => {
     });
 
     it('does not warn before a size is chosen', () => {
-        expect(
-            isLowResolutionForPrint(puzzle, {}, [makePhoto(800, 600)]),
-        ).toBe(false);
+        expect(isLowResolutionForPrint(puzzle, {}, [makePhoto(800, 600)])).toBe(
+            false,
+        );
     });
 
     it('never warns on photos without known dimensions', () => {
@@ -572,9 +583,9 @@ describe('sortSizeOptionValues', () => {
     });
 
     it('keeps non-dimension values in their original order, last', () => {
-        expect(
-            sortSizeOptionValues(['Glossy', '20 x 20 cm', 'Matte']),
-        ).toEqual(['20 x 20 cm', 'Glossy', 'Matte']);
+        expect(sortSizeOptionValues(['Glossy', '20 x 20 cm', 'Matte'])).toEqual(
+            ['20 x 20 cm', 'Glossy', 'Matte'],
+        );
     });
 });
 
@@ -618,7 +629,10 @@ describe('frame thickness helpers', () => {
     });
 
     it('detects a frame thickness option and orders it thinnest first', () => {
-        const values = ['Premium Thickness (4.5Cm)', 'Classic Thickness (2 Cm)'];
+        const values = [
+            'Premium Thickness (4.5Cm)',
+            'Classic Thickness (2 Cm)',
+        ];
 
         expect(isThicknessOption(values)).toBe(true);
         expect(sortThicknessOptionValues(values)).toEqual([
@@ -662,17 +676,18 @@ describe('trimShippingAddress', () => {
     };
 
     it('trims fields and drops an empty addition', () => {
-        expect(trimShippingAddress({ ...base, houseNumberAddition: '  ' }))
-            .toEqual({
-                firstName: 'Michael',
-                lastName: 'Blijleven',
-                street: 'Hoofdstraat',
-                houseNumber: '9',
-                houseNumberAddition: undefined,
-                postalCode: '3121XJ',
-                city: 'Schiedam',
-                country: 'NL',
-            });
+        expect(
+            trimShippingAddress({ ...base, houseNumberAddition: '  ' }),
+        ).toEqual({
+            firstName: 'Michael',
+            lastName: 'Blijleven',
+            street: 'Hoofdstraat',
+            houseNumber: '9',
+            houseNumberAddition: undefined,
+            postalCode: '3121XJ',
+            city: 'Schiedam',
+            country: 'NL',
+        });
     });
 
     it('does not throw when the addition is undefined (second-order prefill)', () => {

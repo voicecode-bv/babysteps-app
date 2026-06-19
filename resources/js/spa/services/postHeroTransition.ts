@@ -52,6 +52,12 @@ async function runHeroTransition(
     try {
         const transition = document.startViewTransition(update);
 
+        // When duplicate `post-hero` names make the browser skip the morph it
+        // rejects `ready` with InvalidStateError while `finished` still
+        // resolves. Swallow it so the skip doesn't surface as an unhandled
+        // rejection; the navigation inside `update` still completes.
+        transition.ready.catch(() => {});
+
         await transition.finished;
     } catch {
         // Skipped transition (duplicate names, timeout): navigation already

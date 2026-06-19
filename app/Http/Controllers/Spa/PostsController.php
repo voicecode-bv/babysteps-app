@@ -62,6 +62,13 @@ class PostsController extends Controller
             'media_metadata.*.taken_at' => ['nullable', 'string'],
             'media_metadata.*.latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'media_metadata.*.longitude' => ['nullable', 'numeric', 'between:-180,180'],
+            // Per-item uncropped originals (local file:// paths) + crop
+            // rectangles, index-aligned with media_paths. Present only for
+            // photos the user cropped; null entries elsewhere.
+            'media_source_paths' => ['nullable', 'array', 'max:'.self::MAX_MEDIA_ITEMS],
+            'media_source_paths.*' => ['nullable', 'string'],
+            'media_crops' => ['nullable', 'array', 'max:'.self::MAX_MEDIA_ITEMS],
+            'media_crops.*' => ['nullable', 'array'],
             'caption' => ['nullable', 'string', 'max:2200'],
             'type' => ['nullable', 'string', 'in:media,quote'],
             'quote_text' => ['nullable', 'required_if:type,quote', 'string', 'max:280'],
@@ -143,14 +150,38 @@ class PostsController extends Controller
             true,
         );
 
+        // Cropped photos archive their uncropped original too: chunk-upload each
+        // source to the external API and forward the redeemed tokens + crop
+        // rectangles (JSON-encoded so null entries stay index-aligned).
+        $sourceSessionIds = [];
+
         try {
+            $sourceTokens = $this->uploadSources(
+                $paths,
+                $validated['media_source_paths'] ?? [],
+                $sourceSessionIds,
+            );
+
+            if ($sourceTokens !== []) {
+                $data['media_source_tokens'] = json_encode($sourceTokens);
+                $data['media_crops'] = json_encode(array_values($validated['media_crops'] ?? []));
+            }
+
             $response = $shouldChunkAll
                 ? $this->postWithChunkedUploads($paths, $mimeTypes, $data)
                 : $this->postWithMultipartAttach($paths, $data);
         } catch (RuntimeException $e) {
+            $this->abortSessions($sourceSessionIds);
+
             throw ValidationException::withMessages([
                 $isLegacySingle ? 'media_path' : 'media_paths.0' => $e->getMessage(),
             ]);
+        }
+
+        // The external API redeems source sessions only on a successful create;
+        // on any error here they must be aborted so they don't linger.
+        if (! $response->successful()) {
+            $this->abortSessions($sourceSessionIds);
         }
 
         foreach ($paths as $path) {
@@ -253,6 +284,42 @@ class PostsController extends Controller
 
             throw $e;
         }
+    }
+
+    /**
+     * Chunk-upload each uncropped source (index-aligned with media) to the
+     * external API. Returns the redeemable tokens with null preserved for items
+     * that were not cropped, or an empty array when no item carries a source.
+     * Collects the opened session ids in `$sessionIds` so the caller can abort
+     * them if the post ultimately fails.
+     *
+     * @param  list<string>  $paths
+     * @param  array<int, string|null>  $sourcePaths
+     * @param  list<string>  $sessionIds
+     * @return list<string|null>
+     */
+    private function uploadSources(array $paths, array $sourcePaths, array &$sessionIds): array
+    {
+        $tokens = [];
+        $hasAny = false;
+
+        foreach ($paths as $index => $path) {
+            $source = $sourcePaths[$index] ?? null;
+
+            if (! is_string($source) || $source === '' || ! file_exists($source)) {
+                $tokens[$index] = null;
+
+                continue;
+            }
+
+            $mimeType = File::mimeType($source) ?: 'application/octet-stream';
+            [$token, $sessionId] = $this->uploadFileInChunks($source, $mimeType);
+            $tokens[$index] = $token;
+            $sessionIds[] = $sessionId;
+            $hasAny = true;
+        }
+
+        return $hasAny ? array_values($tokens) : [];
     }
 
     /**

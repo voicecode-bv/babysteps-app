@@ -14,14 +14,17 @@ import { useTranslations } from '@/spa/composables/useTranslations';
 import { haptics } from '@/spa/services/haptics';
 import { useFeedSelectionStore } from '@/spa/stores/feedSelection';
 import {
+    effectivePrintDpi,
     isLowResolutionForPrint,
     isSizeOption,
     isThicknessOption,
     parseSizeValue,
     parseThicknessCm,
+    printDimensionsMm,
     printOrderStatusKey,
     sortSizeOptionValues,
     sortThicknessOptionValues,
+    targetPrintDpi,
     trimShippingAddress,
     usePrintShopStore,
 } from '@/spa/stores/printShop';
@@ -343,6 +346,63 @@ const selectionLowResolution = computed(() =>
         : false,
 );
 
+// Hard block: a photo below the checkout's DPI floor is refused server-side, so
+// ordering it would only end in a failed checkout. Disable add-to-order and
+// show an error instead of the soft warning. Mirrors the API's min_dpi gate.
+const selectionBlocked = computed(() => {
+    const offering = printShop.selectedOffering;
+
+    if (!offering) {
+        return false;
+    }
+
+    const options = { ...chosenOptions };
+
+    return printShop.photos.some((photo) => {
+        const dpi = effectivePrintDpi(offering, options, photo);
+
+        return dpi !== null && dpi < printShop.minDpi;
+    });
+});
+
+// Local-only resolution readout: the original photo's pixel dimensions and the
+// DPI it resolves to at the chosen print size, next to the size-appropriate
+// target. Helps debug "resolution too low" reports without guessing; stripped
+// from production builds.
+const showResolutionDebug = import.meta.env.DEV;
+
+const resolutionDebug = computed(() => {
+    const offering = printShop.selectedOffering;
+
+    if (!showResolutionDebug || !offering) {
+        return null;
+    }
+
+    const options = { ...chosenOptions };
+    const mm = printDimensionsMm(offering, options);
+    const target = mm
+        ? Math.round(targetPrintDpi(Math.max(mm.width, mm.height)))
+        : null;
+
+    return {
+        sizeMm: mm
+            ? { width: Math.round(mm.width), height: Math.round(mm.height) }
+            : null,
+        target,
+        photos: printShop.photos.map((photo) => {
+            const dpi = effectivePrintDpi(offering, options, photo);
+
+            return {
+                id: photo.id,
+                width: photo.width,
+                height: photo.height,
+                dpi: dpi === null ? null : Math.round(dpi),
+                ok: dpi === null || target === null ? null : dpi >= target,
+            };
+        }),
+    };
+});
+
 // Options such as a puzzle's size change the price, so a complete choice is
 // quoted live; the catalog price only covers option-less products.
 const quotedPriceMinor = ref<number | null>(null);
@@ -398,6 +458,9 @@ watch(
     },
 );
 
+// Deliberately not gated on selectionBlocked: a blocked selection keeps the
+// button tappable so the tap can surface the reason in a dialog, which the
+// user sees even when scrolled past the inline warning.
 const canAddToOrder = computed(
     () =>
         printShop.selectedOffering !== null &&
@@ -405,10 +468,30 @@ const canAddToOrder = computed(
         (!needsQuote.value || quotedPriceMinor.value !== null),
 );
 
+// Reason a too-low-resolution selection can't be ordered; shown both inline and
+// in the blocking dialog so the wording stays identical.
+const blockedMessage = computed(() =>
+    printShop.photoCount === 1
+        ? t(
+              'This photo is too low resolution for this size and cannot be printed. Pick a smaller size or another photo.',
+          )
+        : t(
+              'One or more photos are too low resolution for this size and cannot be printed. Pick a smaller size or other photos.',
+          ),
+);
+
 function confirmAddToOrder(): void {
     const offering = printShop.selectedOffering;
 
     if (offering === null || !canAddToOrder.value) {
+        return;
+    }
+
+    // Below the checkout's DPI floor the order would be refused server-side, so
+    // explain it in a dialog (visible regardless of scroll) instead of adding.
+    if (selectionBlocked.value) {
+        void Dialog.alert(t('Resolution too low'), blockedMessage.value);
+
         return;
     }
 
@@ -496,7 +579,10 @@ async function openExternal(url: string): Promise<void> {
         await Browser.open(url);
     } catch (error) {
         // eslint-disable-next-line no-console
-        console.warn('[print] Browser.open failed, falling back to window.open', error);
+        console.warn(
+            '[print] Browser.open failed, falling back to window.open',
+            error,
+        );
 
         if (typeof window !== 'undefined') {
             window.open(url, '_blank');
@@ -879,7 +965,10 @@ function iconMaskStyle(url: string) {
                         <!-- Single photo (the only case today): shown large and
                              centered so the chosen moment stands out. -->
                         <div
-                            v-if="printShop.photoCount === 1 && printShop.photos[0]"
+                            v-if="
+                                printShop.photoCount === 1 &&
+                                printShop.photos[0]
+                            "
                             class="mt-3 flex justify-center px-6"
                         >
                             <div
@@ -1220,11 +1309,27 @@ function iconMaskStyle(url: string) {
                     </button>
                 </div>
 
+                <!-- Hard block: below the checkout's DPI floor the order is
+                     refused server-side, so ordering is disabled entirely. -->
+                <div
+                    v-if="selectionBlocked"
+                    class="flex items-start gap-3 rounded-2xl bg-brand-orange/15 p-3 ring-1 ring-brand-orange/40"
+                >
+                    <span
+                        aria-hidden="true"
+                        class="mt-0.5 inline-block size-5 shrink-0 bg-brand-orange"
+                        :style="iconMaskStyle(cautionIcon)"
+                    ></span>
+                    <p class="text-sm text-ink">
+                        {{ blockedMessage }}
+                    </p>
+                </div>
+
                 <!-- Soft quality warning: the photo is below the resolution
                      that fills the artwork at 300 DPI, so it will be enlarged
                      and may look less sharp. Ordering stays allowed. -->
                 <div
-                    v-if="selectionLowResolution"
+                    v-if="selectionLowResolution && !selectionBlocked"
                     class="flex items-start gap-3 rounded-2xl bg-brand-yellow/15 p-3 ring-1 ring-brand-yellow/40"
                 >
                     <span
@@ -1243,6 +1348,39 @@ function iconMaskStyle(url: string) {
                                   )
                         }}
                     </p>
+                </div>
+
+                <!-- Local-only resolution readout (DEV builds): original photo
+                     dimensions and the DPI they reach at the chosen size. -->
+                <div
+                    v-if="resolutionDebug"
+                    class="rounded-2xl bg-ink/5 p-3 font-mono text-xs text-ink ring-1 ring-ink/10"
+                >
+                    <p class="mb-1 font-semibold">
+                        DEBUG · target {{ resolutionDebug.target ?? '—' }} dpi
+                        <template v-if="resolutionDebug.sizeMm">
+                            · {{ resolutionDebug.sizeMm.width }}×{{
+                                resolutionDebug.sizeMm.height
+                            }}
+                            mm
+                        </template>
+                    </p>
+                    <ul class="space-y-0.5">
+                        <li
+                            v-for="photo in resolutionDebug.photos"
+                            :key="photo.id"
+                            :class="
+                                photo.ok === false ? 'text-brand-orange' : ''
+                            "
+                        >
+                            {{ photo.width ?? '?' }}×{{
+                                photo.height ?? '?'
+                            }}
+                            px → {{ photo.dpi ?? '?' }} dpi
+                            <span v-if="photo.ok === false">⚠︎ too low</span>
+                            <span v-else-if="photo.ok === true">✓</span>
+                        </li>
+                    </ul>
                 </div>
 
                 <div
@@ -1277,9 +1415,7 @@ function iconMaskStyle(url: string) {
                                 :aria-pressed="
                                     chosenOptions[option.attribute] === value
                                 "
-                                @click="
-                                    chosenOptions[option.attribute] = value
-                                "
+                                @click="chosenOptions[option.attribute] = value"
                             >
                                 <span
                                     aria-hidden="true"
@@ -1297,9 +1433,7 @@ function iconMaskStyle(url: string) {
                                         ></span>
                                     </span>
                                 </span>
-                                <span
-                                    class="text-xs font-semibold text-ink"
-                                >
+                                <span class="text-xs font-semibold text-ink">
                                     {{ printTerm(value) }}
                                 </span>
                                 <span
@@ -1335,9 +1469,7 @@ function iconMaskStyle(url: string) {
                                 :aria-pressed="
                                     chosenOptions[option.attribute] === value
                                 "
-                                @click="
-                                    chosenOptions[option.attribute] = value
-                                "
+                                @click="chosenOptions[option.attribute] = value"
                             >
                                 <span
                                     class="block h-20 w-full rounded-md bg-sand-100/60 p-2"
