@@ -5,6 +5,8 @@ import {
     TOKEN_KEY,
 } from '@/spa/composables/useSecureStorage';
 import { api } from '@/spa/http/apiClient';
+import { attribution } from '@/spa/services/attribution';
+import { sha256Hex } from '@/spa/services/hash';
 import { useCirclesStore } from '@/spa/stores/circles';
 import { useCommentsCacheStore } from '@/spa/stores/commentsCache';
 import { useDefaultCirclesStore } from '@/spa/stores/defaultCircles';
@@ -53,6 +55,25 @@ interface BootstrapPayload {
     api_base: string;
     app_version: string;
     social_auth_urls: { google: string; apple: string };
+}
+
+// Best-effort attribution hookup for an authenticated user. It must never block
+// or break auth, so the hashing is not awaited and every failure is swallowed.
+// `setUserId` stitches a hashed (never raw) first-party id on every session;
+// `trackRegister` reports the registration the first time we see an account that
+// has not finished onboarding — the earliest reliable moment, for both the
+// email and the Apple/Google sign-up paths. trackRegister de-dupes per user, so
+// calling this on every login/bootstrap is safe.
+function linkAttribution(user: User): void {
+    void sha256Hex(user.id)
+        .then((hashed) => attribution.setUserId(hashed))
+        .catch(() => {
+            /* crypto unavailable: skip id stitching, never block auth */
+        });
+
+    if (!user.onboarded) {
+        attribution.trackRegister(user.id);
+    }
 }
 
 export const useAuthStore = defineStore('spa-auth', {
@@ -155,6 +176,10 @@ export const useAuthStore = defineStore('spa-auth', {
             // authenticated
             this.user = data.user;
 
+            if (data.user) {
+                linkAttribution(data.user);
+            }
+
             return data;
         },
         async login(
@@ -170,6 +195,7 @@ export const useAuthStore = defineStore('spa-auth', {
             this.token = data.token;
             this.awaitingConnection = false;
             await secureStorage.set(TOKEN_KEY, data.token);
+            linkAttribution(data.user);
 
             return { redirect_to: data.redirect_to };
         },
@@ -189,6 +215,7 @@ export const useAuthStore = defineStore('spa-auth', {
             this.token = data.token;
             this.awaitingConnection = false;
             await secureStorage.set(TOKEN_KEY, data.token);
+            linkAttribution(data.user);
 
             return { redirect_to: data.redirect_to };
         },

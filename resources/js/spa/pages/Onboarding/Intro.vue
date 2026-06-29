@@ -1,66 +1,25 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import Spinner from '@/components/Spinner.vue';
+import OnboardingFeedPreview from '@/spa/components/OnboardingFeedPreview.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi } from '@/spa/http/externalApi';
 import { trackOnboardingStep } from '@/spa/http/onboarding';
+import { belongsToAnotherPersonsCircle } from '@/spa/router/onboardingResume';
 import { useCirclesStore } from '@/spa/stores/circles';
 import type { Circle } from '@/spa/stores/circles';
 import { useDefaultCirclesStore } from '@/spa/stores/defaultCircles';
-import cameraIcon from '../../../../svg/doodle-icons/camera.svg';
-import heartIcon from '../../../../svg/doodle-icons/heart.svg';
-import userIcon from '../../../../svg/doodle-icons/user.svg';
 
 const { t } = useTranslations();
 const router = useRouter();
 const circles = useCirclesStore();
 const processing = ref(false);
 
-function iconMaskStyle(url: string) {
-    return {
-        maskImage: `url(${url})`,
-        WebkitMaskImage: `url(${url})`,
-        maskSize: 'contain',
-        WebkitMaskSize: 'contain',
-        maskRepeat: 'no-repeat',
-        WebkitMaskRepeat: 'no-repeat',
-        maskPosition: 'center',
-        WebkitMaskPosition: 'center',
-    };
-}
-
-// Each step leans slightly off-axis and carries its own brand colour, so the
-// list reads like notes pinned in an album rather than a feature table.
-const steps = [
-    {
-        icon: userIcon,
-        title: t('Build your family circle'),
-        description: t(
-            'Add the people you trust, like grandparents and godparents. Only people you invite can see your child.',
-        ),
-        badgeClass: 'bg-accent',
-        tilt: '-1.2deg',
-    },
-    {
-        icon: cameraIcon,
-        title: t("Share your child's moments"),
-        description: t(
-            'Post photos and videos of your little one. No public feed, no strangers.',
-        ),
-        badgeClass: 'bg-brand-green',
-        tilt: '1deg',
-    },
-    {
-        icon: heartIcon,
-        title: t('Keep family close'),
-        description: t(
-            'Let faraway family watch your child grow up. Calmly, privately, together.',
-        ),
-        badgeClass: 'bg-brand-orange',
-        tilt: '-0.8deg',
-    },
-];
+// Record that the user opened the first onboarding screen; the matching
+// 'completed' fires when they continue. The gap between the two is the
+// screen's drop-off.
+onMounted(() => trackOnboardingStep('intro', 'reached'));
 
 // Self-healing fallback: register normally creates the "Family" circle, but
 // OAuth signups never pass through that bootstrap and the register-time call
@@ -91,7 +50,7 @@ async function createFamilyCircle(): Promise<Circle | null> {
 }
 
 // The "Family" circle is already created by the API at registration, so we
-// load the circles and jump straight to the children step for that circle.
+// load the circles and jump straight to the first-moment step for that circle.
 // If the circle is missing (OAuth signup or a failed register bootstrap), we
 // create it here after all; only if that fails too do we skip the circle
 // steps towards notifications.
@@ -100,20 +59,26 @@ async function continueOnboarding(): Promise<void> {
         return;
     }
 
-    trackOnboardingStep('intro');
+    trackOnboardingStep('intro', 'completed');
     processing.value = true;
 
     try {
         const items = await circles.refresh();
         // Only a circle the user OWNS will accept their children and rules; a
         // fresh account can already be a member of someone else's circle
-        // (redeemed invite link, linked OAuth account).
+        // (redeemed invite link, linked OAuth account). Such an invited member
+        // already belongs to a circle, so we create no redundant "Family"
+        // circle for them — and since the children/first-moment steps need an
+        // owned circle, they fall through to notifications below.
         const familyCircle =
-            items.find((c) => c.is_owner) ?? (await createFamilyCircle());
+            items.find((c) => c.is_owner) ??
+            (belongsToAnotherPersonsCircle(items)
+                ? null
+                : await createFamilyCircle());
 
         if (familyCircle) {
             await router.push({
-                name: 'spa.onboarding.add-children',
+                name: 'spa.onboarding.first-moment',
                 params: { circle: familyCircle.id },
             });
         } else {
@@ -162,49 +127,13 @@ async function continueOnboarding(): Promise<void> {
                 <p class="mt-3 text-ink-muted">
                     {{
                         t(
-                            'A private album for your family, in three simple steps.',
+                            'Every photo you add makes your family feed warmer and more alive.',
                         )
                     }}
                 </p>
             </div>
 
-            <ol class="mt-8 w-full max-w-sm space-y-4">
-                <li
-                    v-for="(step, index) in steps"
-                    :key="index"
-                    class="reveal-item relative flex items-start gap-4 rounded-lg bg-surface/60 p-4 shadow-sm backdrop-blur-sm"
-                    :style="{
-                        rotate: step.tilt,
-                        '--reveal-delay': `${120 + index * 130}ms`,
-                    }"
-                >
-                    <div class="relative shrink-0">
-                        <div
-                            class="flex size-14 items-center justify-center rounded-lg bg-success-soft text-ink"
-                        >
-                            <span
-                                aria-hidden="true"
-                                class="inline-block size-8 bg-current"
-                                :style="iconMaskStyle(step.icon)"
-                            ></span>
-                        </div>
-                        <span
-                            class="absolute -top-2 -left-2 flex size-6 items-center justify-center rounded-full leading-none font-semibold text-white shadow-md"
-                            :class="step.badgeClass"
-                        >
-                            {{ index + 1 }}
-                        </span>
-                    </div>
-                    <div class="flex-1 pt-1">
-                        <h2 class="font-sans text-base font-semibold text-ink">
-                            {{ step.title }}
-                        </h2>
-                        <p class="mt-1 leading-relaxed text-ink-muted">
-                            {{ step.description }}
-                        </p>
-                    </div>
-                </li>
-            </ol>
+            <OnboardingFeedPreview class="mt-4 w-full" />
         </div>
 
         <div class="relative pt-2 pb-8">

@@ -54,6 +54,10 @@ const processing = ref(false);
 const circleId = String(route.params.circle);
 const circleLoadFailed = ref(false);
 
+// Opened the screen; the terminal outcome is recorded on continue, counting an
+// invite sent or a shared link as a completion.
+onMounted(() => trackOnboardingStep('invite_members', 'reached'));
+
 // The link card and the rules card need the circle; the identifier form works
 // off the route param alone. A fetch failure therefore shows a retry state
 // for those cards instead of silently skipping the whole step.
@@ -154,7 +158,12 @@ async function continueOnboarding(): Promise<void> {
         processing.value = false;
     }
 
-    trackOnboardingStep('invite_members');
+    trackOnboardingStep(
+        'invite_members',
+        invited.value.length > 0 || hasSharedLink.value
+            ? 'completed'
+            : 'skipped',
+    );
     router.push({ name: 'spa.onboarding.notifications' });
 }
 </script>

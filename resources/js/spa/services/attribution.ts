@@ -43,8 +43,29 @@ export const attribution = {
         fire(() => Attribution.setUserId(hashedUserId));
     },
 
-    /** Registration complete. */
-    trackRegister(): void {
+    /**
+     * Registration complete — fired at most once per user on this device.
+     *
+     * The earliest post-auth hook fires this for any brand-new, not-yet-
+     * onboarded account (so it also catches the accounts that close the app
+     * before the onboarding intro), and the intro step fires it again as a
+     * backstop. The per-user localStorage guard means the same user is never
+     * counted twice, while two accounts on one device still each report once.
+     */
+    trackRegister(userId: string): void {
+        const key = `innerr.attribution.registered:${userId}`;
+
+        try {
+            if (window.localStorage?.getItem(key)) {
+                return;
+            }
+
+            window.localStorage?.setItem(key, '1');
+        } catch {
+            // localStorage blocked: prefer a possible duplicate over a missed
+            // registration signal, so fall through and fire.
+        }
+
         fire(() => Attribution.event('sng_complete_registration'));
     },
 

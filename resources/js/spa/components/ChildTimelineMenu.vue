@@ -37,12 +37,12 @@ function toggleAll(): void {
     draftIds.value = allSelected.value ? [] : [...allChildIds.value];
 }
 
-// The filter currently applied to the feed. An empty store means "all children".
-const appliedIds = computed<string[]>(() =>
-    childFilter.selectedIds.length > 0
-        ? childFilter.selectedIds
-        : allChildIds.value,
-);
+// The filter currently applied to the feed. An empty store means "all photos"
+// (no scoping), so we keep it empty here rather than expanding to every child.
+const appliedIds = computed<string[]>(() => childFilter.selectedIds);
+
+// No child selected = the whole feed, including posts that tag no child.
+const showingAllPhotos = computed(() => appliedIds.value.length === 0);
 
 // The trigger button shows the avatars of the first three applied children
 // (overlapping) followed by their names.
@@ -76,15 +76,10 @@ function toggleChild(id: string): void {
 }
 
 // Apply the selection to the current feed (list or grid) instead of navigating
-// away. Selecting every child is stored as "all" (empty) so newly added
-// children keep showing up without re-applying.
+// away. An empty selection is valid and means "all photos" (no scoping), which
+// is what keeps an untagged first moment visible in the feed.
 function applyFilter(): void {
-    if (draftIds.value.length === 0) {
-        return;
-    }
-
-    const isAll = draftIds.value.length === allChildIds.value.length;
-    childFilter.setSelected(isAll ? [] : [...draftIds.value]);
+    childFilter.setSelected([...draftIds.value]);
     open.value = false;
 }
 
@@ -117,12 +112,16 @@ onMounted(() => {
             class="flex h-12 items-center justify-center gap-1 rounded-full px-1.5 text-accent transition-colors hover:bg-sand-100"
             @click="openSheet"
         >
-            <span
-                v-if="appliedChildren.length === 0"
-                aria-hidden="true"
-                class="inline-block size-6 bg-ink"
-                :style="iconMaskStyle(userIcon)"
-            ></span>
+            <template v-if="showingAllPhotos">
+                <span
+                    aria-hidden="true"
+                    class="inline-block size-6 bg-ink"
+                    :style="iconMaskStyle(userIcon)"
+                ></span>
+                <span class="ml-1 text-base font-medium text-ink">
+                    {{ t('All photos') }}
+                </span>
+            </template>
 
             <template v-else>
                 <span class="flex -space-x-3">
@@ -263,11 +262,14 @@ onMounted(() => {
                 <div class="px-4 pt-3">
                     <button
                         type="button"
-                        :disabled="draftIds.length === 0"
-                        class="w-full rounded-lg bg-action py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-action-hover disabled:opacity-40"
+                        class="w-full rounded-lg bg-action py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-action-hover"
                         @click="applyFilter"
                     >
-                        {{ t('View timeline') }}
+                        {{
+                            draftIds.length === 0
+                                ? t('Show all photos')
+                                : t('View timeline')
+                        }}
                     </button>
                 </div>
             </template>

@@ -52,6 +52,10 @@ const circleId = String(route.params.circle);
 const circle = ref<Circle | null>(null);
 const children = ref<AddedChild[]>([]);
 
+// Opened the screen; the terminal outcome (completed when a child was added,
+// skipped otherwise) is recorded on continue.
+onMounted(() => trackOnboardingStep('add_children', 'reached'));
+
 const nameInput = useTemplateRef<HTMLInputElement>('nameInput');
 
 // Removing a just-added child (typo, duplicate) without leaving the flow.
@@ -297,7 +301,12 @@ async function addChild(): Promise<void> {
 }
 
 function continueOnboarding(): void {
-    trackOnboardingStep('add_children');
+    // The same button advances whether or not a child was added; the added
+    // count tells completed from skipped.
+    trackOnboardingStep(
+        'add_children',
+        children.value.length > 0 ? 'completed' : 'skipped',
+    );
     router.push({
         name: 'spa.onboarding.first-moment',
         params: { circle: circleId },
@@ -355,6 +364,13 @@ onUnmounted(() => {
                     {{
                         t(
                             'Add your children so you can tag them in the photos you share.',
+                        )
+                    }}
+                </p>
+                <p class="mx-auto mt-2 max-w-xs text-sm text-ink-muted">
+                    {{
+                        t(
+                            'Only your circle can see them, and you can always add them later.',
                         )
                     }}
                 </p>
@@ -575,8 +591,9 @@ onUnmounted(() => {
             </div>
         </div>
 
-        <!-- Skipping is a text link, not a primary button: filling the step
-             in should look more attractive than skipping it. -->
+        <!-- Completing onboarding matters more than adding a child here, so
+             skipping is a clear, tappable secondary button rather than a faint
+             link: a hesitant parent must never feel walled in by this step. -->
         <div class="relative pt-2 pb-8">
             <button
                 v-if="children.length > 0"
@@ -587,7 +604,7 @@ onUnmounted(() => {
             </button>
             <button
                 v-else
-                class="w-full py-3.5 font-medium text-ink-muted transition-colors hover:text-ink"
+                class="w-full rounded-lg bg-surface/80 py-3.5 font-semibold text-ink shadow-sm ring-1 ring-sand-300/80 transition-colors hover:bg-surface"
                 @click="continueOnboarding"
             >
                 {{ t('Add later') }}

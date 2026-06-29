@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+    belongsToAnotherPersonsCircle,
     firstOwnedCircleId,
     onboardingResumeNeedsCircle,
     onboardingResumeRoute,
@@ -15,35 +16,34 @@ describe('onboardingResumeRoute', () => {
         });
     });
 
-    it('resumes at add-children after the intro', () => {
+    it('resumes at first-moment after the intro', () => {
         expect(onboardingResumeRoute('intro', 'c-1')).toEqual({
-            name: 'spa.onboarding.add-children',
+            name: 'spa.onboarding.first-moment',
             params: { circle: 'c-1' },
         });
     });
 
     it('treats the legacy first_circle step like the intro', () => {
         expect(onboardingResumeRoute('first_circle', 'c-1')).toEqual({
-            name: 'spa.onboarding.add-children',
+            name: 'spa.onboarding.first-moment',
             params: { circle: 'c-1' },
         });
     });
 
-    it('resumes at first-moment after add_children', () => {
+    it('resumes at first-moment for the legacy add_children step', () => {
         expect(onboardingResumeRoute('add_children', 'c-1')).toEqual({
             name: 'spa.onboarding.first-moment',
             params: { circle: 'c-1' },
         });
     });
 
-    it('resumes at invite-members after first_moment', () => {
-        expect(onboardingResumeRoute('first_moment', 'c-1')).toEqual({
-            name: 'spa.onboarding.invite-members',
-            params: { circle: 'c-1' },
+    it('resumes at notifications after first_moment', () => {
+        expect(onboardingResumeRoute('first_moment', null)).toEqual({
+            name: 'spa.onboarding.notifications',
         });
     });
 
-    it('resumes at notifications after invite_members and notifications', () => {
+    it('resumes at notifications for the legacy invite_members step and notifications', () => {
         expect(onboardingResumeRoute('invite_members', null)).toEqual({
             name: 'spa.onboarding.notifications',
         });
@@ -86,12 +86,38 @@ describe('firstOwnedCircleId', () => {
     });
 });
 
+describe('belongsToAnotherPersonsCircle', () => {
+    it('is true when the user is a member of a circle they do not own', () => {
+        // An invite-link joiner: member of the inviter's circle, plus the
+        // "Family" circle the intro step creates for them.
+        expect(
+            belongsToAnotherPersonsCircle([
+                { is_owner: false },
+                { is_owner: true },
+            ]),
+        ).toBe(true);
+    });
+
+    it('is false for a fresh organic signup that only owns its own circle', () => {
+        expect(belongsToAnotherPersonsCircle([{ is_owner: true }])).toBe(false);
+    });
+
+    it('treats a missing is_owner flag as not owned', () => {
+        expect(belongsToAnotherPersonsCircle([{}])).toBe(true);
+    });
+
+    it('is false with no circles at all', () => {
+        expect(belongsToAnotherPersonsCircle([])).toBe(false);
+    });
+});
+
 describe('onboardingResumeNeedsCircle', () => {
     it('needs a circle for the steps that resume into circle routes', () => {
         expect(onboardingResumeNeedsCircle('intro')).toBe(true);
         expect(onboardingResumeNeedsCircle('first_circle')).toBe(true);
         expect(onboardingResumeNeedsCircle('add_children')).toBe(true);
-        expect(onboardingResumeNeedsCircle('first_moment')).toBe(true);
+        // first_moment now resumes into notifications, which needs no circle.
+        expect(onboardingResumeNeedsCircle('first_moment')).toBe(false);
         expect(onboardingResumeNeedsCircle('invite_members')).toBe(false);
         expect(onboardingResumeNeedsCircle(null)).toBe(false);
         expect(onboardingResumeNeedsCircle(undefined)).toBe(false);

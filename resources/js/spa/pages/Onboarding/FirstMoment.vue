@@ -19,6 +19,10 @@ const router = useRouter();
 const circleId = String(route.params.circle);
 const circle = ref<Circle | null>(null);
 
+// Opened the screen. The completion is recorded by CreatePost once a photo is
+// actually shared; "Share later" records a skip below.
+onMounted(() => trackOnboardingStep('first_moment', 'reached'));
+
 onMounted(async () => {
     try {
         const data = await externalApi.get<{ data: Circle }>(
@@ -53,11 +57,8 @@ function chooseAPhoto(): void {
 }
 
 function shareLater(): void {
-    trackOnboardingStep('first_moment');
-    router.push({
-        name: 'spa.onboarding.invite-members',
-        params: { circle: circleId },
-    });
+    trackOnboardingStep('first_moment', 'skipped');
+    router.push({ name: 'spa.onboarding.notifications' });
 }
 </script>
 
@@ -79,11 +80,9 @@ function shareLater(): void {
         </div>
 
         <OnboardingHeader
-            :step="2"
-            :back-to="{
-                name: 'spa.onboarding.add-children',
-                params: { circle: circleId },
-            }"
+            :step="1"
+            :total="2"
+            :back-to="{ name: 'spa.onboarding.intro' }"
         />
 
         <div

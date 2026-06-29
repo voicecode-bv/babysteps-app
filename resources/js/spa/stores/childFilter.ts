@@ -1,10 +1,11 @@
 import { defineStore } from 'pinia';
 import { externalApi } from '@/spa/http/externalApi';
 
-// Which children the home feed is scoped to. An empty list means "all children"
-// (the default). Driven by the ChildTimelineMenu in the feed header; both the
-// list and grid feeds read it through useChildFeedQuery, so picking children
-// filters the current view in place instead of navigating away.
+// Which children the home feed is scoped to. An empty list means "all photos"
+// (the default): the feed is left unscoped, so posts that tag no child (like a
+// first moment) stay visible. Driven by the ChildTimelineMenu in the feed
+// header; both the list and grid feeds read it through useChildFeedQuery, so
+// picking children filters the current view in place instead of navigating away.
 //
 // The server (`GET/PUT /child-filter`, stored per user) is the source of
 // truth, so the choice follows the account across devices and reinstalls.

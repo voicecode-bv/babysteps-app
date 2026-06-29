@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onUnmounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import Spinner from '@/components/Spinner.vue';
 import OnboardingHeader from '@/spa/components/OnboardingHeader.vue';
@@ -73,6 +73,10 @@ function onTokenGenerated({ token }: { token: string }): void {
 
 On(Events.PushNotification.TokenGenerated, onTokenGenerated);
 
+// Enabling notifications is the intended action of this final step; skipping
+// records the distinction without blocking onboarding completion.
+onMounted(() => trackOnboardingStep('notifications', 'reached'));
+
 onUnmounted(() => {
     Off(Events.PushNotification.TokenGenerated, onTokenGenerated);
 });
@@ -81,8 +85,10 @@ onUnmounted(() => {
 // network round-trips, and without feedback a double tap could enroll twice.
 const processingAction = ref<'enable' | 'skip' | null>(null);
 
-async function completeOnboarding(): Promise<void> {
-    trackOnboardingStep('notifications');
+async function completeOnboarding(
+    outcome: 'completed' | 'skipped',
+): Promise<void> {
+    trackOnboardingStep('notifications', outcome);
 
     try {
         await externalApi.post('/onboarding/complete');
@@ -118,7 +124,9 @@ async function enableNotifications(): Promise<void> {
     }
 
     try {
-        await completeOnboarding();
+        // Tapping enable is the step's intended action regardless of whether the
+        // OS permission is ultimately granted.
+        await completeOnboarding('completed');
     } finally {
         processingAction.value = null;
     }
@@ -132,7 +140,7 @@ async function skip(): Promise<void> {
     processingAction.value = 'skip';
 
     try {
-        await completeOnboarding();
+        await completeOnboarding('skipped');
     } finally {
         processingAction.value = null;
     }
@@ -145,7 +153,7 @@ async function skip(): Promise<void> {
     >
         <!-- 'history' back: this step has no circle param of its own, and the
              previous step (with param) is simply the prior history entry. -->
-        <OnboardingHeader :step="4" back-to="history" />
+        <OnboardingHeader :step="2" :total="2" back-to="history" />
         <div
             class="relative flex flex-1 flex-col items-center justify-center py-12"
         >

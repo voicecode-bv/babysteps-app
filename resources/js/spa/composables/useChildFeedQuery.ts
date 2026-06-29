@@ -2,13 +2,14 @@ import { useChildFilterStore } from '@/spa/stores/childFilter';
 import { usePersonsStore } from '@/spa/stores/persons';
 
 /**
- * Builds the query string for the default feed, filtered to all available
- * children. "Children" = tagged persons without their own app account;
- * linked app users (other parents) are excluded.
+ * Builds the query string for the default feed.
  *
- * The persons list is loaded first so the filter is complete before the
- * feed is fetched. If there are no children (or loading fails), the feed
- * falls back to all posts instead of an empty list.
+ * An empty child filter means "all photos": no person scoping is applied, so
+ * posts that tag no child (such as a first moment) stay visible. A non-empty
+ * filter scopes the feed to the selected children, intersected with the current
+ * persons list so a stale id from a removed child cannot blank the feed.
+ * "Children" = tagged persons without their own app account; linked app users
+ * (other parents) are not children.
  */
 export function useChildFeedQuery() {
     const personsStore = usePersonsStore();
@@ -29,25 +30,26 @@ export function useChildFeedQuery() {
                 personsStore.ensureLoaded(),
                 childFilter.ensureLoaded(),
             ]);
-            const childIds = persons
-                .filter((person) => !person.user_id)
-                .map((person) => person.id);
 
-            // An explicit selection scopes the feed to those children; otherwise
-            // (empty selection) we fall back to all children. Intersect with the
-            // current list so a stale id from a removed child can't blank the feed.
             const selected = childFilter.selectedIds;
-            const scoped =
-                selected.length > 0
-                    ? childIds.filter((id) => selected.includes(id))
-                    : childIds;
-            const effective = scoped.length > 0 ? scoped : childIds;
 
-            for (const id of effective) {
-                params.append('person_ids[]', id);
+            // Empty selection: leave the feed unscoped so every photo shows,
+            // including posts that tag no child. Only an explicit selection
+            // narrows the feed, intersected with the current children so a
+            // stale id from a removed child cannot blank it.
+            if (selected.length > 0) {
+                const childIds = persons
+                    .filter((person) => !person.user_id)
+                    .map((person) => person.id);
+
+                for (const id of childIds.filter((id) =>
+                    selected.includes(id),
+                )) {
+                    params.append('person_ids[]', id);
+                }
             }
         } catch {
-            // Persons list unavailable: unfiltered feed as fallback.
+            // Persons/filter unavailable: unscoped feed as a safe fallback.
         }
 
         return params.toString();

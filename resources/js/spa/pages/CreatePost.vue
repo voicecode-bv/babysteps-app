@@ -1018,11 +1018,12 @@ async function submit(): Promise<void> {
     }
 
     if (onboardingCircleId) {
-        trackOnboardingStep('first_moment');
-        router.push({
-            name: 'spa.onboarding.invite-members',
-            params: { circle: onboardingCircleId },
-        });
+        // Reaching here means a photo was actually shared, so the first moment
+        // is genuinely completed (this also fires the attribution conversion).
+        // Inviting members is no longer a forced step; the in-app getting
+        // started card handles it, so we head straight to notifications.
+        trackOnboardingStep('first_moment', 'completed');
+        router.push({ name: 'spa.onboarding.notifications' });
     } else {
         router.push({ name: 'spa.home' });
     }

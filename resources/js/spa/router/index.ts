@@ -6,6 +6,7 @@ import {
 import type { RouteRecordRaw } from 'vue-router';
 import { usePlatform } from '@/spa/composables/usePlatform';
 import {
+    belongsToAnotherPersonsCircle,
     firstOwnedCircleId,
     onboardingResumeNeedsCircle,
     onboardingResumeRoute,
@@ -125,6 +126,25 @@ const routes: RouteRecordRaw[] = [
         name: 'spa.onboarding.invite-members',
         component: () => import('@/spa/pages/Onboarding/InviteMembers.vue'),
         meta: { auth: true },
+        // Someone who arrived through another person's invite link already
+        // belongs to a circle, so prompting them to invite people here is
+        // redundant — skip straight to notifications. Membership in a circle
+        // they do not own is the durable signal: it survives app restarts and
+        // onboarding resume, unlike the transient invite token in storage. This
+        // guard centralises the skip for every path into this step (first
+        // moment's "share later", the post-share hand-off, and resume).
+        beforeEnter: async () => {
+            try {
+                const circles = await useCirclesStore().ensureLoaded();
+
+                if (belongsToAnotherPersonsCircle(circles)) {
+                    return { name: 'spa.onboarding.notifications' };
+                }
+            } catch {
+                // If circles cannot load, fall through and show the step as
+                // before rather than risk skipping it wrongly.
+            }
+        },
     },
     {
         path: '/onboarding/notifications',
